@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+################
+# Custom rules #
+################
+
+*~
+FEMA_P-58_Python_Implementation/
+OpenSeesPy_Building_Modeler/
