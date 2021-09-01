@@ -137,3 +137,4 @@ FEMA_P-58_Python_Implementation/
 OpenSeesPy_Building_Modeler/
 tmp/
 stochastic_ground_motions/
+ground_motions/test_case
