@@ -17,10 +17,11 @@ building_path = 'tmp/building.pcl'
 
 ground_motion_dir = 'ground_motions/test_case/parsed/'
 ground_motion_dt = 0.005
+# num_files = 13
 num_files = 13
 
 
-output_folder = 'tmp/nlth_results'
+output_folder = 'tmp/nlth_results_noV'
 
 
 # ~~~~~~~~~~~~~~~~~~~~ #
@@ -45,7 +46,7 @@ def get_duration(time_history_path, dt):
 if not os.path.exists(output_folder):
     os.mkdir(output_folder)
 
-for i in trange(3, num_files):
+for i in trange(num_files):
 
     print()
     print('Working on record ' + str(i+1))
@@ -65,11 +66,13 @@ for i in trange(3, num_files):
     duration = np.min(np.array((dx, dy, dz)))  # note: actually should be =
         
     # run the nlth analysis
-    nlth.run(duration, 0.05,
+    nlth.run(duration, 0.005,
              ground_motion_dir + str(i+1) + 'x.txt',
              ground_motion_dir + str(i+1) + 'y.txt',
-             ground_motion_dir + str(i+1) + 'z.txt',
-             ground_motion_dt)
+             None,
+             ground_motion_dt,
+             damping_ratio=0.03,
+             skip_steps=20)
 
     # store the results
     with open(output_folder + '/nlth_' + str(i+1) + '.pcl', 'wb') as f:

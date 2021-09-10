@@ -79,8 +79,8 @@ fiber_modeling_type = {'type': 'fiber', 'n_x': 25, 'n_y': 50}
 pinned_ends = {'type': 'pinned', 'dist': 0.01}
 # pinned_ends = {'type': 'fixed'}
 
-gtransf = 'Linear'
-# gtransf = 'PDelta'
+# gtransf = 'Linear'
+gtransf = 'Corotational'
 
 b.add_gridline('A', [0.00, 0.00], [0.00, 3.*25.*12.])
 b.add_gridline('A1', [0.00, 0.00], [1.00, 0.00])
@@ -168,13 +168,13 @@ b.add_gridline('5', [000.00*12., 100.00*12.], [140.00*12., 100.00*12.])
 b.set_active_placement('centroid')
 b.set_active_levels(['1'])
 b.set_active_section(c1grav)
-b.add_columns_from_grids(model_as=elastic_modeling_type, geomTransf=gtransf)
+b.add_columns_from_grids(model_as=fiber_modeling_type, geomTransf=gtransf)
 b.set_active_levels(['2'])
 b.set_active_section(c2grav)
-b.add_columns_from_grids(model_as=elastic_modeling_type, geomTransf=gtransf)
+b.add_columns_from_grids(model_as=fiber_modeling_type, geomTransf=gtransf)
 b.set_active_levels(['3'])
 b.set_active_section(c3grav)
-b.add_columns_from_grids(model_as=elastic_modeling_type, geomTransf=gtransf)
+b.add_columns_from_grids(model_as=fiber_modeling_type, geomTransf=gtransf)
 
 b.set_active_placement('top_center')
 b.set_active_levels(['1'])
@@ -375,13 +375,13 @@ with open('tmp/building.pcl', 'wb') as f:
 
 # fx = Vb * cvx
 
-# # ~~~~~~~~~~~~~~~~~ #
-# #  linear analysis  #
-# # ~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~ #
+#  linear analysis  #
+# ~~~~~~~~~~~~~~~~~ #
 
-# #
-# # x direction
-# #
+#
+# x direction
+#
 
 
 # parent_nodes = b.list_of_parent_nodes()

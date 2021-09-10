@@ -56,7 +56,7 @@ print(dux_1, dux_2, dux_3)
 #
 
 dt = 0.005
-num_points = 10.00 / dt
+num_points = int(10.00 / dt)
 ag_vals = np.full(num_points, 0.10)
 gm_directory = 'ground_motions/test_case/parsed'
 np.savetxt(gm_directory+'/'+'dynamic_test.txt', ag_vals)
@@ -69,10 +69,12 @@ np.savetxt(gm_directory+'/'+'dynamic_test.txt', ag_vals)
 with open('tmp/building.pcl', 'rb') as f:
     b = pickle.load(f)
 
+parent_nodes = b.list_of_parent_nodes()
+    
 nlth = solver.NLTHAnalysis(b)
 # nlth.plot_ground_motion(gm_directory + '/' + 'dynamic_test.txt', 0.005)
 
-nlth.run(5.00, 0.05,
+nlth.run(10.00, 0.15,
          gm_directory + '/' + 'dynamic_test.txt',
          None,
          None,
@@ -108,5 +110,6 @@ plt.grid()
 plt.legend()
 plt.xlabel('Time [$s$]')
 plt.ylabel('Displacement [$in$]')
-plt.savefig('tmp/dynamic_test.pdf')
+plt.show()
+# plt.savefig('tmp/dynamic_test.pdf')
 plt.close()
