@@ -6,8 +6,18 @@ import modeler
 import solver
 import time
 import pickle
-
 from scipy.interpolate import interp1d
+import argparse
+
+# ~~~~~~~~~~~~~~~~~~~~~ #
+# setup argument parser #
+# ~~~~~~~~~~~~~~~~~~~~~ #
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--output_path')
+args = parser.parse_args()
+
+output_path = args.output_path
 
 
 # Define a building
@@ -278,7 +288,7 @@ b.preprocess(assume_floor_slabs=True, self_weight=True)
 
 
 
-with open('tmp/building.pcl', 'wb') as f:
+with open(output_path, 'wb') as f:
     pickle.dump(b, f)
 
 

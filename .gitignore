@@ -138,3 +138,10 @@ OpenSeesPy_Building_Modeler/
 tmp/
 stochastic_ground_motions/
 ground_motions/test_case
+archive/
+pelicun_log.txt
+src/USGS_Data_Cache/
+src/building.pcl
+analysis/
+figures/
+pelicun/
