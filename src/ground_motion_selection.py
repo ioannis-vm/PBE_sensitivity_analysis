@@ -47,6 +47,10 @@ else:
 target_intensities = np.logspace(np.log(SaMin), -0.02, 16)
 target_MAFE = target_hazard_curve(Tbar, target_intensities,
                                   periods, accelerations, MAFEs)
+
+data = np.column_stack((target_intensities, target_MAFE))
+np.savetxt('analysis/site_hazard/hazard_curve.csv', data, delimiter=',')
+
 plot_target_hazard_curve(
     target_intensities, target_MAFE, accelerations, MAFEs,
     'figures/site_hazard/target_hazard_curve.pdf')
