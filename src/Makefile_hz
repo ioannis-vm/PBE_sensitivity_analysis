@@ -10,56 +10,108 @@ distr_update_response\
 distr_response_summary\
 distr_performance\
 distr_performance_figures\
-distr_clean_performance_figures\
-distr_clean_performance
+distr_response_TH_figures
+
+distr_ground_motions: ground_motions/parsed/ground_motions_parsed
+
+ground_motions/parsed/ground_motions_parsed : ground_motions/peer_raw/_SearchResults.csv ../../src/parse_gms.py ../../src/ground_motion_utils.py
+	@python ../../src/parse_gms.py '--input_dir' 'ground_motions/peer_raw' '--output_dir' 'ground_motions/parsed' '--plot_dir' '../../figures/$(directory)/ground_motions'
+	@touch ground_motions/parsed/ground_motions_parsed
 
 distr_response: response/all_responses_obtained
 
 response/all_responses_obtained:\
-response/gm1/empty_target_file\
-response/gm2/empty_target_file\
-response/gm3/empty_target_file\
-response/gm4/empty_target_file\
-response/gm5/empty_target_file\
-response/gm6/empty_target_file\
-response/gm7/empty_target_file\
-response/gm8/empty_target_file\
-response/gm9/empty_target_file\
-response/gm10/empty_target_file\
-response/gm11/empty_target_file\
-response/gm12/empty_target_file\
-response/gm13/empty_target_file
+response/gm1/response_obtained\
+response/gm2/response_obtained\
+response/gm3/response_obtained\
+response/gm4/response_obtained\
+response/gm5/response_obtained\
+response/gm6/response_obtained\
+response/gm7/response_obtained\
+response/gm8/response_obtained\
+response/gm9/response_obtained\
+response/gm10/response_obtained\
+response/gm11/response_obtained\
+response/gm12/response_obtained\
+response/gm13/response_obtained
 	@touch response/all_responses_obtained
 
-response/gm%/empty_target_file: ground_motions/parsed/empty_target_file ../../src/response.py ../../src/building.pcl
-	@python ../../src/response.py '--building' '../../src/building.pcl' '--gm_dir' 'ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.01' '--gm_number' '$*' '--output_dir' 'response/gm$*'
-	@touch response/gm$*/empty_target_file
-
-distr_clean_response:
-	rm -rf response
-
-distr_update_response:
-	@touch response/gm1/empty_target_file
-	@touch response/gm2/empty_target_file
-	@touch response/gm3/empty_target_file
-	@touch response/gm4/empty_target_file
-	@touch response/gm5/empty_target_file
-	@touch response/gm6/empty_target_file
-	@touch response/gm7/empty_target_file
-	@touch response/gm8/empty_target_file
-	@touch response/gm9/empty_target_file
-	@touch response/gm10/empty_target_file
-	@touch response/gm11/empty_target_file
-	@touch response/gm12/empty_target_file
-	@touch response/gm13/empty_target_file
+response/gm%/response_obtained: ground_motions/parsed/ground_motions_parsed ../../src/response.py
+	@python ../../src/response.py '--gm_dir' 'ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.1' '--gm_number' '$*' '--output_dir' 'response/gm$*'
+	@touch response/gm$*/response_obtained
 
 distr_response_summary: response_summary/response.csv
 
 response_summary/response.csv: ../../src/response_vectors.py response/all_responses_obtained
 	@python ../../src/response_vectors.py '--input_dir' 'response' '--output_dir' 'response_summary' '--num_levels' '$(num_levels)'
 
-distr_clean_response_summary:
-	@rm -rf response_summary
+
+distr_response_TH_figures: distr_response_TH_figures_generated
+
+distr_response_TH_figures_generated:\
+../../figures/$(directory)/response/gm1/FA.pdf\
+../../figures/$(directory)/response/gm2/FA.pdf\
+../../figures/$(directory)/response/gm3/FA.pdf\
+../../figures/$(directory)/response/gm4/FA.pdf\
+../../figures/$(directory)/response/gm5/FA.pdf\
+../../figures/$(directory)/response/gm6/FA.pdf\
+../../figures/$(directory)/response/gm7/FA.pdf\
+../../figures/$(directory)/response/gm8/FA.pdf\
+../../figures/$(directory)/response/gm9/FA.pdf\
+../../figures/$(directory)/response/gm10/FA.pdf\
+../../figures/$(directory)/response/gm11/FA.pdf\
+../../figures/$(directory)/response/gm12/FA.pdf\
+../../figures/$(directory)/response/gm13/FA.pdf\
+../../figures/$(directory)/response/gm1/ID.pdf\
+../../figures/$(directory)/response/gm2/ID.pdf\
+../../figures/$(directory)/response/gm3/ID.pdf\
+../../figures/$(directory)/response/gm4/ID.pdf\
+../../figures/$(directory)/response/gm5/ID.pdf\
+../../figures/$(directory)/response/gm6/ID.pdf\
+../../figures/$(directory)/response/gm7/ID.pdf\
+../../figures/$(directory)/response/gm8/ID.pdf\
+../../figures/$(directory)/response/gm9/ID.pdf\
+../../figures/$(directory)/response/gm10/ID.pdf\
+../../figures/$(directory)/response/gm11/ID.pdf\
+../../figures/$(directory)/response/gm12/ID.pdf\
+../../figures/$(directory)/response/gm13/ID.pdf\
+../../figures/$(directory)/response/gm1/FV.pdf\
+../../figures/$(directory)/response/gm2/FV.pdf\
+../../figures/$(directory)/response/gm3/FV.pdf\
+../../figures/$(directory)/response/gm4/FV.pdf\
+../../figures/$(directory)/response/gm5/FV.pdf\
+../../figures/$(directory)/response/gm6/FV.pdf\
+../../figures/$(directory)/response/gm7/FV.pdf\
+../../figures/$(directory)/response/gm8/FV.pdf\
+../../figures/$(directory)/response/gm9/FV.pdf\
+../../figures/$(directory)/response/gm10/FV.pdf\
+../../figures/$(directory)/response/gm11/FV.pdf\
+../../figures/$(directory)/response/gm12/FV.pdf\
+../../figures/$(directory)/response/gm13/FV.pdf
+	@touch distr_response_TH_figures_generated
+
+distr_response_TH_figures_merged:\
+../../figures/$(directory)/response/merged/FA.pdf\
+../../figures/$(directory)/response/merged/FV.pdf\
+../../figures/$(directory)/response/merged/ID.pdf
+
+../../figures/$(directory)/response/merged/%: distr_response_TH_figures_generated
+	@bash -c "mkdir -p ../../figures/$(directory)/response/merged && gs -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=../../figures/$(directory)/response/merged/$* -dBATCH $$(find ../../figures/$(directory)/response -name '$*' | sort | tr '\n' ' ')"
+
+../../figures/$(directory)/response/gm%/FA.pdf: response/all_responses_obtained ../../src/response_figures_TH.py
+	@mkdir -p ../../figures/$(directory)/response/gm$* && python ../../src/response_figures_TH.py '--input_dir' 'response/gm$*' '--fig_type' 'FA' '--output_filename' '../../figures/$(directory)/response/gm$*/FA.pdf' '--num_levels' '$(num_levels)'
+
+../../figures/$(directory)/response/gm%/ID.pdf: response/all_responses_obtained ../../src/response_figures_TH.py
+	@mkdir -p ../../figures/$(directory)/response/gm$* && python ../../src/response_figures_TH.py '--input_dir' 'response/gm$*' '--fig_type' 'ID' '--output_filename' '../../figures/$(directory)/response/gm$*/ID.pdf' '--num_levels' '$(num_levels)'
+
+../../figures/$(directory)/response/gm%/FV.pdf: response/all_responses_obtained ../../src/response_figures_TH.py
+	@mkdir -p ../../figures/$(directory)/response/gm$* && python ../../src/response_figures_TH.py '--input_dir' 'response/gm$*' '--fig_type' 'FV' '--output_filename' '../../figures/$(directory)/response/gm$*/FV.pdf' '--num_levels' '$(num_levels)'
+
+
+
+
+
+
 
 
 distr_performance:\
@@ -117,9 +169,3 @@ distr_performance_figures:\
 
 ../../figures/$(directory)/performance/component_costs_%.html: performance/%/DL_summary.csv ../../src/performance_figures/cost_agg.py
 	@mkdir -p ../../figures/$(directory)/performance && cd ../../ && python src/performance_figures/cost_agg.py '--DV_rec_cost_agg_path' 'analysis/$(directory)/performance/$*/DV_rec_cost_agg.csv' '--output_path' 'figures/$(directory)/performance/component_costs_$*.html'
-
-distr_clean_performance_figures:
-	@rm -rf ../../figures/$(directory)/performance
-
-distr_clean_performance:
-	@rm -rf performance
