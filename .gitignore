@@ -145,3 +145,6 @@ src/building.pcl
 analysis/
 figures/
 pelicun/
+distr_*
+nohup.out
+response_figures_generated
