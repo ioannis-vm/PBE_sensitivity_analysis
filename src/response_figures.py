@@ -28,13 +28,13 @@ num_levels = int(args.num_levels)
 # main #
 # ~~~~ #
 
-filetag = dict(PID='ID', PFA='FA', PFV='FV')
+filetag = dict(PID='ID', PFA='FA', PFA_norm = 'FA', PFV='FV')
 
 if fig_type not in filetag.keys():
     raise ValueError('Invalid fig_type')
 
 if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
 
 response_dirs = sorted(glob.glob(input_dir+'/*/'))
@@ -59,6 +59,14 @@ q84 = np.quantile(response_mat, 0.84, axis=1)
 q16 = np.quantile(response_mat, 0.16, axis=1)
 y_axis = np.arange(0, num_levels+1)
 
+if fig_type == 'PFA_norm':
+    medians = np.median(response_mat/response_mat[0,:], axis=1)
+    q84 = np.quantile(response_mat/response_mat[0,:], 0.84, axis=1)
+    q16 = np.quantile(response_mat/response_mat[0,:], 0.16, axis=1)
+    x_lab = 'PFA/PGA'
+else:
+    x_lab = fig_type
+
 plt.figure(figsize=(6, 6))
 plt.plot(medians, y_axis, linewidth=2, color='black')
 plt.scatter(medians, y_axis, s=80, facecolors='none', edgecolors='black',
@@ -67,12 +75,14 @@ plt.plot(q84, y_axis, color='black', linestyle='dashed',
          label='16th and 84th quantiles')
 plt.plot(q16, y_axis, color='black', linestyle='dashed')
 if fig_type == 'PID':
-    plt.xlim((-0.005, 0.02))
+    plt.xlim((-0.005, 0.03))
 elif fig_type == 'PFV':
     plt.xlim((-50, 100.))
+elif fig_type == 'PFA':
+    plt.xlim((-0.05, 1.00))
 else:
-    plt.xlim((-0.05, 2.00))
-plt.xlabel(fig_type)
+    plt.xlim((-0.05, 4.00))
+plt.xlabel(x_lab)
 plt.ylabel('Level')
 plt.yticks(np.arange(0, num_levels+1))
 plt.legend()
