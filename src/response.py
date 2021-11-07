@@ -9,6 +9,7 @@ suitable for subsequent use in PELICUN.
 
 import sys
 sys.path.append("../../../OpenSeesPy_Building_Modeler")
+# sys.path.append("../OpenSeesPy_Building_Modeler")  # debug
 
 import numpy as np
 import modeler
@@ -16,7 +17,6 @@ import solver
 import time
 import pickle
 import os
-from tqdm import trange
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -27,7 +27,6 @@ import argparse
 # ~~~~~~~~~~~~~~~~~~~~~ #
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--building')
 parser.add_argument('--gm_dir')
 parser.add_argument('--gm_dt')
 parser.add_argument('--analysis_dt')
@@ -36,12 +35,19 @@ parser.add_argument('--output_dir')
 
 args = parser.parse_args()
 
-building_path = args.building  # 'tmp/building.pcl'
 ground_motion_dir = args.gm_dir  # 'ground_motions/test_case/parsed'
 ground_motion_dt = float(args.gm_dt)  # 0.005
 analysis_dt = float(args.analysis_dt)  # 0.05
 gm_number = int(args.gm_number)
 output_folder = args.output_dir  # 'response/test_case'
+
+# debug
+# ground_motion_dir = 'analysis/hazard_level_8/ground_motions/parsed'
+# ground_motion_dt = 0.005
+# analysis_dt = 0.01
+# gm_number = 1
+# output_folder = 'analysis/hazard_level_8/response/gm1'
+
 
 # ~~~~~~~~~~~~~~~~~~~~ #
 # function definitions #
@@ -105,16 +111,268 @@ def retrieve_velocity_th(floor, drct, anal_obj):
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 
-# # initialize response dictionary
-# edps = {}
-# # evaluation id column
-# c_tag = "%eval_id"
-# edps[c_tag] = np.arange(1, num_analyses+1, 1)
+b = modeler.Building()
+
+hi = np.array([15.00, 13.00, 13.00]) * 12.00  # in
+
+b.add_level("base", 0.00, "fixed")
+b.add_level("1", hi[0])
+b.add_level("2", hi[0]+hi[1])
+b.add_level("3", hi[0]+hi[1]+hi[2])
+
+sections = dict(
+    gravity_cols=dict(
+        level_1="W14X90",
+        level_2="W14X90",
+        level_3="W14X90"),
+    gravity_beams_perimeter=dict(
+        level_1="W21X55",
+        level_2="W21X55",
+        level_3="W21X55"),
+    gravity_beams_interior_32=dict(
+        level_1="W12X152",
+        level_2="W12X152",
+        level_3="W12X152"),
+    gravity_beams_interior_25=dict(
+        level_1="W10X100",
+        level_2="W10X100",
+        level_3="W10X100"),
+    secondary_beams="W14X30",
+    lateral_cols=dict(
+        level_1="W14X342",
+        level_2="W14X311",
+        level_3="W14X283"),
+    lateral_beams=dict(
+        level_1="W24X162",
+        level_2="W24X146",
+        level_3="W21X93")
+    )
+
+b.set_active_material('steel02-fy50')
+
+# define sections
+wsections = set()
+for lvl_tag in ['level_1', 'level_2', 'level_3']:
+    wsections.add(sections['gravity_beams_perimeter'][lvl_tag])
+    wsections.add(sections['gravity_beams_interior_32'][lvl_tag])
+    wsections.add(sections['gravity_beams_interior_25'][lvl_tag])
+    wsections.add(sections['lateral_cols'][lvl_tag])
+    wsections.add(sections['lateral_beams'][lvl_tag])
+    wsections.add(sections['gravity_cols'][lvl_tag])
+wsections.add(sections['secondary_beams'])
+
+for sec in wsections:
+    b.add_sections_from_json(
+        "../../../OpenSeesPy_Building_Modeler/section_data/sections.json",
+        'W',
+        [sec])
+
+nsub = 15  # element subdivision
+pinned_ends = {'type': 'pinned', 'dist': 0.005}
+fixedpinned_ends = {'type': 'fixed-pinned', 'dist': 0.005}
+elastic_modeling_type = {'type': 'elastic'}
+grav_col_ends = fixedpinned_ends
+lat_bm_ends = {'type': 'steel_W_IMK', 'dist': 0.05,
+               'Lb/ry': 60., 'L/H': 0.50, 'RBS_factor': 0.60,
+               'composite action': True,
+               'doubler plate thickness': 0.00}
+lat_bm_modeling = {'type': 'elastic'}
+lat_col_ends = {'type': 'steel_W_PZ_IMK', 'dist': 0.05,
+                'Lb/ry': 60., 'L/H': 1.0, 'pgpye': 0.05,
+                'doubler plate thickness': 0.00}
+lat_col_modeling_type = {'type': 'elastic'}
+lat_bm_modeling_type = {'type': 'elastic'}
+grav_bm_ends = {'type': 'steel W shear tab', 'dist': 0.005,
+                'composite action': True}
+col_gtransf = 'Corotational'
 
 
-# import the pre-processed building object
-with open(building_path, 'rb') as f:
-    b = pickle.load(f)
+#
+# define structural members
+#
+
+# generate a dictionary containing coordinates given gridline tag names
+# (here we won't use the native gridline objects,
+#  since the geometry is very simple)
+point = {}
+x_grd_tags = ['A', 'B', 'C', 'D', 'E', 'F']
+y_grd_tags = ['5', '4', '3', '2', '1']
+x_grd_locs = np.array([0.00, 32.5, 57.5, 82.5, 107.5, 140.00]) * 12.00  # (in)
+y_grd_locs = np.array([0.00, 25.00, 50.00, 75.00, 100.00]) * 12.00  # (in)
+
+for i in range(len(x_grd_tags)):
+    point[x_grd_tags[i]] = {}
+    for j in range(len(y_grd_tags)):
+        point[x_grd_tags[i]][y_grd_tags[j]] = \
+            np.array([x_grd_locs[i], y_grd_locs[j]])
+
+for level_counter in range(3):
+    level_tag = 'level_'+str(level_counter+1)
+    # define gravity columns
+    b.set_active_angle(0.00)
+    b.set_active_placement('centroid')
+    b.set_active_levels([str(level_counter+1)])
+    b.set_active_section(sections['gravity_cols'][level_tag])
+    for tag in ['A', 'F']:
+        pt = point[tag]['1']
+        col = b.add_column_at_point(
+            pt[0], pt[1], n_sub=1, ends=grav_col_ends,
+            model_as=elastic_modeling_type, geomTransf=col_gtransf)
+    for tag1 in ['B', 'C', 'D', 'E']:
+        for tag2 in ['2', '3', '4']:
+            pt = point[tag1][tag2]
+            col = b.add_column_at_point(
+                pt[0], pt[1], n_sub=1, ends=grav_col_ends,
+                model_as=elastic_modeling_type, geomTransf=col_gtransf)
+
+    # define X-dir frame columns
+    b.set_active_section(sections['lateral_cols'][level_tag])
+    b.set_active_angle(np.pi/2.00)
+    for tag1 in ['B', 'C', 'D', 'E']:
+        for tag2 in ['1', '5']:
+            pt = point[tag1][tag2]
+            b.add_column_at_point(
+                pt[0], pt[1], n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geomTransf=col_gtransf)
+    # deffine Y-dir frame columns
+    b.set_active_angle(0.00)
+    for tag1 in ['A', 'F']:
+        for tag2 in ['5', '4', '3', '2']:
+            pt = point[tag1][tag2]
+            b.add_column_at_point(
+                pt[0], pt[1], n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geomTransf=col_gtransf)
+    # define X-dir frame beams
+    b.set_active_section(sections['lateral_beams'][level_tag])
+    b.set_active_placement('top_center')
+    for tag1 in ['1', '5']:
+        tag2_start = ['B', 'C', 'D']
+        tag2_end = ['C', 'D', 'E']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag2_start[j]][tag1],
+                point[tag2_end[j]][tag1],
+                ends=lat_bm_ends,
+                model_as=lat_bm_modeling_type, n_sub=nsub,
+                snap_i='bottom_center',
+                snap_j='top_center')
+    # define Y-dir frame beams
+    for tag1 in ['A', 'F']:
+        tag2_start = ['2', '3', '4']
+        tag2_end = ['3', '4', '5']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag1][tag2_start[j]],
+                point[tag1][tag2_end[j]],
+                ends=lat_bm_ends,
+                model_as=lat_bm_modeling_type, n_sub=nsub,
+                snap_i='bottom_center',
+                snap_j='top_center')
+    # define perimeter gravity beams
+    b.set_active_section(sections['gravity_beams_perimeter'][level_tag])
+    for tag1 in ['A', 'F']:
+        tag2_start = ['1']
+        tag2_end = ['2']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag1][tag2_start[j]],
+                point[tag1][tag2_end[j]],
+                ends=grav_bm_ends)
+    for tag1 in ['1', '5']:
+        tag2_start = ['A', 'E']
+        tag2_end = ['B', 'F']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag2_start[j]][tag1],
+                point[tag2_end[j]][tag1],
+                ends=grav_bm_ends)
+    # define interior gravity beams
+    for tag1 in ['B', 'C', 'D', 'E']:
+        b.set_active_section(
+            sections['gravity_beams_interior_25'][level_tag])
+        tag2_start = ['1', '2', '3', '4']
+        tag2_end = ['2', '3', '4', '5']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag1][tag2_start[j]],
+                point[tag1][tag2_end[j]],
+                ends=grav_bm_ends)
+    for tag1 in ['2', '3', '4']:
+        tag2_start = ['A', 'B', 'C', 'D', 'E']
+        tag2_end = ['B', 'C', 'D', 'E', 'F']
+        for j in range(len(tag2_start)):
+            if tag2_start[j] in ['B', 'E']:
+                b.set_active_section(
+                    sections['gravity_beams_interior_32'][level_tag])
+            else:
+                b.set_active_section(
+                    sections['gravity_beams_interior_25'][level_tag])
+            b.add_beam_at_points(
+                point[tag2_start[j]][tag1],
+                point[tag2_end[j]][tag1],
+                ends=grav_bm_ends)
+    # define secondary beams
+    b.set_active_section(sections['secondary_beams'])
+    for tag1 in ['A', 'B', 'C', 'D', 'E']:
+        tag2_start = ['1', '2', '3', '4']
+        tag2_end = ['2', '3', '4', '5']
+        if tag1 in ['A', 'E']:
+            shifts = 32.5/4. * 12.  # in
+            num = 3
+        else:
+            shifts = 25.0/3. * 12  # in
+            num = 2
+        shift = 0.00
+        for i in range(num):
+            shift += shifts
+            for j in range(len(tag2_start)):
+                b.add_beam_at_points(
+                    point[tag1][tag2_start[j]] + np.array([shift, 0.00]),
+                    point[tag1][tag2_end[j]] + np.array([shift, 0.00]),
+                    offset_i=np.array([0., 0., 0.]),
+                    offset_j=np.array([0., 0., 0.]),
+                    ends=pinned_ends)
+
+#
+# define surface loads
+#
+
+
+b.set_active_levels(['1', '2'])
+b.assign_surface_DL((75.+15.+20.+0.25*80.)/(12.**2))
+
+b.set_active_levels(['3'])
+b.assign_surface_DL((75.+15.+80.+0.25*20)/(12.**2))
+
+
+# cladding - 1st story
+b.select_perimeter_beams_story('1')
+# 10 is the load in lb/ft2, we multiply it by the height
+# the tributary area of the 1st story cladding support is
+# half the height of the 1st story and half the height of the second
+# we get lb/ft, so we divide by 12 to convert this to lb/in
+# which is what OpenSeesPy_Building_Modeler uses.
+b.selection.add_UDL(np.array((0.00, 0.00,
+                              -((10./12.**2) * (hi[0] + hi[1]) / 2.00))))
+
+# cladding - 2nd story
+b.selection.clear()
+b.select_perimeter_beams_story('2')
+b.selection.add_UDL(np.array((0.00, 0.00,
+                              -((10./12.**2) * (hi[1] + hi[2]) / 2.00))))
+
+# cladding - roof
+b.selection.clear()
+b.select_perimeter_beams_story('3')
+b.selection.add_UDL(np.array((0.00, 0.00,
+                              -((10./12.**2) * hi[2] / 2.00))))
+b.selection.clear()
+
+b.preprocess(assume_floor_slabs=True, self_weight=True,
+             steel_panel_zones=True, elevate_column_splices=0.25)
+
+
+
 
 # retrieve some info used in the for loops
 num_levels = len(b.levels.level_list) - 1
@@ -137,19 +395,22 @@ dy = get_duration(gm_Y_filepath, ground_motion_dt)
 dz = get_duration(gm_Z_filepath, ground_motion_dt)
 duration = np.min(np.array((dx, dy, dz)))  # note: actually should be =
 
+
 # run the nlth analysis
-nlth.run(duration, analysis_dt,
+nlth.run(analysis_dt,
          ground_motion_dir + '/' + str(gm_number) + 'x.txt',
          ground_motion_dir + '/' + str(gm_number) + 'y.txt',
          ground_motion_dir + '/' + str(gm_number) + 'z.txt',
          ground_motion_dt,
+         finish_time=0.00,
          damping_ratio=0.03,
-         skip_steps=0,
-         printing=True)
+         printing=False,
+         data_retention='lightweight')
 
 # ~~~~~~~~~~~~~~~~ #
 # collect response #
 # ~~~~~~~~~~~~~~~~ #
+
 ag = {}
 ag[0] = np.genfromtxt(gm_X_filepath)
 ag[1] = np.genfromtxt(gm_Y_filepath)
@@ -163,14 +424,17 @@ f = {}
 f[0] = interp1d(t, ag[0], bounds_error=False, fill_value=0.00)
 f[1] = interp1d(t, ag[1], bounds_error=False, fill_value=0.00)
 
+prepend = output_folder + '/'
+if not os.path.exists(prepend):
+    os.mkdir(prepend)
+
+time = np.array(nlth.time_vector)
+np.savetxt(prepend + 'time.csv', time)
 
 for direction in range(2):
     # store response time-histories
-    prepend = output_folder + '/'
-    if not os.path.exists(prepend):
-        os.mkdir(prepend)
     np.savetxt(prepend + "FA-0-" + str(direction+1) + '.csv',
-               ag[direction])
+               f[direction](time))
     for lvl in range(num_levels):
         # story drifts
         if lvl == 0:
