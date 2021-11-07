@@ -14,7 +14,7 @@ def import_PEER(rel_path, filename):
 
     # Get all data except for the last line, where it may have fewer
     # columns and cause an error
-    ag = np.genfromtxt(filename, delimiter='  ', skip_header=4, skip_footer=1)
+    ag = np.genfromtxt(filename, skip_header=4, skip_footer=1)
     # Manually read the last line and append
     with open(filename) as f:
         for line in f:
