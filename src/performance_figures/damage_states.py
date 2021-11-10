@@ -12,26 +12,25 @@ sns.set_theme(style="whitegrid")
 # ~~~~~~~~~~~~~~~~~~~~~ #
 
 # todo
-# parser = argparse.ArgumentParser()
-# parser.add_argument('--DL_summary_path')
-# parser.add_argument('--output_path')
+parser = argparse.ArgumentParser()
+parser.add_argument('--DMG_path')
+parser.add_argument('--output_path')
 
-# args = parser.parse_args()
-# path = args.DL_summary_path
-# output_path = args.output_path
+args = parser.parse_args()
+path = args.DMG_path
+output_path = args.output_path
 
-# debug
-import os
-os.chdir('analysis/hazard_level_8')
-
-path = 'performance/A/DMG.csv'
+# # debug
+# import os
+# os.chdir('analysis/hazard_level_8')
+# path = 'performance/A/DMG.csv'
 
 # ~~~~ #
 # main #
 # ~~~~ #
 
 def base(ds_string):
-    return ds_string.split("_")[0]
+    return "DS " + ds_string.split("_")[0]
 
 fragility_group = np.genfromtxt(
     path, max_rows=1, delimiter=',', dtype='str')[1::]
@@ -72,5 +71,8 @@ for fg in percentage.keys():
         x.append(percentage[fg][ds])
 pinput = {'x': x, 'y': y, 'group': group}
 
+plt.figure(figsize=(10, 10))
 sns.barplot(x='x', y='y', hue='group', data=pinput, orient='h')
-plt.show()
+plt.xlim((0.00, 1.00))
+# plt.show()
+plt.savefig(output_path)

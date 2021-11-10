@@ -63,7 +63,7 @@
             "ReconstructionTimes": "Independent",
             "RedTagProbabilities": "Independent"
         },
-        "ComponentDataFolder": "../../src/component_data",
+        "ComponentDataFolder": "src/component_data",
         "Components": {
             "B1031.001": [
                 {
@@ -83,7 +83,7 @@
                     "unit": "ea"
                 }
             ],
-            "B1031.011b": [
+            "B1031.011c": [
                 {
                     "cov": "",
                     "direction": "1",

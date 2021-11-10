@@ -1,5 +1,5 @@
 {
-  "Name": "Steel Column Base Plates, Column 150 plf < W < 300 plf",
+  "Name": "Steel Column Base Plates, Column W > 300 plf",
   "QuantityUnit": [
     1.0,
     "EA"
@@ -15,11 +15,11 @@
     "Offset": 0
   },
   "GeneralInformation": {
-    "ID": "B1031.011b",
+    "ID": "B1031.011c",
     "Description": "Costing is on a per connection basis.  Costing does not include fireproofing removal or reapplication cost.",
     "Author": "Greg Deierlein",
     "Official": true,
-    "DateCreated": "2019-02-19T17:48:27.3785282-08:00",
+    "DateCreated": "2019-02-19T17:48:27.6104586-08:00",
     "Approved": true,
     "Incomplete": false,
     "Notes": "None"
@@ -35,8 +35,58 @@
       "MedianEDP": "0.04",
       "Beta": "0.4",
       "CurveType": "LogNormal",
-      "DSGroupType": "Single",
+      "DSGroupType": "MutuallyExclusive",
       "DamageStates": [
+        {
+          "Weight": 0.95,
+          "LongLeadTime": 0.0,
+          "Consequences": {
+            "RedTag": {
+              "Amount": 0.0,
+              "Beta": 0.0,
+              "CurveType": "Normal",
+              "Bounds": [
+                0.0,
+                1.0
+              ]
+            },
+            "ReconstructionCost": {
+              "Amount": [
+                "5000.00",
+                "2000.00"
+              ],
+              "Quantity": [
+                5.0,
+                20.0
+              ],
+              "CurveType": "LogNormal",
+              "Beta": 0.25,
+              "Bounds": [
+                0.0,
+                "None"
+              ]
+            },
+            "ReconstructionTime": {
+              "Amount": [
+                "6",
+                "4"
+              ],
+              "Quantity": [
+                5.0,
+                20.0
+              ],
+              "CurveType": "LogNormal",
+              "Beta": 0.3536,
+              "Bounds": [
+                0.0,
+                "None"
+              ]
+            }
+          },
+          "Description": "Initiation of crack at the fusion line between the column flange and the base plate weld.  Damage in field is either obscured or deemed to not warrant repair.  No repair conducted.",
+          "RepairMeasures": "The repair will involve removal of a portion of grade slab, gouging out material surrounding the fracture initiating and re-welding, then repair of slab. Field condition is deemed to not warrant repair by field observation.  This Damage State is Mutually Exclusive with DS2.  See fragility DS1 and DS2 probabilities.",
+          "DamageImageName": "B1031.011a-schematic.JPG"
+        },
         {
           "Weight": 0.05,
           "LongLeadTime": 0.0,
@@ -52,15 +102,15 @@
             },
             "ReconstructionCost": {
               "Amount": [
-                "26403.0",
-                "16248.0"
+                "27963.0",
+                "17208.0"
               ],
               "Quantity": [
                 5.0,
                 20.0
               ],
               "CurveType": "LogNormal",
-              "Beta": 0.3916,
+              "Beta": 0.3705,
               "Bounds": [
                 0.0,
                 "None"
@@ -68,15 +118,15 @@
             },
             "ReconstructionTime": {
               "Amount": [
-                "19.4139",
-                "11.947"
+                "18.505",
+                "11.3877"
               ],
               "Quantity": [
                 5.0,
                 20.0
               ],
               "CurveType": "LogNormal",
-              "Beta": 0.4646,
+              "Beta": 0.447,
               "Bounds": [
                 0.0,
                 "None"
@@ -110,15 +160,15 @@
             },
             "ReconstructionCost": {
               "Amount": [
-                "33864.0",
-                "23987.0"
+                "37464.0",
+                "26537.0"
               ],
               "Quantity": [
                 5.0,
                 20.0
               ],
               "CurveType": "LogNormal",
-              "Beta": 0.3418,
+              "Beta": 0.3104,
               "Bounds": [
                 0.0,
                 "None"
@@ -126,15 +176,15 @@
             },
             "ReconstructionTime": {
               "Amount": [
-                "24.9",
-                "17.6375"
+                "24.7924",
+                "17.5613"
               ],
               "Quantity": [
                 5.0,
                 20.0
               ],
               "CurveType": "LogNormal",
-              "Beta": 0.4234,
+              "Beta": 0.3986,
               "Bounds": [
                 0.0,
                 "None"
@@ -167,15 +217,15 @@
             },
             "ReconstructionCost": {
               "Amount": [
-                "41544.0",
-                "29427.0"
+                "47544.0",
+                "33677.0"
               ],
               "Quantity": [
                 5.0,
                 20.0
               ],
               "CurveType": "LogNormal",
-              "Beta": 0.3058,
+              "Beta": 0.2689,
               "Bounds": [
                 0.0,
                 "None"
@@ -183,15 +233,15 @@
             },
             "ReconstructionTime": {
               "Amount": [
-                "30.5471",
-                "21.6375"
+                "31.4629",
+                "22.2862"
               ],
               "Quantity": [
                 5.0,
                 20.0
               ],
               "CurveType": "LogNormal",
-              "Beta": 0.395,
+              "Beta": 0.3672,
               "Bounds": [
                 0.0,
                 "None"
