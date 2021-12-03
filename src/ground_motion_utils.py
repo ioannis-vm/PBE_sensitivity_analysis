@@ -35,6 +35,7 @@ def import_PEER(rel_path, filename):
                 # Time step
                 tmp = re.sub('DT=\s+', '', line.split(sep=', ')[1])
                 tmp = re.sub('\s* SEC', '', tmp)
+                tmp = tmp.replace('SEC', '')  # some files have no space
                 dt = float(tmp)
             elif i > 29:
                 break

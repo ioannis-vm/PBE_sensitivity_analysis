@@ -409,8 +409,10 @@ Cd = 5.5
 R = 8.0
 Ie = 1.0
 
-Sds = 1.535
-Sd1 = 0.956
+# Sds = 1.535
+# Sd1 = 0.956
+Sds = 1.2
+Sd1 = 0.45
 Tshort = Sd1/Sds
 
 # period estimation (Table 12.8-2)
@@ -502,6 +504,34 @@ for i in range(num_modeshapes):
     vb_modal.append(
         cs(ti[i], Sds, Sd1, R, Ie) * mnstar[i] * 386.22
         )
+
+
+# # using site-specific design spectrum
+# site_des_rs = np.genfromtxt(
+#     'analysis/site_hazard/uhs_3.csv', skip_header=3, delimiter=',')
+# site_des_rs_ts = site_des_rs[:, 0]
+# site_des_rs_as = site_des_rs[:, 1]
+# from scipy.interpolate import interp1d
+# f = interp1d(site_des_rs_ts, site_des_rs_as, kind='linear')
+
+# vb_modal = []
+# for i in range(num_modeshapes):
+#     vb_modal.append(
+#         cs(ti[i], Sds, Sd1, R, Ie) * mnstar[i] * 386.22
+#         )
+
+# import matplotlib.pyplot as plt
+# plt.figure()
+# plt.plot(site_des_rs_ts, site_des_rs_as/(R/Ie),
+#          label='site spectrum')
+# des_spec = []
+# for i in range(len(site_des_rs_ts)):
+#     des_spec.append(cs(site_des_rs_ts[i], Sds, Sd1, R, Ie))
+# plt.plot(site_des_rs_ts, des_spec)
+# plt.show()
+# plt.close()
+
+
 
 print('V_b modal = %.2f kips \n' % (np.sum(vb_modal)))
 

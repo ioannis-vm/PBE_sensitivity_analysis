@@ -49,9 +49,9 @@ output_folder = args.output_dir  # 'response/test_case'
 # output_folder = 'analysis/hazard_level_8/response/gm1'
 
 
-# ~~~~~~~~~~~~~~~~~~~~ #
-# function definitions #
-# ~~~~~~~~~~~~~~~~~~~~ #
+# # ~~~~~~~~~~~~~~~~~~~~ #
+# # function definitions #
+# # ~~~~~~~~~~~~~~~~~~~~ #
 
 
 def get_duration(time_history_path, dt):
@@ -65,43 +65,43 @@ def get_duration(time_history_path, dt):
     return float(num_points) * dt
 
 
-def retrieve_displacement_th(floor, drct, anal_obj):
-    # retrieve the number of successful steps
-    n_steps = anal_obj.n_steps_success
-    # get the displacement time-history
-    nid = anal_obj.building.list_of_parent_nodes()[floor].uniq_id
-    d = []
-    for i in range(n_steps):
-        d.append(anal_obj.node_displacements[nid][i][drct])
-    d = np.array(d)
-    t = np.array(nlth.time_vector)
-    return np.column_stack((t, d))
+# def retrieve_displacement_th(floor, drct, anal_obj):
+#     # retrieve the number of successful steps
+#     n_steps = anal_obj.n_steps_success
+#     # get the displacement time-history
+#     nid = anal_obj.building.list_of_parent_nodes()[floor].uniq_id
+#     d = []
+#     for i in range(n_steps):
+#         d.append(anal_obj.node_displacements[nid][i][drct])
+#     d = np.array(d)
+#     t = np.array(nlth.time_vector)
+#     return np.column_stack((t, d))
 
 
-def retrieve_acceleration_th(floor, drct, anal_obj):
-    # retrieve the number of successful steps
-    n_steps = anal_obj.n_steps_success
-    # get the acceleration time-history
-    nid = anal_obj.building.list_of_parent_nodes()[floor].uniq_id
-    d = []
-    for i in range(n_steps):
-        d.append(anal_obj.node_accelerations[nid][i][drct])
-    d = np.array(d)
-    t = np.array(nlth.time_vector)
-    return np.column_stack((t, d))
+# def retrieve_acceleration_th(floor, drct, anal_obj):
+#     # retrieve the number of successful steps
+#     n_steps = anal_obj.n_steps_success
+#     # get the acceleration time-history
+#     nid = anal_obj.building.list_of_parent_nodes()[floor].uniq_id
+#     d = []
+#     for i in range(n_steps):
+#         d.append(anal_obj.node_accelerations[nid][i][drct])
+#     d = np.array(d)
+#     t = np.array(nlth.time_vector)
+#     return np.column_stack((t, d))
 
 
-def retrieve_velocity_th(floor, drct, anal_obj):
-    # retrieve the number of successful steps
-    n_steps = anal_obj.n_steps_success
-    # get the acceleration time-history
-    nid = anal_obj.building.list_of_parent_nodes()[floor].uniq_id
-    d = []
-    for i in range(n_steps):
-        d.append(anal_obj.node_velocities[nid][i][drct])
-    d = np.array(d)
-    t = np.array(nlth.time_vector)
-    return np.column_stack((t, d))
+# def retrieve_velocity_th(floor, drct, anal_obj):
+#     # retrieve the number of successful steps
+#     n_steps = anal_obj.n_steps_success
+#     # get the acceleration time-history
+#     nid = anal_obj.building.list_of_parent_nodes()[floor].uniq_id
+#     d = []
+#     for i in range(n_steps):
+#         d.append(anal_obj.node_velocities[nid][i][drct])
+#     d = np.array(d)
+#     t = np.array(nlth.time_vector)
+#     return np.column_stack((t, d))
 
 
 # ~~~~~~~~ #
@@ -372,14 +372,12 @@ b.preprocess(assume_floor_slabs=True, self_weight=True,
              steel_panel_zones=True, elevate_column_splices=0.25)
 
 
-
-
-# retrieve some info used in the for loops
-num_levels = len(b.levels.level_list) - 1
-level_heights = []
-for level in b.levels.level_list:
-    level_heights.append(level.elevation)
-level_heights = np.diff(level_heights)
+# # retrieve some info used in the for loops
+# num_levels = len(b.levels.level_list) - 1
+# level_heights = []
+# for level in b.levels.level_list:
+#     level_heights.append(level.elevation)
+# level_heights = np.diff(level_heights)
 
 
 # define analysis object
@@ -405,56 +403,62 @@ nlth.run(analysis_dt,
          finish_time=0.00,
          damping_ratio=0.03,
          printing=False,
-         data_retention='lightweight')
+         data_retention='default')
 
-# ~~~~~~~~~~~~~~~~ #
-# collect response #
-# ~~~~~~~~~~~~~~~~ #
-
-ag = {}
-ag[0] = np.genfromtxt(gm_X_filepath)
-ag[1] = np.genfromtxt(gm_Y_filepath)
-n_pts = len(ag[0])
-t = np.linspace(0.00, ground_motion_dt*n_pts, n_pts)
-print()
-print(t[-1])
-print(np.array(nlth.time_vector)[-1])
-print()
-f = {}
-f[0] = interp1d(t, ag[0], bounds_error=False, fill_value=0.00)
-f[1] = interp1d(t, ag[1], bounds_error=False, fill_value=0.00)
-
+# store analysis results using pickle
 prepend = output_folder + '/'
-if not os.path.exists(prepend):
-    os.mkdir(prepend)
 
-time = np.array(nlth.time_vector)
-np.savetxt(prepend + 'time.csv', time)
+with open(prepend + "nlth_obj.pcl", 'wb') as f:
+    pickle.dump(nlth, f)
 
-for direction in range(2):
-    # store response time-histories
-    np.savetxt(prepend + "FA-0-" + str(direction+1) + '.csv',
-               f[direction](time))
-    for lvl in range(num_levels):
-        # story drifts
-        if lvl == 0:
-            u = retrieve_displacement_th(lvl, direction, nlth)
-            dr = u[:, 1] / level_heights[lvl]
-        else:
-            uprev = retrieve_displacement_th(lvl-1, direction, nlth)
-            u = retrieve_displacement_th(lvl, direction, nlth)
-            dr = (u[:, 1] - uprev[:, 1]) / level_heights[lvl]
-        # story accelerations
-        a1 = retrieve_acceleration_th(lvl, direction, nlth)
-        # story velocities
-        vel = retrieve_velocity_th(lvl, direction, nlth)
+# # ~~~~~~~~~~~~~~~~ #
+# # collect response #
+# # ~~~~~~~~~~~~~~~~ #
 
-        np.savetxt(prepend + "ID-" + str(lvl+1) + "-" + str(direction+1) +
-                   '.csv',
-                   dr)
-        np.savetxt(prepend + "FA-" + str(lvl+1) + "-" + str(direction+1) +
-                   '.csv',
-                   a1[:, 1]/386. + f[direction](a1[:, 0]))
-        np.savetxt(prepend + "FV-" + str(lvl+1) + "-" + str(direction+1) +
-                   '.csv',
-                   vel[:, 1])
+# ag = {}
+# ag[0] = np.genfromtxt(gm_X_filepath)
+# ag[1] = np.genfromtxt(gm_Y_filepath)
+# n_pts = len(ag[0])
+# t = np.linspace(0.00, ground_motion_dt*n_pts, n_pts)
+# print()
+# print(t[-1])
+# print(np.array(nlth.time_vector)[-1])
+# print()
+# f = {}
+# f[0] = interp1d(t, ag[0], bounds_error=False, fill_value=0.00)
+# f[1] = interp1d(t, ag[1], bounds_error=False, fill_value=0.00)
+
+# prepend = output_folder + '/'
+# if not os.path.exists(prepend):
+#     os.mkdir(prepend)
+
+# time = np.array(nlth.time_vector)
+# np.savetxt(prepend + 'time.csv', time)
+
+# for direction in range(2):
+#     # store response time-histories
+#     np.savetxt(prepend + "FA-0-" + str(direction+1) + '.csv',
+#                f[direction](time))
+#     for lvl in range(num_levels):
+#         # story drifts
+#         if lvl == 0:
+#             u = retrieve_displacement_th(lvl, direction, nlth)
+#             dr = u[:, 1] / level_heights[lvl]
+#         else:
+#             uprev = retrieve_displacement_th(lvl-1, direction, nlth)
+#             u = retrieve_displacement_th(lvl, direction, nlth)
+#             dr = (u[:, 1] - uprev[:, 1]) / level_heights[lvl]
+#         # story accelerations
+#         a1 = retrieve_acceleration_th(lvl, direction, nlth)
+#         # story velocities
+#         vel = retrieve_velocity_th(lvl, direction, nlth)
+
+#         np.savetxt(prepend + "ID-" + str(lvl+1) + "-" + str(direction+1) +
+#                    '.csv',
+#                    dr)
+#         np.savetxt(prepend + "FA-" + str(lvl+1) + "-" + str(direction+1) +
+#                    '.csv',
+#                    a1[:, 1]/386. + f[direction](a1[:, 0]))
+#         np.savetxt(prepend + "FV-" + str(lvl+1) + "-" + str(direction+1) +
+#                    '.csv',
+#                    vel[:, 1])

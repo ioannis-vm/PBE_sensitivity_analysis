@@ -75,13 +75,13 @@ plt.plot(q84, y_axis, color='black', linestyle='dashed',
          label='16th and 84th quantiles')
 plt.plot(q16, y_axis, color='black', linestyle='dashed')
 if fig_type == 'PID':
-    plt.xlim((-0.005, 0.03))
+    plt.xlim((-0.005, 0.05))
 elif fig_type == 'PFV':
     plt.xlim((-50, 100.))
 elif fig_type == 'PFA':
-    plt.xlim((-0.05, 1.00))
+    plt.xlim((-0.05, 2.00))
 else:
-    plt.xlim((-0.05, 4.00))
+    plt.xlim((-0.05, 2.50))
 plt.xlabel(x_lab)
 plt.ylabel('Level')
 plt.yticks(np.arange(0, num_levels+1))

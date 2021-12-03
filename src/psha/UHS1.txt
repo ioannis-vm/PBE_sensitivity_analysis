@@ -1,0 +1,61 @@
+
+X-Axis: Period (sec)
+Y-Axis: SA (g)
+Number of Data Sets: 1
+
+
+DATASET #1
+
+Name: 
+Num Points: 21
+Info: 
+IMR Param List:
+---------------
+IMR = NGAWest2 2014 Averaged Attenuation Relationship; IMR Weights = ['Abrahamson, Silva & Kamai (2014)': 0.22, 'Boore, Stewart, Seyhan & Atkinson (2014)': 0.22, 'Campbell & Bozorgnia (2014)': 0.22, 'Chiou & Youngs (2014)': 0.22, 'Idriss (2014)': 0.12]; Std Dev Type = Total; Tectonic Region = Active Shallow Crust; Additional Epistemic Uncertainty = null; Component = RotD50; Gaussian Truncation = None
+
+Site Param List: 
+----------------
+Longitude = -122.259; Latitude = 37.871; Vs30 = 733.4; Vs30 Type = Inferred; Depth 2.5 km/sec = 0.885; Depth 1.0 km/sec = 57.01149368286133
+
+IML/Prob Param List: 
+---------------
+Map Type = IML@Prob; Probability = 0.013691407665484046
+
+Forecast Param List: 
+--------------------
+Eqk Rup Forecast = Mean UCERF3; Mean UCERF3 Presets = null; Apply Aftershock Filter = true; Aleatory Mag-Area StdDev = 0.0; Background Seismicity = Include; Treat Background Seismicity As = Point Sources; Fault Grid Spacing = 1.0; Probability Model = Poisson; Sect Upper Depth Averaging Tolerance = 100.0; Use Mean Upper Depth = false; Rup Mag Averaging Tolerance = 1.0; Rupture Rake To Use = Def. Model Mean; Fault Model(s) = Both; Ignore Cache = false
+
+TimeSpan Param List: 
+--------------------
+Duration = 1.0
+
+TimeSpan Param List: 
+--------------------
+Duration = 1.0
+
+Maximum Distance = 200.0; Pt Src Dist Corr = None
+
+X, Y Data:
+0.01	0.19767988
+0.02	0.20149274
+0.03	0.22161704
+0.05	0.28105515
+0.075	0.3619614
+0.1	0.41514504
+0.15	0.45938444
+0.2	0.44084913
+0.25	0.40181088
+0.3	0.36092
+0.4	0.2943907
+0.5	0.24640106
+0.75	0.16559748
+1.0	0.1200378
+1.5	0.07330753
+2.0	0.051510714
+3.0	0.03155373
+4.0	0.02229772
+5.0	0.01691838
+7.5	0.009812991
+10.0	0.006143479
+
+

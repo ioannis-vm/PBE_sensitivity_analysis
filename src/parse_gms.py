@@ -6,6 +6,9 @@ Process PEER ground motion records
 # Imports #
 # ~~~~~~~ #
 
+import sys
+sys.path.append("src")
+
 import numpy as np
 import os
 from scipy.interpolate import interp1d
@@ -32,6 +35,12 @@ args = parser.parse_args()
 input_dir = args.input_dir
 output_dir = args.output_dir
 plot_dir = args.plot_dir
+
+# # debug
+# input_dir = 'analysis/hazard_level_1/ground_motions/peer_raw'
+# output_dir = 'analysis/hazard_level_1/ground_motions/parsed'
+# plot_dir = 'figures/hazard_level_1/ground_motions'
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Extract record information from the csv #
@@ -141,16 +150,28 @@ for i in range(num_records):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 response_spectra = []
+n_pts = 200
+sa_mat = np.full((n_pts, 180), 0.00)
 
 for i in range(num_records):
 
-    rs_x = response_spectrum(ground_motions[i][0], 0.005, 0.05, T_max=2.0)
-    rs_y = response_spectrum(ground_motions[i][1], 0.005, 0.05, T_max=2.0)
-    rs_geomean = np.full(np.shape(rs_x), 0.00)
-    rs_geomean[:, 0] = rs_x[:, 0]
-    rs_geomean[:, 1] = np.sqrt(rs_x[:, 1]**2 + rs_y[:, 1]**2)
-
-    response_spectra.append(rs_geomean)
+    rs_x = response_spectrum(ground_motions[i][0], 0.005, 0.05, n_Pts=n_pts)
+    rs_y = response_spectrum(ground_motions[i][1], 0.005, 0.05, n_Pts=n_pts)
+    periods = rs_x[:, 0]
+    x_vec = rs_x[:, 1]
+    y_vec = rs_y[:, 1]
+    xy = np.column_stack((x_vec, y_vec))
+    angles = np.linspace(0.00, 180.00, 180)
+    for j, ang in enumerate(np.nditer(angles)):
+        rot_mat = np.array(
+            [
+                [np.cos(ang)],
+                [np.sin(ang)]
+            ]
+        )
+        sa_mat[:, j] = np.abs(np.reshape(xy @ rot_mat, (1, -1)))
+    rotd50 = np.median(sa_mat, axis=1)
+    response_spectra.append(np.column_stack((periods, rotd50)))
 
 # ~~~~~~~~~~~~~~ #
 # generate plots #
@@ -196,11 +217,12 @@ for i in range(1, num_records):
 for i in range(num_records-1):
     plt.setp(axs[i].get_xticklabels(), visible=False)
 # set axis limits
-plt.xlim(0.00, 50.00)
+plt.xlim(0.00, 60.00)
 
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
 plt.savefig(plot_dir + '/time_history.pdf')
+# plt.show()
 plt.close()
 
 #
@@ -209,9 +231,9 @@ plt.close()
 
 
 plt.figure(figsize=(10, 10))
-plt.plot(target_spectrum[:, 0][target_spectrum[:, 0] < 2.00],
-         target_spectrum[:, 1][target_spectrum[:, 0] < 2.00],
-         'k:', linewidth=2, label='Target')
+plt.plot(target_spectrum[:, 0],
+         target_spectrum[:, 1],
+         'k', linewidth=2, label='Target')
 for i, rs in enumerate(response_spectra):
     plt.plot(rs[:, 0], rs[:, 1], linewidth=0.75, label=labels[i])
 rs_T = rs[:, 0]
@@ -222,9 +244,13 @@ plt.plot(rs_T, rs_mean, linewidth=2, color='red', label='$\mu$')
 plt.plot(rs_T, rs_mean+rs_stdev, linewidth=2, color='red',
          linestyle='dashed', label='$\mu\pm\sigma$')
 plt.plot(rs_T, rs_mean-rs_stdev, linewidth=2, color='red', linestyle='dashed')
-plt.legend(loc='upper right')
+# plt.xscale('log')
+# plt.yscale('log')
+plt.legend()
 plt.xlabel('Period T [s]')
 plt.ylabel('PSA [g]')
+plt.xlim((1e-2, 3))
+# plt.show()
 plt.savefig(plot_dir + '/RS.pdf')
 plt.close()
 
