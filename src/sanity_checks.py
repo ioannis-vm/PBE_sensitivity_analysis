@@ -251,8 +251,8 @@ Cd = 5.5
 R = 1.0
 Ie = 1.0
 
-Sds = 1.452
-Sd1 = 2/3.
+Sds = 1.09
+Sd1 = 1.15
 Tshort = Sd1/Sds
 
 periodsCode = np.logspace(-2, 1, num=100)

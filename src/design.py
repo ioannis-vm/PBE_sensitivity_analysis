@@ -411,8 +411,10 @@ Ie = 1.0
 
 # Sds = 1.535
 # Sd1 = 0.956
-Sds = 1.2
-Sd1 = 0.45
+# Sds = 1.2
+# Sd1 = 0.45
+Sds = 1.0966990157914764
+Sd1 = 1.15201377008067
 Tshort = Sd1/Sds
 
 # period estimation (Table 12.8-2)
