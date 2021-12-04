@@ -1,0 +1,36 @@
+
+X-Axis: SA Period (sec)
+Y-Axis: Median SA (g)
+Number of Data Sets: 1
+
+
+DATASET #1
+
+Name: Campbell & Bozorgnia (2014)
+Num Points: 21
+Info: DistanceRup = 4.1411524, DistanceJB = 0.0, DistanceX = 0.0, Vs30 = 733.4, Depth 2.5 km/sec = 0.885, Depth 1.0 km/sec = 57.01149368286133, Magnitude = 7.047148, Rake = N/A, Dip = 90.0, Rupture Top Depth = 0.0, Down-Dip Width = 10.0, Focal Depth = 0.0
+
+X, Y Data:
+0.01	0.44568282
+0.02	0.4721898
+0.03	0.55552375
+0.05	0.7535067
+0.075	0.87945867
+0.1	0.9055299
+0.15	0.92764515
+0.2	0.85599923
+0.25	0.7992292
+0.3	0.7242505
+0.4	0.6369027
+0.5	0.53632915
+0.75	0.38526717
+1.0	0.3051729
+1.5	0.1948704
+2.0	0.14323534
+3.0	0.09258116
+4.0	0.06352374
+5.0	0.04630266
+7.5	0.020297647
+10.0	0.012993613
+
+
