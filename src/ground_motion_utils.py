@@ -53,40 +53,46 @@ def import_PEER(rel_path, filename):
     return np.column_stack((t, ag))
 
 
-def response_spectrum(th, dt, zeta, T_max=5, n_Pts=200):
+def response_spectrum(th, dt, zeta, n_Pts=200):
     """
     Calculate the linear response spectrum of an acceleration
     time history of fixed time interval dt and values given in vector
     th, and damping ratio zeta.
-    T_max is the maximum period calculated
-    n_Pts is the density of the periods, starting from 0.05 s.
-    Periods below 0.1*dt are ignored due to insufficient step size.
-    T = 0.00 is included and matched with the peak acceleration of
-    the provided time history.
+    n_Pts is the number of log-spaced points of the response spectrum
     """
-    T = np.logspace(np.log10(0.05), np.log10(T_max), n_Pts)
-    Tval = T[dt < 0.1*T]
-    omega = 2 * np.pi / Tval
+    T = np.logspace(-2, 1, n_Pts-1)  # -1 becuase we also include PGA @ T=0s
+    # we may have to upsample the ground motion time history
+    # to ensure convergence of the central difference method
+    if dt > 0.1*T[0]:
+        t_max = float(len(th)) * dt
+        upscale = dt/(0.1*T[0])
+        old_ts = np.linspace(0, t_max, num=len(th))
+        new_ts = np.linspace(0, t_max, num=int(upscale+1.0) * len(th))
+        th = np.interp(new_ts, old_ts, th)
+        dt = new_ts[1] - new_ts[0]
+        assert (dt < 0.1 * T[0])
+    omega = 2 * np.pi / T
     c = 2 * zeta * omega
     k = omega**2
     n = len(th)
     # Initial calculations
-    u = np.full(len(Tval), 0.00)  # initialize constant array
-    u_prev = np.full(len(Tval), 0.00)  # initialize constant array
-    umax = np.full(len(Tval), 0.00)  # initialize constant array
-    khut = 1.00/dt**2 + c/(2.*dt)
+    u = np.full(len(T), 0.00)       # initialize arrays
+    u_prev = np.full(len(T), 0.00)
+    umax = np.full(len(T), 0.00)
+    khut = 1.00/dt**2 + c/(2.*dt)   # initial calcs
     alpha = 1.00/dt**2 - c/(2.*dt)
     beta = k - 2./dt**2
     for i in range(1, n):
         phut = -th[i] - alpha*u_prev - beta*u
         u_prev = u
-        u = phut/khut  # update
+        u = phut/khut  # update step
         # update maximum displacements
         umax[np.abs(u) > umax] = np.abs(u[np.abs(u) > umax])
     # Determine pseudo-spectral acceleration
     sa = umax * omega**2
-    # Reformat data for the RS
-    Ts = np.concatenate((np.array([0.00]), Tval))
+    # rs = np.column_stack((T, sa))  # not yet
+    # Include T = 0 s ~ PGA
+    Ts = np.concatenate((np.array([0.00]), T))
     sas = np.concatenate((np.array([np.max(np.abs(th))]), sa))
     rs = np.column_stack((Ts, sas))
     return(rs)
