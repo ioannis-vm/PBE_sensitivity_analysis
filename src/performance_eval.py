@@ -23,6 +23,10 @@ from pelicun import assessment
 from pelicun import file_io
 
 
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["mathtext.fontset"] = "dejavuserif"
+
+
 # ~~~~~~~~~~~~~~~~~~~~~ #
 # setup argument parser #
 # ~~~~~~~~~~~~~~~~~~~~~ #

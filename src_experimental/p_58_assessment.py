@@ -63,6 +63,18 @@ class P58_Assessment:
         is deemed irreparable, normalized by the expected replacement
         cost of the building. FEMA P-58 suggests using a
         value of 0.4~0.5.
+    fix_epd_mean (bool): Testing ~ fixes edp realizations
+                         to the mean.
+    fix_epd_mean (bool): Testing ~ fixes component quantity realizations
+                         to the mean.
+    fix_cmp_dm_mean (bool): Testing ~ fixes component damage threshold
+                         realizations to the mean.
+    fix_blg_dm_mean (bool): Testing ~ fixes building damage threshold
+                            realizations to the mean.
+    fix_cmp_dv_mean (bool): Testing ~ fixes component cost
+                         realizations to the mean.
+    fix_blg_dv_mean (bool): Testing ~ fixes building replacement cost
+                            realizations to the mean.
     From user input files:
     perf_model (pd.DataFrame): Performance model
     cmp_fragility_input (pd.DataFrame): Fragility curves
@@ -97,7 +109,12 @@ class P58_Assessment:
 
     num_realizations: int = field(default=1000)
     replacement_threshold: float = field(default=1.00)
-    analysis_tag: str = field(default=False)
+    fix_epd_mean: bool = field(default=False)
+    fix_quant_mean: bool = field(default=False)
+    fix_cmp_dm_mean: bool = field(default=False)
+    fix_blg_dm_mean: bool = field(default=False)
+    fix_cmp_dv_mean: bool = field(default=False)
+    fix_blg_dv_mean: bool = field(default=False)
     perf_model: pd.DataFrame = field(init=False, repr=False)
     cmp_fragility_input: pd.DataFrame = field(init=False, repr=False)
     cmp_repair_cost_input: pd.DataFrame = field(init=False, repr=False)
@@ -138,6 +155,8 @@ class P58_Assessment:
         samples.columns = data.columns
         samples.index.name = 'realization'
         samples.sort_index(axis=1, inplace=True)
+        if self.fix_epd_mean:
+            samples.loc[:, :] = samples.mean(axis=0).to_numpy()
         self.edp_samples = samples
 
     def read_perf_model(self, perf_model_input_path):
@@ -220,6 +239,8 @@ class P58_Assessment:
             sgm_n = np.sqrt(np.log(1. + (sgm/mu)**2))
             vec = np.exp(np.random.normal(mu_n, sgm_n, self.num_realizations))
             cmp_quant_RV.loc[:, comp_group] = vec
+        if self.fix_quant_mean:
+            cmp_quant_RV.loc[:, :] = cmp_quant_RV.mean(axis=0).to_numpy()
         self.cmp_quant_RV = cmp_quant_RV
 
     def read_fragility_input(self, cmp_fragility_input_path):
@@ -269,11 +290,17 @@ class P58_Assessment:
                 sample *= (delta / np.median(sample))
                 cmp_fragility_RV.loc[:, (*group, f'DS{i+1}')] = sample
 
-        # # debug - fix to the mean
-        # cols = cmp_fragility_RV.columns
-        # cols = cols[:-2]  # remove 'collapse, 'irreparable'
-        # cmp_fragility_RV.loc[:, cols] = \
-        #     cmp_fragility_RV.loc[:, cols].mean(axis=0).to_numpy()
+        if self.fix_cmp_dm_mean:
+            cols = cmp_fragility_RV.columns
+            cols = cols[:-2]  # remove 'collapse, 'irreparable'
+            cmp_fragility_RV.loc[:, cols] = \
+                cmp_fragility_RV.loc[:, cols].mean(axis=0).to_numpy()
+        if self.fix_blg_dm_mean:
+            cols = [('collapse', '0', '1', '0', 'DS1'),
+                    ('irreparable', '0', '1', '0', 'DS1')]
+            cmp_fragility_RV.loc[:, cols] = \
+                cmp_fragility_RV.loc[:, cols].mean(axis=0).to_numpy()
+            
         self.cmp_fragility_RV = cmp_fragility_RV
 
     def calc_cmp_damage(self):
@@ -309,23 +336,22 @@ class P58_Assessment:
         # reaching a specified damage state of particular components
         # trigger damage states of other components
         # when D2021.011a reaches DS2 --> C3021.001k DS1 is enabled
-        # debug
-        # cols = cmp_damage.loc[:, ('D2021.011a')].columns
-        # for col in cols:
-        #     loc, drct, group = col
-        #     sub = cmp_damage.loc[:, ('D2021.011a', *col)]
-        #     indx = sub[sub == 2].index
-        #     cmp_damage.loc[
-        #         indx, ('C3021.001k', str(int(loc)-1), drct, group)] = 1
+        cols = cmp_damage.loc[:, ('D2021.011a')].columns
+        for col in cols:
+            loc, drct, group = col
+            sub = cmp_damage.loc[:, ('D2021.011a', *col)]
+            indx = sub[sub == 2].index
+            cmp_damage.loc[
+                indx, ('C3021.001k', str(int(loc)-1), drct, group)] = 1
 
-        # # when D4011.021a reaches DS2 --> C3021.001k DS1 is enabled
-        # cols = cmp_damage.loc[:, ('D4011.021a')].columns
-        # for col in cols:
-        #     loc, drct, group = col
-        #     sub = cmp_damage.loc[:, ('D2021.011a', *col)]
-        #     indx = sub[sub == 2].index
-        #     cmp_damage.loc[
-        #         indx, ('C3021.001k', str(int(loc)-1), drct, group)] = 1
+        # when D4011.021a reaches DS2 --> C3021.001k DS1 is enabled
+        cols = cmp_damage.loc[:, ('D4011.021a')].columns
+        for col in cols:
+            loc, drct, group = col
+            sub = cmp_damage.loc[:, ('D2021.011a', *col)]
+            indx = sub[sub == 2].index
+            cmp_damage.loc[
+                indx, ('C3021.001k', str(int(loc)-1), drct, group)] = 1
         self.cmp_damage = cmp_damage
 
     def read_cmp_repair_cost_input(self, cmp_repair_cost_input_path):
@@ -538,6 +564,13 @@ class P58_Assessment:
                 sample /= np.mean(sample)
                 cmp_cost.loc[:, col] = self.cmp_dmg_quant.loc[
                     :, col] / b_q * cost * sample
+                if comp_id != 'replacement' and self.fix_cmp_dv_mean:
+                    cmp_cost.loc[:, col] = self.cmp_dmg_quant.loc[
+                        :, col] / b_q * cost
+                if comp_id == 'replacement' and self.fix_blg_dv_mean:
+                    cmp_cost.loc[:, col] = self.cmp_dmg_quant.loc[
+                        :, col] / b_q * cost
+
             elif distribution == 'lognormal':
                 beta = self.cmp_repair_cost_input.loc[comp_id, :][
                     f'{damage_state}_{consequence}_theta1']
@@ -546,7 +579,12 @@ class P58_Assessment:
                 sample /= np.median(sample)
                 cmp_cost.loc[:, col] = self.cmp_dmg_quant.loc[
                     :, col] / b_q * cost * sample
-                # cmp_cost.loc[:, col] = cost
+                if comp_id != 'replacement' and self.fix_cmp_dv_mean:
+                    cmp_cost.loc[:, col] = self.cmp_dmg_quant.loc[
+                        :, col] / b_q * cost * np.exp(beta**2/2)
+                if comp_id == 'replacement' and self.fix_blg_dv_mean:
+                    cmp_cost.loc[:, col] = self.cmp_dmg_quant.loc[
+                        :, col] / b_q * cost * np.exp(beta**2/2)
             elif distribution == 'zero':
                 cmp_cost.loc[:, col] = 0.00
             else:
@@ -577,6 +615,8 @@ class P58_Assessment:
                 self.cmp_cost_RV.loc[change_idx, col], delta, beta)
             sample *= delta/np.median(sample)
             total_cost[change_idx] = sample
+            if self.fix_blg_dv_mean:
+                total_cost[change_idx] = mean
         self.total_cost = total_cost
 
     def run(self, response_path, c_mdl):

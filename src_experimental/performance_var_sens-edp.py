@@ -14,6 +14,8 @@ import pandas as pd
 from scipy.stats import norm
 from p_58_assessment import P58_Assessment
 
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 idx = pd.IndexSlice
 

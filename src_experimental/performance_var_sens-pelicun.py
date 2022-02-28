@@ -22,10 +22,14 @@ from pelicun import base
 from pelicun import assessment
 from pelicun import file_io
 
+
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["mathtext.fontset"] = "dejavuserif"
+
+
 # debug
-response_path = 'analysis/hazard_level_8/response_summary/response.csv'
-# output_directory = 'analysis/hazard_level_8/performance/0'
-c_edp_stdev = 1.00        # uncertainty in building response
+response_path = 'analysis/hazard_level_3/response_summary/response.csv'
+c_edp_stdev =  1.00       # uncertainty in building response
 c_quant_stdev = 1.00      # uncertainty in the component quantities
 c_dm_stdev = 1.00         # in the fragility curves
 c_collapse_irrep_stdev = 1.00  # in the collapse or irreparable fragilities
@@ -35,7 +39,7 @@ c_replace_stdev = 1.00    # in the building replacement cost
 
 # configuration #
 
-num_realizations = 10000
+num_realizations = 1000
 num_stories = 3
 
 component_model_prefix = 'src/performance_data/CMP'
@@ -84,16 +88,27 @@ A.asset.load_cmp_model(file_prefix=component_model_prefix)
 A.asset.generate_cmp_sample(num_realizations, c_quant_stdev)
 A.damage.load_fragility_model(fragility_data_sources)
 # if pipes break, flooding occurs
-# dmg_process = {
-#     "1_D2021.011a": {
-#         "DS2": "C3021.001k_DS1"
-
-#     },
-#     "2_D4011.021a": {
-#         "DS2": "C3021.001k_DS1"
-#     }
-# }
-dmg_process = None
+dmg_process = {
+    "1_D2021.011a1": {
+        "DS2": "C3021.001k1_DS1"
+    },
+    "2_D2021.011a2": {
+        "DS2": "C3021.001k2_DS1"
+    },
+    "3_D2021.011a3": {
+        "DS2": "C3021.001k3_DS1"
+    },
+    "4_D4011.021a1": {
+        "DS2": "C3021.001k1_DS1"
+    },
+    "5_D4011.021a2": {
+        "DS2": "C3021.001k2_DS1"
+    },
+    "6_D4011.021a3": {
+        "DS2": "C3021.001k3_DS1"
+    },
+}
+# dmg_process = None
 A.damage.calculate(num_realizations, dmg_process=dmg_process,
                    c_dm_stdev=c_dm_stdev,
                    c_collapse_irrep_stdev=c_collapse_irrep_stdev)
@@ -117,16 +132,24 @@ from p_58_assessment import P58_Assessment
 
 
 c_modeling_uncertainty = 0.00
-num_realizations = 100000
+num_realizations = 1000
 replacement_threshold = 0.50
-response_path = 'analysis/hazard_level_8/response_summary/response.csv'
+response_path = 'analysis/hazard_level_3/response_summary/response.csv'
 perf_model_input_path = 'src_experimental/new_perf/input_cmp_quant.csv'
 cmp_fragility_input_path = 'src_experimental/new_perf/input_fragility.csv'
 cmp_repair_cost_input_path = 'src_experimental/new_perf/input_repair_cost.csv'
 
 
-asmt = P58_Assessment(num_realizations=1000,
-                      replacement_threshold=replacement_threshold)
+
+
+asmt = P58_Assessment(num_realizations=num_realizations,
+                      replacement_threshold=replacement_threshold,
+                      fix_epd_mean=False,
+                      fix_quant_mean=False,
+                      fix_cmp_dm_mean=False,
+                      fix_blg_dm_mean=False,
+                      fix_cmp_dv_mean=False,
+                      fix_blg_dv_mean=False)
 asmt.read_perf_model(perf_model_input_path)
 asmt.read_fragility_input(cmp_fragility_input_path)
 asmt.read_cmp_repair_cost_input(cmp_repair_cost_input_path)
@@ -136,26 +159,26 @@ asmt.run(response_path, c_modeling_uncertainty)
 
 
 
+# # save baseline
+# vals.to_csv('baseline_pelicun.csv')
+# asmt.total_cost.to_csv('baseline_ourcode.csv')
+
+# # load baseline
+# valsv = pd.read_csv('baseline_pelicun.csv')['repair_cost']
+# totcv = pd.read_csv('baseline_ourcode.csv')['0']
 
 
-
-
-# comparison
-
+# component group damage comparison
 # x = A.bldg_repair.sample.loc[:, ('COST')].groupby(level='loss', axis=1).sum().mean(axis=0)
-
 # y = asmt.cmp_cost.groupby(level='component', axis=1).sum().mean(axis=0)
-
 # (x - y).plot.bar()
 # plt.show()
 
 
+
+# single component group comparison
 # xx = A.bldg_repair.sample.loc[:, ('COST')].groupby(level='loss', axis=1).sum()
-
 # yy = asmt.cmp_cost.groupby(level='component', axis=1).sum()
-
-
-
 # f = plt.figure()
 # sns.ecdfplot(xx.loc[:, 'D3041.041a'], label='pelicun tot', color='tab:blue', linestyle='dashed')
 # sns.ecdfplot(yy.loc[:, 'D3041.041a'], label='mine total', color='tab:orange', linestyle='dashed')
@@ -163,10 +186,27 @@ asmt.run(response_path, c_modeling_uncertainty)
 # plt.close()
 
 
+# edp comparison
+# xxedp = A.demand.sample.loc[:, ('PID', '1', '1')]
+# yyedp = asmt.edp_samples.loc[:, ('PID', '1', '1')]
+# f = plt.figure()
+# sns.ecdfplot(xxedp, label='pelicun tot', color='tab:blue', linestyle='dashed')
+# sns.ecdfplot(yyedp, label='mine total', color='tab:orange', linestyle='dashed')
+# plt.show()
+# plt.close()
 
-
-f = plt.figure()
-sns.ecdfplot(vals, label='pelicun tot', color='tab:blue', linestyle='dashed')
-sns.ecdfplot(asmt.total_cost, label='mine total', color='tab:orange', linestyle='dashed')
-plt.show()
-plt.close()
+# # total repair cost comparison
+# f = plt.figure(figsize=(6, 6))
+# sns.ecdfplot(valsv, label='pelicun (baseline)', color='black', linewidth=0.5)
+# sns.ecdfplot(totcv, label='our code (baseline)', color='grey', linestyle='dashed')
+# sns.ecdfplot(vals, label='pelicun', color='red', linewidth=0.5)
+# sns.ecdfplot(asmt.total_cost, label='our code', color='red', linestyle='dashed')
+# mred = -(valsv.mean() - vals.mean()) / valsv.mean() * 100
+# sred = -(valsv.std() - vals.std()) / valsv.std() * 100
+# plt.annotate(f'Mean: {valsv.mean():.0f} -> {vals.mean():.0f} ({mred:.0f}%)', xy=(valsv.mean(), 0.50))
+# plt.annotate(f'Stdev: {valsv.std():.0f} -> {vals.std():.0f} ({sred:.0f}%)', xy=(valsv.mean(), 0.45))
+# plt.legend()
+# plt.title("Fixing component repair cost to the mean")
+# # plt.savefig("tmp_results/fix_cmp_dm_hz3.pdf")
+# plt.show()
+# plt.close()
