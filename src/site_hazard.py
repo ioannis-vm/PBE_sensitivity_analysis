@@ -66,87 +66,16 @@ from scipy.interpolate import interp1d
 import numpy as np
 import os
 
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["mathtext.fontset"] = "dejavuserif"
+
+
 # Building-specific first-mode response period
 # (Tbar = (Tx + Ty) / 2)
 
-# ~~~~~~~~~~~ #
-Tbar = 1.075  #
-# ~~~~~~~~~~~~#
-
-
-
-
-# DEBUG
-
-# from scipy import interpolate
-# import requests
-# import matplotlib.pyplot as plt
-# import numpy as np
-# import pickle
-# import os
-
-# def retrieve_hazard_curves(long, lat, vs30, cache=False):
-#     """
-#     Sends a get request to the USGS hazard API to retrieve hazard data
-#     long: longitude, lat: latitude, vs30: vs30.
-#     """
-#     # Check if the query has been made in the past
-#     fname = long+'_'+lat+'_'+vs30+'.pcl'
-#     if os.path.exists('./src/USGS_Data_Cache/' + fname):
-#         data = pickle.load(open('./src/USGS_Data_Cache/' + fname, "rb"))
-#     else:
-#         # Construct URL to send the request
-#         URL = 'https://earthquake.usgs.gov/nshmp-haz-ws/hazard/E2008/WUS/' + \
-#             long + '/' + lat + '/any/' + vs30
-#         # Send the request
-#         r = requests.get(url=URL)
-#         # Cache the response
-#         # Convert data to JSON format
-#         data = r.json()
-#         if cache is True:
-#             # Output response to a file
-#             pickle.dump(data, open('./src/USGS_Data_Cache/' + fname, "wb"))
-#     # Initialize empty containers
-#     descs = []
-#     accelerations = {}
-#     MAFEs = {}
-#     # Store relevant hazard curve
-#     for curve in data['response']:
-#         name = curve['metadata']['imt']['value']
-#         desc = curve['metadata']['imt']['display']
-#         accelerations[name] = np.array(curve['metadata']['xvalues'])
-#         MAFEs[name] = np.array(curve['data'][0]['yvalues'])
-#         # Replace zeros with None
-#         MAFEs[name][MAFEs[name] == 0.00] = None
-#         descs.append(desc)
-#     # Parse descriptions to get periods
-#     periods = []
-#     for desc in descs:
-#         if desc == 'Peak Ground Acceleration':
-#             periods.append(0.00)
-#         else:
-#             s = desc.replace(' Second Spectral Acceleration', '')
-#             periods.append(float(s))
-
-#     return periods, accelerations, MAFEs
-
-
-
-# longitude = -122.259
-# latitude = 37.871
-# vs30 = 733.4
-
-# # Location-specific earthquake hazard data from USGS
-# periods_usgs, accelerations_usgs, MAFEs_usgs = retrieve_hazard_curves(
-#     str(longitude), str(latitude), str(vs30), cache=False
-# )
-
-
-# END DEBUG
-
-
-
-
+# ~~~~~~~~~~ #
+Tbar = 0.93  #
+# ~~~~~~~~~~~#
 
 # long = -122.259
 # lat = 37.871
@@ -211,9 +140,11 @@ plt.grid(which='Major')
 plt.grid(which='Minor')
 for i in range(len(periods)):
     plt.plot(accelerations[i], MAFEs[i], '-s',
-             label='T = ' + str(periods[i]) + ' s')
+             label='T = ' + str(periods[i]) + ' s (OpenSHA)')
 plt.xscale('log')
 plt.yscale('log')
+plt.axhline(2e-2)
+plt.axhline(4e-4)
 plt.legend()
 plt.xlabel('Earthquake Intensity $e$ [g]')
 plt.ylabel('Mean annual frequency of exceedance $λ$')
@@ -526,7 +457,7 @@ def correl(t1, t2):
         cor = c_4
     return cor
 
-# # Debug ~ compare with fig. 11
+# # debug ~ compare with fig. 11
 # num = 200
 # x = np.logspace(-2.0, 1.0, num)
 # y = np.logspace(-2.0, 1.0, num)
@@ -542,6 +473,7 @@ def correl(t1, t2):
 # plt.yscale('log')
 # plt.show()
 # plt.close()
+
 
 cmssTmin = np.full((len(uhss[0][:, 0]), m), 0.00)
 cmssTmax = np.full((len(uhss[0][:, 0]), m), 0.00)
@@ -566,12 +498,14 @@ for i in range(m):
     for j, t in enumerate(ts.tolist()):
         correlationsTmin[j] = correl(t, ts[idx_tmin])
         correlationsTmax[j] = correl(t, ts[idx_tmax])
-    eTmin = epsTmin[i]
-    eTmax = epsTmax[i]
+    eTmin = np.log(uhs[idx_tmin]/fmTmin(ts[idx_tmin]))/fsTmin(ts[idx_tmin])
+    # # debug print(f'%.2f %.2f' % (eTmin, epsTmin[i]))
+    eTmax = np.log(uhs[idx_tmax]/fmTmax(ts[idx_tmax]))/fsTmax(ts[idx_tmax])
+    # # debug print(f'%.2f %.2f' % (eTmax, epsTmax[i]))
     cmssTmin[:, i] = fmTmin(ts) * np.exp(eTmin * correlationsTmin * fsTmin(ts))
-    cmssTmin[:, i] *= uhs[idx_tmin]/cmssTmin[idx_tmin, i]
+    # # debug print(uhs[idx_tmin]/cmssTmin[idx_tmin, i])
     cmssTmax[:, i] = fmTmax(ts) * np.exp(eTmax * correlationsTmax * fsTmax(ts))
-    cmssTmax[:, i] *= uhs[idx_tmax]/cmssTmax[idx_tmax, i]
+    # # debug print(uhs[idx_tmax]/cmssTmax[idx_tmax, i])
     cmp_spec[0:idx_tmin, i] = cmssTmin[0:idx_tmin, i]
     cmp_spec[idx_tmin:idx_tmax, i] = uhss[i][idx_tmin:idx_tmax, 1]
     cmp_spec[idx_tmax::, i] = cmssTmax[idx_tmax::, i]
@@ -587,49 +521,81 @@ for i in range(m):
 # plt.xscale('log')
 # plt.yscale('log')
 # plt.xlabel('Period T [s]')
-# plt.ylabel('PSa [g] (GMRotI50)')
+# plt.ylabel('PSa [g] (RotD50)')
 # plt.title('Uniform Hazard Spectra')
 # plt.xlim((1e-2, 1e1))
 # plt.legend()
 # plt.show()
 # plt.close()
 
+# adjust for directivity using the Bayless and Somerville 2013 model.
+bay_coeff = np.array([
+    [0.5, 0., 0.],
+    [0.75, 0., 0.],
+    [1., -0.12, 0.075],
+    [1.5, -0.175, 0.09],
+    [2., -0.21, 0.095],
+    [3., -0.235, 0.099],
+    [4., -0.255, 0.103],
+    [5., -0.275, 0.108],
+    [7.5, -0.29, 0.112],
+    [10., -0.3, 0.115]
+])
+fgeom = np.log(np.array([24.15, 14.41, 10.58, 8.77, 7.78, 7.06, 6.43, 5.84]))
+fd = bay_coeff[:, 1] + bay_coeff[:, 2].reshape((-1, 1)).T * fgeom.reshape((-1, 1))
+f_fd = []
+for i in range(m):
+    f_fd.append(interp1d(
+        bay_coeff[:, 0], fd[i, :],
+        kind='linear', fill_value=0.00, bounds_error=False))
 
-# Composite Spectra
-save_path = 'figures/site_hazard/composite_spectra.pdf'
-plt.figure()
-plt.grid(which='Major')
-plt.grid(which='Minor')
-for i, opsh in enumerate(uhss):
-    plt.plot(ts, cmp_spec[:, i],
-             label='R.P. = %.0f yrs' % return_period_midpoints[i])
-plt.axvline(ts[idx_tmin])
-plt.axvline(ts[idx_tmax])
-plt.xscale('log')
-plt.yscale('log')
-plt.xlabel('Period T [s]')
-plt.ylabel('PSa [g] (GMRotI50)')
-plt.title('Composite Spectra')
-plt.xlim((1e-2, 1e1))
-plt.legend()
+cmp_spec_drctv = np.full_like(cmp_spec, 0.00)
+for i in range(m):
+    cmp_spec_drctv[:, i] = cmp_spec[:, i] * np.exp(f_fd[i](ts))
+
+
+# # Composite Spectra
+# save_path = 'figures/site_hazard/composite_spectra.pdf'
+# plt.figure()
+# plt.grid(which='Major')
+# plt.grid(which='Minor')
+# for i, opsh in enumerate(uhss):
+#     plt.plot(ts, cmp_spec[:, i], linestyle='dotted')
+# plt.gca().set_prop_cycle(None)
+# for i, opsh in enumerate(uhss):
+#     plt.plot(ts, cmp_spec_drctv[:, i],
+#              label='R.P. = %.0f yrs' % return_period_midpoints[i])
+# plt.axvline(ts[idx_tmin], color='tab:grey', linestyle='dashed')
+# plt.axvline(ts[idx_tmax], color='tab:grey', linestyle='dashed')
+# plt.xscale('log')
+# plt.yscale('log')
+# plt.xlabel('Period T [s]')
+# plt.ylabel('PSa [g] (RotD50)')
+# plt.title('Composite Spectra')
+# plt.xlim((1e-2, 1e1))
+# plt.legend()
 # plt.show()
-plt.savefig(save_path)
-plt.close()
+# # plt.savefig(save_path)
+# plt.close()
 
 
 for i in range(m):
     np.savetxt(
         'analysis/site_hazard/spectrum_'+str(i+1)+'.csv',
-        np.column_stack((ts, cmp_spec[:, i])),
+        np.column_stack((ts, cmp_spec_drctv[:, i])),
         header='Hazard Level '+str(i+1)+',\r\n,\r\nT (s),Sa (g)',
         delimiter=',', comments='', fmt='%.5f', newline='\r\n')
 
-weights_per = np.logspace(-2, 1, 50)
+
+
+# useful output for MSE scaling for use in
+# the PEER NGA-West2 website
+weights_per = np.logspace(-2, 1, 30)
 wstr_per = ''
 for weight in weights_per:
     wstr_per += '%.3f, ' % weight
 print(wstr_per)
-weights_w = np.ones(50)
+weights_w = np.ones(30)
 wstr_w = ''
 for weight in weights_w:
     wstr_w += '%.0f, ' % weight

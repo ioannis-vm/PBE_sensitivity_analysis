@@ -65,7 +65,7 @@ medns = medns * np.repeat(
 mean_of_logSa = np.log(medns)
 p84_of_logSa = norm.ppf(0.84, loc=mean_of_logSa, scale=stdvs)
 p84_of_Sa = np.exp(p84_of_logSa)
-p84_of_Sa_max = np.max(p84_of_Sa, axis=1)
+p84_of_Sa_max = np.max(p84_of_Sa, axis=1) * f_d50_to_d100(ts)
 
 # determine lower bound for deterministic
 f_a = 1.00  # site class D

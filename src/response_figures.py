@@ -2,9 +2,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import argparse
 import os
-import glob
 
 # ~~~~~~~~~~~~~~~~~~~~~ #
 # setup argument parser #
@@ -28,6 +28,10 @@ num_levels = int(args.num_levels)
 # main #
 # ~~~~ #
 
+# sns.set_style('whitegrid')
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["mathtext.fontset"] = "dejavuserif"
+
 filetag = dict(PID='ID', PFA='FA', PFA_norm = 'FA', PFV='FV')
 
 if fig_type not in filetag.keys():
@@ -37,14 +41,14 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
 
-response_dirs = sorted(glob.glob(input_dir+'/*/'))
+response_dirs = [f'{i}/gm{x}' for i, x in zip([input_dir]*14, range(1, 14+1))]
 num_earthquakes = len(response_dirs)
 
 # initialize numpy array
 response_mat = np.full((num_levels+1, num_earthquakes), 0.00)
 
 for level in range(num_levels+1):
-    if fig_type in ['PID', 'PFV'] and level == 0:
+    if fig_type in ['PID'] and level == 0:
         continue
     for j, response_dir in enumerate(response_dirs):
         response_file = response_dir + '/' + filetag[fig_type] + '-' +\

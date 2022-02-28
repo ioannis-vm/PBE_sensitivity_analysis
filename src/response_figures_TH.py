@@ -1,7 +1,9 @@
 # %% Imports #
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import seaborn as sns
 import argparse
 
 # ~~~~~~~~~~~~~~~~~~~~~ #
@@ -23,6 +25,10 @@ num_levels = int(args.num_levels)
 # ~~~~ #
 # main #
 # ~~~~ #
+
+# sns.set_style('whitegrid')
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 if fig_type == 'FA':
     num_rows = num_levels + 1
@@ -54,6 +60,9 @@ for level in level_list:
                           linewidth=2, color='red', alpha=0.5)
     axs[level+shift].plot(time_vec, response[level][1],
                           linewidth=2, color='green', alpha=0.5)
-    axs[level+shift].grid()
+    axs[level+shift].get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+    axs[level+shift].get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+    axs[level+shift].grid(visible=True, which='major', linewidth=1.0)
+    axs[level+shift].grid(visible=True, which='minor', linewidth=0.5)
 plt.savefig(output_filename)
 plt.close()

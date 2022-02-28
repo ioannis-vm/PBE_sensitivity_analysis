@@ -17,6 +17,9 @@ from ground_motion_utils import import_PEER
 from ground_motion_utils import response_spectrum
 import argparse
 
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["mathtext.fontset"] = "dejavuserif"
+
 # ~~~~~~~~~~~~~~~~~~~~~ #
 # setup argument parser #
 # ~~~~~~~~~~~~~~~~~~~~~ #
@@ -37,10 +40,12 @@ output_dir = args.output_dir
 plot_dir = args.plot_dir
 
 # # debug
-# input_dir = 'analysis/hazard_level_1/ground_motions/peer_raw'
-# output_dir = 'analysis/hazard_level_1/ground_motions/parsed'
-# plot_dir = 'figures/hazard_level_1/ground_motions'
+# input_dir = 'analysis/hazard_level_8/ground_motions/peer_raw'
+# output_dir = 'analysis/hazard_level_8/ground_motions/parsed'
+# plot_dir = 'figures/hazard_level_8/ground_motions'
 
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Extract record information from the csv #
@@ -172,6 +177,11 @@ for i in range(num_records):
         sa_mat[:, j] = np.abs(np.reshape(xy @ rot_mat, (1, -1)))
     rotd50 = np.median(sa_mat, axis=1)
     response_spectra.append(np.column_stack((periods, rotd50)))
+    # store response spectra
+    np.savetxt(f'{output_dir}/{i+1}RS.txt',
+               np.column_stack((periods, rotd50)))
+
+
 
 # ~~~~~~~~~~~~~~ #
 # generate plots #
@@ -195,11 +205,11 @@ t_vals = np.linspace(0.00, num_pts*0.005, num_pts)
 plt.figure(figsize=(10, num_records))
 axs.append(plt.subplot(num_records, 1, 1))
 plt.plot(t_vals, ground_motions[0][0],
-         'red', label=labels[0], alpha=0.4)
+         'red', label=labels[0], linewidth=0.4)
 plt.plot(t_vals, ground_motions[0][1],
-         'green', alpha=0.4)
+         'green', linewidth=0.4)
 plt.plot(t_vals, ground_motions[0][2],
-         'blue', alpha=0.4)
+         'blue', linewidth=0.4)
 plt.legend(loc='upper right')
 # and then the rest
 for i in range(1, num_records):
@@ -207,17 +217,15 @@ for i in range(1, num_records):
     t_vals = np.linspace(0.00, num_pts*0.005, num_pts)
     axs.append(plt.subplot(num_records, 1, i+1, sharex=axs[0], sharey=axs[0]))
     plt.plot(t_vals, ground_motions[i][0],
-             'red', label=labels[i], alpha=0.4)
+             'red', label=labels[i], linewidth=0.4)
     plt.plot(t_vals, ground_motions[i][1],
-             'green', alpha=0.4)
+             'green', linewidth=0.4)
     plt.plot(t_vals, ground_motions[i][2],
-             'blue', alpha=0.4)
+             'blue', linewidth=0.4)
     plt.legend(loc='upper right')
 # hide x-tickmarks except for the last plot
 for i in range(num_records-1):
     plt.setp(axs[i].get_xticklabels(), visible=False)
-# set axis limits
-plt.xlim(0.00, 60.00)
 
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
@@ -246,10 +254,14 @@ plt.plot(rs_T, rs_mean+rs_stdev, linewidth=2, color='red',
 plt.plot(rs_T, rs_mean-rs_stdev, linewidth=2, color='red', linestyle='dashed')
 # plt.xscale('log')
 # plt.yscale('log')
-plt.legend()
+plt.legend(bbox_to_anchor=(1.05, 1.00), loc='upper left')
 plt.xlabel('Period T [s]')
 plt.ylabel('PSA [g]')
+plt.xscale('log')
+plt.yscale('log')
 plt.xlim((1e-2, 3))
+plt.ylim((1e-2, 6))
+plt.tight_layout()
 # plt.show()
 plt.savefig(plot_dir + '/RS.pdf')
 plt.close()
@@ -258,10 +270,8 @@ plt.close()
 # save results on disk #
 # ~~~~~~~~~~~~~~~~~~~~ #
 
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-    # Export to corresponding directory
+# Export to corresponding directory
 for i in range(num_records):
-    np.savetxt(output_dir+'/'+str(i+1)+'x.txt', ground_motions[i][0])
-    np.savetxt(output_dir+'/'+str(i+1)+'y.txt', ground_motions[i][1])
-    np.savetxt(output_dir+'/'+str(i+1)+'z.txt', ground_motions[i][2])
+    np.savetxt(f"{output_dir}/{i+1}x.txt", ground_motions[i][0])
+    np.savetxt(f"{output_dir}/{i+1}y.txt", ground_motions[i][1])
+    np.savetxt(f"{output_dir}/{i+1}z.txt", ground_motions[i][2])

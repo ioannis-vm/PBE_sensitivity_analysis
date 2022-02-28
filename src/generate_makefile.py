@@ -56,10 +56,8 @@ class Makefile:
 # Setup #
 # ~~~~~ #
 
-# hazard_lvl_dirs = ['hazard_level_' + str(i+1)
-#                    for i in range(8)]
 hazard_lvl_dirs = ['hazard_level_' + str(i+1)
-                   for i in range(0, 8)]
+                   for i in range(8)]
 
 gms = ['gm'+str(i+1) for i in range(14)]
 
@@ -72,8 +70,8 @@ mkf.add_preamble("num_levels=3")
 mkf.add_rule(
     'all',
     ['make/all_ground_motions_parsed',
+     'make/all_ground_motion_figures_merged',
      'make/all_responses_obtained',
-     'make/all_response_summaries_obtained',
      'make/all_response_figures_obtained',
      'make/response_figures_merged',
      'make/all_response_TH_figures_obtained',
@@ -82,18 +80,18 @@ mkf.add_rule(
      'make/performance_figures_merged'],
     [])
 
+
 mkf.add_rule(
     'clean',
     '',
     ['rm -rf analysis/*/ground_motions/parsed',
      'rm -rf figures/*',
-     '#rm -rf analysis/*/response',
+     'rm -rf analysis/*/response',
      'rm -rf analysis/*/response_summary',
      'rm -rf analysis/*/performance',
      'rm -rf analysis/*/pelicun_log.txt',
      'rm -rf make/*'],
     phony=True)
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Parsing raw PEER ground motion files #
@@ -120,6 +118,11 @@ for hz in hazard_lvl_dirs:
             "mkdir -p make/"+hz+"/ground_motions && touch make/"+hz+"/ground_motions/ground_motions_parsed"
         ])
 
+# merging of generated ground motion figures
+mkf.add_rule(
+    "make/all_ground_motion_figures_merged",
+    ["make/all_ground_motions_parsed"],
+    ["bash -c \"mkdir -p figures/merged/ground_motions && gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=figures/merged/ground_motions/RS.pdf -dBATCH $$(find . -name 'RS.pdf' | sort | tr '\\n' ' ' | sed -r 's/\.\///g')\" && bash -c \"mkdir -p figures/merged/ground_motions && gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=figures/merged/ground_motions/time_history.pdf -dBATCH $$(find . -name 'time_history.pdf' | sort | tr '\\n' ' ' | sed -r 's/\.\///g')\" && touch make/all_ground_motion_figures_merged"])
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Running NLTH analysis to get the building response #
@@ -136,9 +139,9 @@ for hz in hazard_lvl_dirs:
         "make/"+hz+"/response/all_responses_obtained",
         ["make/"+hz+"/response/"+gm+"/response_obtained"
          for hz in hazard_lvl_dirs
-         for gm in gms],
-        ["python src/response_vectors.py '--input_dir' 'analysis/"+hz+"/response' '--output_dir' 'analysis/"+hz+"/response_summary' '--num_levels' '$(num_levels)'",
-         "touch make/"+hz+"/response/all_responses_obtained"])
+         for gm in gms] +
+        ['src/response_vectors.py'],
+        ["python src/response_vectors.py '--input_dir' 'analysis/"+hz+"/response' '--output_dir' 'analysis/"+hz+"/response_summary' '--num_levels' '$(num_levels)' '--num_inputs' '14' && touch make/"+hz+"/response/all_responses_obtained"])
 
 for hz in hazard_lvl_dirs:
     for gm in gms:
@@ -149,31 +152,19 @@ for hz in hazard_lvl_dirs:
                 'src/response.py',
             ],
             [
-                "#python src/response.py '--gm_dir' 'analysis/"+hz+"/ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.01' '--gm_number' '"+gm+"' '--output_dir' 'analysis/"+hz+"/response/"+gm+"'",
-                "mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained",
-                ""
+                "python src/response.py '--gm_dir' 'analysis/"+hz+"/ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.01' '--gm_number' '"+gm+"' '--output_dir' 'analysis/"+hz+"/response/"+gm+"' && mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
             ])
+        # mkf.add_rule(
+        #     "make/"+hz+"/response/"+gm+"/response_obtained",
+        #     [
+        #         'make/'+hz+'/ground_motions/ground_motions_parsed',
+        #         'src/response.py',
+        #     ],
+        #     [
+        #         "mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
+        #     ])
 
-# response summary csv files
-
-mkf.add_rule(
-    "make/all_response_summaries_obtained",
-    ["analysis/"+hz+"/response_summary/response.csv"
-     for hz in hazard_lvl_dirs],
-    [])
-
-for hz in hazard_lvl_dirs:
-    mkf.add_rule(
-        "analysis/"+hz+"/response_summary/response.csv",
-        [
-            "make/"+hz+"/response/all_responses_obtained",
-            'src/response_vectors.py'],
-        [
-            "python src/response_vectors.py '--input_dir' 'analysis/"+hz+"/response' '--output_dir' 'analysis/"+hz+"/response_summary' '--num_levels' '$(num_levels)'"
-        ])
-
-
-# response plots
+# response figures
 
 mkf.add_rule(
     "make/all_response_TH_figures_obtained",
@@ -206,9 +197,6 @@ for hz in hazard_lvl_dirs:
         ["make/"+hz+"/response/all_responses_obtained",
          "src/response_figures_TH.py"],
         ["mkdir -p figures/"+hz+"/response/gm$* && python src/response_figures_TH.py '--input_dir' 'analysis/"+hz+"/response/gm$*' '--fig_type' 'FV' '--output_filename' 'figures/"+hz+"/response/gm$*/FV.pdf' '--num_levels' '$(num_levels)'"])
-
-
-
 
 
 mkf.add_rule(
@@ -279,42 +267,51 @@ mkf.add_rule(
 
 mkf.add_rule(
     "make/all_performance_evals_obtained",
-    ["make/"+hz+"/performance/performance_evals_obtained" for hz in hazard_lvl_dirs],
+    [f"make/{hz}/performance/performance_evals_obtained" for hz in hazard_lvl_dirs],
     ["touch make/all_performance_evals_obtained"])
 
 for hz in hazard_lvl_dirs:
-    prereqs = ["analysis/"+hz+"/response_summary/response.csv",
-               "pelicun/pelicun/tools/DL_calculation.py",
-               "src/DL_input.json",
-               "src/component_data/*.json"]
+    prereqs = ["make/"+hz+"/response/all_responses_obtained",
+               "src/performance_eval.py",
+               "src/performance_data/CMP_marginals.csv",
+               "src/performance_data/fragility_Additional.csv",
+               "src/performance_data/LOSS_map.csv",
+               "src/performance_data/repair_Additional.csv",
+               "src/performance_data/resources_modified/fragility_DB_FEMA_P58_2nd.csv",
+               "src/performance_data/resources_modified/bldg_repair_DB_FEMA_P58_2nd.csv"
+               ]
     mkf.add_rule(
         "make/"+hz+"/performance/performance_evals_obtained",
-        ["analysis/"+hz+"/performance/"+x+"/DL_summary.csv" for x in ['A', 'B', 'C', 'D', 'E', 'F']],
+        ["make/"+hz+"/performance/"+x+"/performance_eval_obtained" for x in ['0', 'A', 'B', 'C', 'D', 'E', 'F']],
         ["mkdir -p make/"+hz+"/performance && touch make/"+hz+"/performance/performance_evals_obtained"])
     mkf.add_rule(
-        "analysis/"+hz+"/performance/A/DL_summary.csv",
+        "make/"+hz+"/performance/0/performance_eval_obtained",
         prereqs,
-        ["mkdir -p analysis/"+hz+"/performance/A && python pelicun/pelicun/tools/DL_calculation.py '--filenameDL' 'src/DL_input.json' '--filenameEDP' 'analysis/"+hz+"/response_summary/response.csv' '--dirnameOutput' 'analysis/"+hz+"/performance/A' '--c_gm_beta' '1.00' '--c_ds_beta' '1.00' '--c_rc_beta' '1.00'"])
+        ["mkdir -p analysis/"+hz+"/performance/0 && python src/performance_eval.py '--response_path' 'analysis/"+hz+"/response_summary/response.csv' '--output_directory' 'analysis/"+hz+"/performance/0' '--c_edp_stdev' '1.00' '--c_quant_stdev' '1.00' '--c_dm_stdev' '1.00' '--c_collapse_stdev' '1.00' '--c_dv_stdev' '1.00' '--c_replace_stdev' '1.00' && mkdir -p make/"+hz+"/performance/0 && touch make/"+hz+"/performance/0/performance_eval_obtained"])
     mkf.add_rule(
-        "analysis/"+hz+"/performance/B/DL_summary.csv",
+        "make/"+hz+"/performance/A/performance_eval_obtained",
         prereqs,
-        ["mkdir -p analysis/"+hz+"/performance/B && python pelicun/pelicun/tools/DL_calculation.py '--filenameDL' 'src/DL_input.json' '--filenameEDP' 'analysis/"+hz+"/response_summary/response.csv' '--dirnameOutput' 'analysis/"+hz+"/performance/B' '--c_gm_beta' '0.0000001' '--c_ds_beta' '1.00' '--c_rc_beta' '1.00'"])
+        ["mkdir -p analysis/"+hz+"/performance/A && python src/performance_eval.py '--response_path' 'analysis/"+hz+"/response_summary/response.csv' '--output_directory' 'analysis/"+hz+"/performance/A' '--c_edp_stdev' '0.001' '--c_quant_stdev' '1.00' '--c_dm_stdev' '1.00' '--c_collapse_stdev' '1.00' '--c_dv_stdev' '1.00' '--c_replace_stdev' '1.00' && mkdir -p make/"+hz+"/performance/A  && touch make/"+hz+"/performance/A/performance_eval_obtained"])
     mkf.add_rule(
-        "analysis/"+hz+"/performance/C/DL_summary.csv",
+        "make/"+hz+"/performance/B/performance_eval_obtained",
         prereqs,
-        ["mkdir -p analysis/"+hz+"/performance/C && python pelicun/pelicun/tools/DL_calculation.py '--filenameDL' 'src/DL_input.json' '--filenameEDP' 'analysis/"+hz+"/response_summary/response.csv' '--dirnameOutput' 'analysis/"+hz+"/performance/C' '--c_gm_beta' '1.00' '--c_ds_beta' '0.0000001' '--c_rc_beta' '1.00'"])
+        ["mkdir -p analysis/"+hz+"/performance/B && python src/performance_eval.py '--response_path' 'analysis/"+hz+"/response_summary/response.csv' '--output_directory' 'analysis/"+hz+"/performance/B' '--c_edp_stdev' '1.00' '--c_quant_stdev' '0.001' '--c_dm_stdev' '1.00' '--c_collapse_stdev' '1.00' '--c_dv_stdev' '1.00' '--c_replace_stdev' '1.00' && mkdir -p make/"+hz+"/performance/B  && touch make/"+hz+"/performance/B/performance_eval_obtained"])
     mkf.add_rule(
-        "analysis/"+hz+"/performance/D/DL_summary.csv",
+        "make/"+hz+"/performance/C/performance_eval_obtained",
         prereqs,
-        ["mkdir -p analysis/"+hz+"/performance/D && python pelicun/pelicun/tools/DL_calculation.py '--filenameDL' 'src/DL_input.json' '--filenameEDP' 'analysis/"+hz+"/response_summary/response.csv' '--dirnameOutput' 'analysis/"+hz+"/performance/D' '--c_gm_beta' '1.00' '--c_ds_beta' '1.00' '--c_rc_beta' '0.0000001'"])
+        ["mkdir -p analysis/"+hz+"/performance/C && python src/performance_eval.py '--response_path' 'analysis/"+hz+"/response_summary/response.csv' '--output_directory' 'analysis/"+hz+"/performance/C' '--c_edp_stdev' '1.00' '--c_quant_stdev' '1.00' '--c_dm_stdev' '0.001' '--c_collapse_stdev' '1.00' '--c_dv_stdev' '1.00' '--c_replace_stdev' '1.00' && mkdir -p make/"+hz+"/performance/C  && touch make/"+hz+"/performance/C/performance_eval_obtained"])
     mkf.add_rule(
-        "analysis/"+hz+"/performance/E/DL_summary.csv",
+        "make/"+hz+"/performance/D/performance_eval_obtained",
         prereqs,
-        ["mkdir -p analysis/"+hz+"/performance/E && python pelicun/pelicun/tools/DL_calculation.py '--filenameDL' 'src/DL_input.json' '--filenameEDP' 'analysis/"+hz+"/response_summary/response.csv' '--dirnameOutput' 'analysis/"+hz+"/performance/E' '--c_gm_beta' '1.00' '--c_ds_beta' '0.0000001' '--c_rc_beta' '0.0000001'"])
+        ["mkdir -p analysis/"+hz+"/performance/D && python src/performance_eval.py '--response_path' 'analysis/"+hz+"/response_summary/response.csv' '--output_directory' 'analysis/"+hz+"/performance/D' '--c_edp_stdev' '1.00' '--c_quant_stdev' '1.00' '--c_dm_stdev' '1.00' '--c_collapse_stdev' '0.001' '--c_dv_stdev' '1.00' '--c_replace_stdev' '1.00' && mkdir -p make/"+hz+"/performance/D  && touch make/"+hz+"/performance/D/performance_eval_obtained"])
     mkf.add_rule(
-        "analysis/"+hz+"/performance/F/DL_summary.csv",
+        "make/"+hz+"/performance/E/performance_eval_obtained",
         prereqs,
-        ["mkdir -p analysis/"+hz+"/performance/F && python pelicun/pelicun/tools/DL_calculation.py '--filenameDL' 'src/DL_input.json' '--filenameEDP' 'analysis/"+hz+"/response_summary/response.csv' '--dirnameOutput' 'analysis/"+hz+"/performance/F' '--c_gm_beta' '0.0000001' '--c_ds_beta' '0.0000001' '--c_rc_beta' '0.0000001'"])
+        ["mkdir -p analysis/"+hz+"/performance/E && python src/performance_eval.py '--response_path' 'analysis/"+hz+"/response_summary/response.csv' '--output_directory' 'analysis/"+hz+"/performance/E' '--c_edp_stdev' '1.00' '--c_quant_stdev' '1.00' '--c_dm_stdev' '1.00' '--c_collapse_stdev' '1.00' '--c_dv_stdev' '0.001' '--c_replace_stdev' '1.00' && mkdir -p make/"+hz+"/performance/E  && touch make/"+hz+"/performance/E/performance_eval_obtained"])
+    mkf.add_rule(
+        "make/"+hz+"/performance/F/performance_eval_obtained",
+        prereqs,
+        ["mkdir -p analysis/"+hz+"/performance/F && python src/performance_eval.py '--response_path' 'analysis/"+hz+"/response_summary/response.csv' '--output_directory' 'analysis/"+hz+"/performance/F' '--c_edp_stdev' '1.00' '--c_quant_stdev' '1.00' '--c_dm_stdev' '1.00' '--c_collapse_stdev' '1.00' '--c_dv_stdev' '1.00' '--c_replace_stdev' '0.001' && mkdir -p make/"+hz+"/performance/F  && touch make/"+hz+"/performance/F/performance_eval_obtained"])
 
 # performance evaluation figures
 
@@ -325,82 +322,43 @@ mkf.add_rule(
     ["touch make/all_performance_figures_obtained"])
 
 for hz in hazard_lvl_dirs:
+    # mkf.add_rule(
+    #     "make/"+hz+"/performance_figures_obtained",
+    #     ["figures/"+hz+"/performance/total_cost_"+x+".pdf"
+    #      for x in ["A-B", "A-C", "A-D", "A-E", "A-F"]] +
+    #     ["figures/"+hz+"/performance/component_costs_"+x+".html"
+    #      for x in ["A", "B", "C", "D", "E", "F"]] +
+    #     ["figures/"+hz+"/performance/damage_states_"+x+".pdf"
+    #      for x in ["A", "B", "C", "D", "E", "F"]] +
+    #     ["figures/"+hz+"/performance/cost_deagg_"+x+".pdf"
+    #      for x in ["A", "B", "C", "D", "E", "F"]],
+    #     ["touch make/"+hz+"/performance_figures_obtained"])
     mkf.add_rule(
         "make/"+hz+"/performance_figures_obtained",
-        ["figures/"+hz+"/performance/total_cost_"+x+".pdf"
-         for x in ["A", "B", "C", "D", "E", "F", "A-B", "A-C", "A-D", "A-E", "A-F"]] +
-        ["figures/"+hz+"/performance/component_costs_"+x+".html"
-         for x in ["A", "B", "C", "D", "E", "F"]] +
-        ["figures/"+hz+"/performance/damage_states_"+x+".pdf"
-         for x in ["A", "B", "C", "D", "E", "F"]] +
-        ["figures/"+hz+"/performance/cost_deagg_"+x+".pdf"
-         for x in ["A", "B", "C", "D", "E", "F"]],
+        [f"figures/{hz}/performance/0/repair_per_category.pdf"],
         ["touch make/"+hz+"/performance_figures_obtained"])
     mkf.add_rule(
-        "figures/"+hz+"/performance/total_cost_%.pdf",
-        ["src/performance_figures/single.py",
-         "analysis/"+hz+"/performance/%/DL_summary.csv"],
-        ["mkdir -p figures/"+hz+"/performance && python src/performance_figures/single.py '--DL_summary_path' 'analysis/"+hz+"/performance/$*/DL_summary.csv' '--output_path' 'figures/"+hz+"/performance/total_cost_$*.pdf'"])
-    mkf.add_rule(
-        "figures/"+hz+"/performance/total_cost_A-%.pdf",
-        ["src/performance_figures/multiple.py",
-         "analysis/"+hz+"/performance/A/DL_summary.csv",
-         "analysis/"+hz+"/performance/%/DL_summary.csv"],
-        ["mkdir -p figures/"+hz+"/performance && python src/performance_figures/multiple.py '--DL_summary_path1' 'analysis/"+hz+"/performance/A/DL_summary.csv' '--DL_summary_path2' 'analysis/"+hz+"/performance/$*/DL_summary.csv' '--label_1' 'A' '--label_2' '$*'  '--output_path' 'figures/"+hz+"/performance/total_cost_A-$*.pdf'"])
-    mkf.add_rule(
-        "figures/"+hz+"/performance/component_costs_%.html",
-        ["analysis/"+hz+"/performance/%/DL_summary.csv",
-         "src/performance_figures/cost_agg.py"],
-        ["mkdir -p figures/$(directory)/performance && python src/performance_figures/cost_agg.py '--DV_rec_cost_agg_path' 'analysis/"+hz+"/performance/$*/DV_rec_cost_agg.csv' '--output_path' 'figures/"+hz+"/performance/component_costs_$*.html'"])
-    mkf.add_rule(
-        "figures/"+hz+"/performance/damage_states_%.pdf",
-        ["make/"+hz+"/performance/performance_evals_obtained",
-         "src/performance_figures/damage_states.py"],
-        ["mkdir -p figures/"+hz+"/performance && python src/performance_figures/damage_states.py '--DMG_path' 'analysis/"+hz+"/performance/$*/DMG.csv' '--output_path' 'figures/"+hz+"/performance/damage_states_$*.pdf'"])
-    mkf.add_rule(
-        "figures/"+hz+"/performance/cost_deagg_%.pdf",
-        ["make/"+hz+"/performance/performance_evals_obtained",
-         "src/performance_figures/cost_deagg.py"],
-        ["mkdir -p figures/"+hz+"/performance && python src/performance_figures/cost_deagg.py '--DV_path' 'analysis/"+hz+"/performance/$*/DV_rec_cost.csv' '--output_path' 'figures/"+hz+"/performance/cost_deagg_$*.pdf'"])
+        f"figures/{hz}/performance/0/repair_per_category.pdf",
+        ["src/performance_figures/cost_deagg_group.py",
+         f"make/{hz}/performance/performance_evals_obtained"],
+        [f"python src/performance_figures/cost_deagg_group.py '--LOSS_repair_path' 'analysis/{hz}/performance/0/LOSS_repair.csv' '--output_path' 'figures/{hz}/performance/0'"])
 
 # merging performance figures to a single pdf file
 
-mkf.add_rule(
-    "make/performance_figures_merged",
-    ["figures/merged/performance/total_cost_A-B.pdf",
-     "figures/merged/performance/total_cost_A-C.pdf",
-     "figures/merged/performance/total_cost_A-D.pdf",
-     "figures/merged/performance/total_cost_A-E.pdf",
-     "figures/merged/performance/total_cost_A-F.pdf",
-     "figures/merged/performance/damage_states_A.pdf",
-     "figures/merged/performance/damage_states_C.pdf",
-     "figures/merged/performance/cost_deagg_A.pdf"],
-    ["touch make/performance_figures_merged"])
-
-mkf.add_rule(
-    "figures/merged/performance/%",
-    ["make/all_performance_figures_obtained"],
-    ["bash -c \"mkdir -p figures/merged/performance && gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=figures/merged/performance/$* -dBATCH $$(find . -name \'$*\' | sort | tr \'\\n\' \' \' | sed -r \'s/\\.\\///g')\""])
+# mkf.add_rule(
+#     "make/performance_figures_merged",
+#     ["figures/merged/performance/total_cost_A-B.pdf",
+#      "figures/merged/performance/total_cost_A-C.pdf",
+#      "figures/merged/performance/total_cost_A-D.pdf",
+#      "figures/merged/performance/total_cost_A-E.pdf",
+#      "figures/merged/performance/total_cost_A-F.pdf",
+#      "figures/merged/performance/damage_states_A.pdf",
+#      "figures/merged/performance/damage_states_C.pdf",
+#      "figures/merged/performance/cost_deagg_A.pdf"],
+#     ["touch make/performance_figures_merged"])
 
 
 
-# Analysis in which we store all metadata
-
-mkf.add_rule(
-    "full_response",
-    ["make/hazard_level_8/response/gm11/full_response_obtained"],
-    []
-)
-
-mkf.add_rule(
-    "make/hazard_level_8/response/gm11/full_response_obtained",
-    [
-        'make/hazard_level_8/ground_motions/ground_motions_parsed',
-        'src/response_alldata.py'
-    ],
-    [
-        "python src/response_alldata.py '--gm_dir' 'analysis/hazard_level_8/ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.01' '--gm_number' 'gm11' '--output_dir' 'analysis/hazard_level_8/response/gm11' && mkdir -p make/hazard_level_8/response/gm11 && touch make/hazard_level_8/response/gm11/full_response_obtained"
-    ])
 
 
 

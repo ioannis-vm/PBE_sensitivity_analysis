@@ -1,17 +1,16 @@
 # %% Imports #
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import argparse
 
-sns.set_theme(style="whitegrid")
+from pelicun.pelicun import base
 
 # ~~~~~~~~~~~~~~~~~~~~~ #
 # setup argument parser #
 # ~~~~~~~~~~~~~~~~~~~~~ #
 
-# todo
 parser = argparse.ArgumentParser()
 parser.add_argument('--DMG_path')
 parser.add_argument('--output_path')
@@ -21,58 +20,68 @@ path = args.DMG_path
 output_path = args.output_path
 
 # # debug
-# import os
-# os.chdir('analysis/hazard_level_8')
-# path = 'performance/A/DMG.csv'
+path = 'analysis/hazard_level_8/performance/0/DMG_sample.csv'
 
 # ~~~~ #
 # main #
 # ~~~~ #
 
-def base(ds_string):
-    return "DS " + ds_string.split("_")[0]
+dmg_sample = pd.read_csv(path, index_col=0)
 
-fragility_group = np.genfromtxt(
-    path, max_rows=1, delimiter=',', dtype='str')[1::]
-performance_group = np.genfromtxt(
-    path, skip_header=1, max_rows=1, delimiter=',')[1::]
-damage_state = np.genfromtxt(
-    path, skip_header=2, max_rows=1, delimiter=',', dtype='str')[1::]
-quant = np.genfromtxt(
-    path, skip_header=3, delimiter=',')[:, 1::]
+dmg_sample = base.convert_to_MultiIndex(dmg_sample, axis=1)
 
-percentage = {}
-for i in range(len(fragility_group)):
-    percentage[fragility_group[i]] = {}
-for i in range(len(fragility_group)):
-    percentage[fragility_group[i]][base(damage_state[i])] = []
-for i in range(len(fragility_group)):
-    percentage[fragility_group[i]][base(damage_state[i])].append(
-        len(quant[:, i][quant[:, i] != 0.0]))
+col_idx = dmg_sample.columns.values
 
-num_realizations = len(quant)
+component_groups = list(set([val[0] for val in col_idx]))
+component_groups.sort()
 
-for fg in percentage.keys():
-    for ds in percentage[fg].keys():
-        numm = len(percentage[fg][ds]) * num_realizations
-        summ = np.sum(np.array(percentage[fg][ds]))
-        p = summ / numm
-        percentage[fg][ds] = p
+plot_data = {}
 
-# rearrange dictionary to match the Seaborn data format
+val_list = []
+count_list = []
+max_num = 0
 
-x = []
-y = []
-group = []
-for fg in percentage.keys():
-    for ds in percentage[fg].keys():
-        y.append(fg)
-        group.append(ds)
-        x.append(percentage[fg][ds])
-pinput = {'x': x, 'y': y, 'group': group}
+for group in component_groups:
 
-plt.figure(figsize=(10, 10))
-sns.barplot(x='x', y='y', hue='group', data=pinput, orient='h')
-plt.xlim((0.00, 1.00))
-# plt.show()
-plt.savefig(output_path)
+    vals, counts = np.unique(dmg_sample.loc[:, group].to_numpy(),
+                             return_counts=True)
+    counts = counts/np.sum(counts)
+    if max(vals) > max_num:
+        max_num = max(vals) + 1
+
+    val_list.append(vals)
+    count_list.append(counts)
+
+for i in range(len(count_list)):
+    num_times = max_num - len(count_list[i])
+    if num_times > 0:
+        count_list[i] = np.concatenate((count_list[i],
+                                        ([0.00]*num_times)), axis=0)
+
+all_counts = np.row_stack((count_list))
+
+
+fig, ax = plt.subplots(figsize=(10, 10))
+
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.barh(component_groups, all_counts[:, 0],
+        0.35, edgecolor='k', color='lightgreen')
+ax.barh(component_groups, all_counts[:, 1],
+        0.35, left=all_counts[:, 0],
+        edgecolor='k', color='lightyellow')
+ax.barh(component_groups, all_counts[:, 2],
+        0.35, left=all_counts[:, 1]+all_counts[:, 0],
+        edgecolor='k', color='lightblue')
+ax.barh(component_groups, all_counts[:, 3],
+        0.35, left=all_counts[:, 2]+all_counts[:, 1]+all_counts[:, 0],
+        edgecolor='k', color='orange')
+ax.barh(component_groups, all_counts[:, 4],
+        0.35, left=all_counts[:, 3]+all_counts[:, 2]+all_counts[:, 1] +
+        all_counts[:, 0],
+        edgecolor='k', color='magenta')
+plt.subplots_adjust(left=0.3)
+ax.invert_yaxis()
+# ax.set(xlim=(0.0, 2.50))
+# plt.savefig('output_path')
+plt.show()

@@ -113,13 +113,13 @@ sections = dict(
         level_3="W10X100"),
     secondary_beams="W14X30",
     lateral_cols=dict(
-        level_1="W14X342",
-        level_2="W14X311",
-        level_3="W14X283"),
+        level_1="W14X426",
+        level_2="W14X426",
+        level_3="W14X342"),
     lateral_beams=dict(
-        level_1="W24X162",
-        level_2="W24X146",
-        level_3="W21X93")
+        level_1="W24X192",
+        level_2="W24X192",
+        level_3="W24X94")
     )
 
 RBS_ends = {'type': 'RBS', 'dist': (17.50+17.5)/(25.*12.),
@@ -141,11 +141,13 @@ for lvl_tag in ['level_1', 'level_2', 'level_3']:
     wsections.add(sections['gravity_cols'][lvl_tag])
 wsections.add(sections['secondary_beams'])
 
+
 for sec in wsections:
     b.add_sections_from_json(
         "../OpenSeesPy_Building_Modeler/section_data/sections.json",
         'W',
         [sec])
+
 
 
 
@@ -180,7 +182,6 @@ print("SCWB ratios: %.3f, %.3f\n" % (scwbr1, scwbr2))
 #
 
 elastic_modeling_type = {'type': 'elastic'}
-ber_modeling_type = {'type': 'fiber', 'n_x': 10, 'n_y': 25}
 lat_col_ends = {'type': 'steel_W_PZ_IMK', 'dist': 0.05,
                 'Lb/ry': 60., 'L/H': 1.0, 'pgpye': 0.005,
                 'doubler plate thickness': 0.00}
@@ -371,9 +372,9 @@ b.selection.add_UDL(np.array((0.00, 0.00,
                               -((10./12.**2) * hi[2] / 2.00))))
 b.selection.clear()
 
-
 b.preprocess(assume_floor_slabs=True, self_weight=True,
              steel_panel_zones=True, elevate_column_splices=0.25)
+
 
 
 print()
@@ -409,12 +410,8 @@ Cd = 5.5
 R = 8.0
 Ie = 1.0
 
-# Sds = 1.535
-# Sd1 = 0.956
-# Sds = 1.2
-# Sd1 = 0.45
-Sds = 1.0966990157914764
-Sd1 = 1.15201377008067
+Sds = 1.206
+Sd1 = 1.1520
 Tshort = Sd1/Sds
 
 # period estimation (Table 12.8-2)
@@ -507,34 +504,6 @@ for i in range(num_modeshapes):
         cs(ti[i], Sds, Sd1, R, Ie) * mnstar[i] * 386.22
         )
 
-
-# # using site-specific design spectrum
-# site_des_rs = np.genfromtxt(
-#     'analysis/site_hazard/uhs_3.csv', skip_header=3, delimiter=',')
-# site_des_rs_ts = site_des_rs[:, 0]
-# site_des_rs_as = site_des_rs[:, 1]
-# from scipy.interpolate import interp1d
-# f = interp1d(site_des_rs_ts, site_des_rs_as, kind='linear')
-
-# vb_modal = []
-# for i in range(num_modeshapes):
-#     vb_modal.append(
-#         cs(ti[i], Sds, Sd1, R, Ie) * mnstar[i] * 386.22
-#         )
-
-# import matplotlib.pyplot as plt
-# plt.figure()
-# plt.plot(site_des_rs_ts, site_des_rs_as/(R/Ie),
-#          label='site spectrum')
-# des_spec = []
-# for i in range(len(site_des_rs_ts)):
-#     des_spec.append(cs(site_des_rs_ts[i], Sds, Sd1, R, Ie))
-# plt.plot(site_des_rs_ts, des_spec)
-# plt.show()
-# plt.close()
-
-
-
 print('V_b modal = %.2f kips \n' % (np.sum(vb_modal)))
 
 # Modal responses
@@ -551,21 +520,3 @@ dr = Cd / Ie * dr_el
 
 print("Drift capacity ratios, X direction (Modal):")
 print(dr/0.02)
-
-
-# #
-# # y direction
-# #
-
-# u1_el, u2_el, u3_el = get_floor_displacements(b, fx, 1)
-
-# u1 = Cd / Ie * u1_el
-# u2 = Cd / Ie * u2_el
-# u3 = Cd / Ie * u3_el
-
-# dr1 = u1 / (15.*12.)
-# dr2 = (u2 - u1) / (13.*12.)
-# dr3 = (u3 - u2) / (13.*12.)
-
-# print("Drift capacity ratios, Y direction:")
-# print("%.2f %.2f %.2f" % (dr1/0.02, dr2/0.02, dr3/0.02))

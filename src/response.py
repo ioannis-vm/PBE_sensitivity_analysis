@@ -9,13 +9,14 @@ suitable for subsequent use in PELICUN.
 
 import sys
 sys.path.append("../OpenSeesPy_Building_Modeler")
-# sys.path.append("../OpenSeesPy_Building_Modeler")  # debug
 
 import numpy as np
+from scipy import integrate
 import modeler
 import solver
 import time
 import pickle
+import sys
 import os
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
@@ -41,13 +42,19 @@ analysis_dt = float(args.analysis_dt)  # 0.05
 gm_number = int(args.gm_number.replace('gm', ''))
 output_folder = args.output_dir  # 'response/test_case'
 
-# debug
+# # debug
 # ground_motion_dir = 'analysis/hazard_level_8/ground_motions/parsed'
 # ground_motion_dt = 0.005
 # analysis_dt = 0.01
-# gm_number = 1
-# output_folder = 'analysis/hazard_level_8/response/gm1'
+# gm_number = 13
+# output_folder = 'analysis/hazard_level_8/response/gm13'
 
+# ~~~~~~~~~~ #
+# parameters #
+# ~~~~~~~~~~ #
+
+# fundamental period of the building
+t_1 = 0.945
 
 # ~~~~~~~~~~~~~~~~~~~~ #
 # function definitions #
@@ -139,13 +146,13 @@ sections = dict(
         level_3="W10X100"),
     secondary_beams="W14X30",
     lateral_cols=dict(
-        level_1="W14X342",
-        level_2="W14X311",
-        level_3="W14X283"),
+        level_1="W14X426",
+        level_2="W14X426",
+        level_3="W14X342"),
     lateral_beams=dict(
-        level_1="W24X162",
-        level_2="W24X146",
-        level_3="W21X93")
+        level_1="W24X192",
+        level_2="W24X192",
+        level_3="W24X94")
     )
 
 b.set_active_material('steel02-fy50')
@@ -397,44 +404,70 @@ duration = np.min(np.array((dx, dy, dz)))  # note: actually should be =
 
 
 # run the nlth analysis
-nlth.run(analysis_dt,
-         ground_motion_dir + '/' + str(gm_number) + 'x.txt',
-         ground_motion_dir + '/' + str(gm_number) + 'y.txt',
-         ground_motion_dir + '/' + str(gm_number) + 'z.txt',
-         ground_motion_dt,
-         finish_time=0.00,
-         damping_ratio=0.03,
-         printing=False,
-         data_retention='lightweight')
+metadata = nlth.run(analysis_dt,
+                    ground_motion_dir + '/' + str(gm_number) + 'x.txt',
+                    ground_motion_dir + '/' + str(gm_number) + 'y.txt',
+                    ground_motion_dir + '/' + str(gm_number) + 'z.txt',
+                    ground_motion_dt,
+                    finish_time=0.00,
+                    damping_ratio=0.03,
+                    num_modes=3,
+                    printing=False,
+                    data_retention='lightweight')
+
+
+if not metadata['analysis_finished_successfully']:
+    print('Analysis failed.')
+    # print(args)
+    sys.exit()
 
 # ~~~~~~~~~~~~~~~~ #
 # collect response #
 # ~~~~~~~~~~~~~~~~ #
 
-ag = {}
+
+# ground acceleration, velocity and displacement
+# interpolation functions
+
+ag = {}  # g units
 ag[0] = np.genfromtxt(gm_X_filepath)
 ag[1] = np.genfromtxt(gm_Y_filepath)
 n_pts = len(ag[0])
 t = np.linspace(0.00, ground_motion_dt*n_pts, n_pts)
-print()
-print(t[-1])
-print(np.array(nlth.time_vector)[-1])
-print()
-f = {}
-f[0] = interp1d(t, ag[0], bounds_error=False, fill_value=0.00)
-f[1] = interp1d(t, ag[1], bounds_error=False, fill_value=0.00)
+vg = {}  # in/s units
+vg[0] = integrate.cumulative_trapezoid(
+    ag[0]*modeler.common.G_CONST, t, initial=0)
+vg[1] = integrate.cumulative_trapezoid(
+    ag[1]*modeler.common.G_CONST, t, initial=0)
+dg = {}  # in units
+dg[0] = integrate.cumulative_trapezoid(vg[0], t, initial=0)
+dg[1] = integrate.cumulative_trapezoid(vg[1], t, initial=0)
 
-prepend = output_folder + '/'
-if not os.path.exists(prepend):
-    os.mkdir(prepend)
+fag = {}
+fag[0] = interp1d(t, ag[0], bounds_error=False, fill_value=0.00)
+fag[1] = interp1d(t, ag[1], bounds_error=False, fill_value=0.00)
+fvg = {}
+fvg[0] = interp1d(t, vg[0], bounds_error=False, fill_value=0.00)
+fvg[1] = interp1d(t, vg[1], bounds_error=False, fill_value=0.00)
+fdg = {}
+fdg[0] = interp1d(t, dg[0], bounds_error=False, fill_value=0.00)
+fdg[1] = interp1d(t, dg[1], bounds_error=False, fill_value=0.00)
 
-time = np.array(nlth.time_vector)
-np.savetxt(prepend + 'time.csv', time)
+
+if not os.path.exists(output_folder):
+    os.mkdir(output_folder)
+
+time_vec = np.array(nlth.time_vector)
+num_levels = 3
 
 for direction in range(2):
     # store response time-histories
-    np.savetxt(prepend + "FA-0-" + str(direction+1) + '.csv',
-               f[direction](time))
+    # ground acceleration
+    np.savetxt(f'{output_folder}/FA-0-{direction+1}.csv',
+               fag[direction](time_vec))
+    # ground velocity
+    np.savetxt(f'{output_folder}/FV-0-{direction+1}.csv',
+               fvg[direction](time_vec))
     for lvl in range(num_levels):
         # story drifts
         if lvl == 0:
@@ -449,12 +482,14 @@ for direction in range(2):
         # story velocities
         vel = retrieve_velocity_th(lvl, direction, nlth)
 
-        np.savetxt(prepend + "ID-" + str(lvl+1) + "-" + str(direction+1) +
-                   '.csv',
-                   dr)
-        np.savetxt(prepend + "FA-" + str(lvl+1) + "-" + str(direction+1) +
-                   '.csv',
-                   a1[:, 1]/386. + f[direction](a1[:, 0]))
-        np.savetxt(prepend + "FV-" + str(lvl+1) + "-" + str(direction+1) +
-                   '.csv',
-                   vel[:, 1])
+        np.savetxt(f'{output_folder}/ID-{lvl+1}-{direction+1}.csv', dr)
+        np.savetxt(f'{output_folder}/FA-{lvl+1}-{direction+1}.csv',
+                   a1[:, 1]/modeler.common.G_CONST + fag[direction](a1[:, 0]))
+        np.savetxt(f'{output_folder}/FV-{lvl+1}-{direction+1}.csv',
+                   vel[:, 1] + fvg[direction](vel[:, 0]))
+
+    # global building drift
+    bdr = retrieve_displacement_th(num_levels-1, direction, nlth)
+    bdr[:, 1] /= np.sum(level_heights)
+    np.savetxt(f'{output_folder}/BD-{direction+1}.csv', dr)
+
