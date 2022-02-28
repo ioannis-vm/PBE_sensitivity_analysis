@@ -33,9 +33,7 @@ c_dv_stdev = 1.00         # in the damage consequences
 c_replace_stdev = 1.00    # in the building replacement cost
 
 
-# ~~~~~~~~~~~~~ #
 # configuration #
-# ~~~~~~~~~~~~~ #
 
 num_realizations = 10000
 num_stories = 3
@@ -73,65 +71,18 @@ repair_data_sources = [
     "src/performance_data/resources_modified/bldg_repair_DB_FEMA_P58_2nd.csv"]
 
 
-# ------------- #
-# Initial setup #
-# ------------- #
-
-# parameters
-
-# additional modeling uncertainty (FEMA P-58 vol1 sec 5.2.6)
-# beta_modeling = np.sqrt(0.10**2 + 0.10**2)
 beta_modeling = 0.
-# building replacement loss threshold (FEMA P-58 vol1 sec 3.2)
 replacement_threshold = 0.50
 
-
 base.set_options(config_opt)
-
 A = assessment.Assessment()
-
 A.stories = num_stories
-
-
-# ----------------- #
-# Demand Assessment #
-# ----------------- #
-
-# load demand samples to serve as reference data
 A.demand.load_sample(response_path)
-
-# calibrate the demand model
 A.demand.calibrate_model(calibration_marginals, c_edp_stdev, beta_modeling)
-
-# save the model to files
-# A.demand.save_model(f'{output_directory}/EDP')
-# A.demand.load_model(f'{output_directory}/EDP')
-
-# generate demand sample
 A.demand.generate_sample({"SampleSize": num_realizations, 'method': 'LHS_midpoint'})
-
-A.demand.save_sample(f'src/new_perf/PELICUN_EDP_sample.csv')
-
-
-# ----------------- #
-# Damage Assessment #
-# ----------------- #
 A.asset.load_cmp_model(file_prefix=component_model_prefix)
-
-# generate component quantity sample
 A.asset.generate_cmp_sample(num_realizations, c_quant_stdev)
-
-# save the quantity sample to a file
-# A.asset.save_cmp_sample(f'{output_directory}/CMP_sample.csv')
-# A.asset.load_cmp_sample(f'{output_directory}/CMP_sample.csv')
-
-# A.demand.load_sample('tmp/simple_pelicun/out/EDP_sample.csv')
-
-# load the fragility information
 A.damage.load_fragility_model(fragility_data_sources)
-
-# calculate damages
-
 # if pipes break, flooding occurs
 # dmg_process = {
 #     "1_D2021.011a": {
@@ -142,71 +93,80 @@ A.damage.load_fragility_model(fragility_data_sources)
 #         "DS2": "C3021.001k_DS1"
 #     }
 # }
-dmg_process=None
+dmg_process = None
 A.damage.calculate(num_realizations, dmg_process=dmg_process,
                    c_dm_stdev=c_dm_stdev,
                    c_collapse_irrep_stdev=c_collapse_irrep_stdev)
-
-
-# save the damage sample to a file
-# A.damage.save_sample(f'{output_directory}/DMG_sample.csv')
-
- 
-# --------------- #
-# Loss Assessment #
-# --------------- #
-
-# load the demands from file
-# (if not, we assume there is a preceding demand assessment with sampling)
-# A.demand.load_sample(f'{output_directory}/EDP_sample.csv')
-
-# load the component data from file
-# (if not, we assume there is a preceding assessment
-#  with component sampling)
-# A.asset.load_cmp_sample(f'{output_directory}/CMP_sample.csv')
-
-# load the damage from file
-# (if not, we assume there is a preceding damage assessment with sampling)
-# A.damage.load_sample(f'{output_directory}/DMG_sample.csv')
-
-# calculate repair consequences
 A.bldg_repair.load_model(
     repair_data_sources, loss_map, c_dv_stdev, c_replace_stdev)
 A.bldg_repair.calculate(num_realizations)
-
-# A.bldg_repair.save_sample(f'{output_directory}/LOSS_repair.csv')
-
 agg_DF = A.bldg_repair.aggregate_losses(A.damage, replacement_threshold)
-
-file_io.save_to_csv(agg_DF, f'src/new_perf/Summary.csv')
-
+vals = agg_DF.loc[:, 'repair_cost']
 
 
 
 
 
 
+# our code
+
+
+import sys
+sys.path.insert(0, "src_experimental")
+from p_58_assessment import P58_Assessment
+
+
+c_modeling_uncertainty = 0.00
+num_realizations = 100000
+replacement_threshold = 0.50
+response_path = 'analysis/hazard_level_8/response_summary/response.csv'
+perf_model_input_path = 'src_experimental/new_perf/input_cmp_quant.csv'
+cmp_fragility_input_path = 'src_experimental/new_perf/input_fragility.csv'
+cmp_repair_cost_input_path = 'src_experimental/new_perf/input_repair_cost.csv'
+
+
+asmt = P58_Assessment(num_realizations=1000,
+                      replacement_threshold=replacement_threshold)
+asmt.read_perf_model(perf_model_input_path)
+asmt.read_fragility_input(cmp_fragility_input_path)
+asmt.read_cmp_repair_cost_input(cmp_repair_cost_input_path)
+asmt.run(response_path, c_modeling_uncertainty)
 
 
 
-vals = np.genfromtxt(f'src/new_perf/Summary.csv',
-                     skip_header=1, delimiter=',')[:, 1]
+
+
+
+
+
+
+# comparison
+
+# x = A.bldg_repair.sample.loc[:, ('COST')].groupby(level='loss', axis=1).sum().mean(axis=0)
+
+# y = asmt.cmp_cost.groupby(level='component', axis=1).sum().mean(axis=0)
+
+# (x - y).plot.bar()
+# plt.show()
+
+
+# xx = A.bldg_repair.sample.loc[:, ('COST')].groupby(level='loss', axis=1).sum()
+
+# yy = asmt.cmp_cost.groupby(level='component', axis=1).sum()
+
+
+
+# f = plt.figure()
+# sns.ecdfplot(xx.loc[:, 'D3041.041a'], label='pelicun tot', color='tab:blue', linestyle='dashed')
+# sns.ecdfplot(yy.loc[:, 'D3041.041a'], label='mine total', color='tab:orange', linestyle='dashed')
+# plt.show()
+# plt.close()
+
 
 
 
 f = plt.figure()
-# sns.ecdfplot(ds1_c1_pel+ds1_c2_pel+ds2_c1_pel, label='pelicun', color='blue')
-# sns.ecdfplot(ds1_c1_me+ds1_c2_me+ds2_c1_me, label='my code', color='orange')
 sns.ecdfplot(vals, label='pelicun tot', color='tab:blue', linestyle='dashed')
-sns.ecdfplot(total_cost_df, label='mine total', color='tab:orange', linestyle='dashed')
+sns.ecdfplot(asmt.total_cost, label='mine total', color='tab:orange', linestyle='dashed')
 plt.show()
 plt.close()
-
-
-
-
-
-
-
-
-

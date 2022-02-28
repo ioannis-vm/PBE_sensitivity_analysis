@@ -269,11 +269,11 @@ class P58_Assessment:
                 sample *= (delta / np.median(sample))
                 cmp_fragility_RV.loc[:, (*group, f'DS{i+1}')] = sample
 
-        # debug - fix to the mean
-        cols = cmp_fragility_RV.columns
-        cols = cols[:-2]  # remove 'collapse, 'irreparable'
-        cmp_fragility_RV.loc[:, cols] = \
-            cmp_fragility_RV.loc[:, cols].mean(axis=0).to_numpy()
+        # # debug - fix to the mean
+        # cols = cmp_fragility_RV.columns
+        # cols = cols[:-2]  # remove 'collapse, 'irreparable'
+        # cmp_fragility_RV.loc[:, cols] = \
+        #     cmp_fragility_RV.loc[:, cols].mean(axis=0).to_numpy()
         self.cmp_fragility_RV = cmp_fragility_RV
 
     def calc_cmp_damage(self):
@@ -309,22 +309,23 @@ class P58_Assessment:
         # reaching a specified damage state of particular components
         # trigger damage states of other components
         # when D2021.011a reaches DS2 --> C3021.001k DS1 is enabled
-        cols = cmp_damage.loc[:, ('D2021.011a')].columns
-        for col in cols:
-            loc, drct, group = col
-            sub = cmp_damage.loc[:, ('D2021.011a', *col)]
-            indx = sub[sub == 2].index
-            cmp_damage.loc[
-                indx, ('C3021.001k', str(int(loc)-1), drct, group)] = 1
+        # debug
+        # cols = cmp_damage.loc[:, ('D2021.011a')].columns
+        # for col in cols:
+        #     loc, drct, group = col
+        #     sub = cmp_damage.loc[:, ('D2021.011a', *col)]
+        #     indx = sub[sub == 2].index
+        #     cmp_damage.loc[
+        #         indx, ('C3021.001k', str(int(loc)-1), drct, group)] = 1
 
-        # when D4011.021a reaches DS2 --> C3021.001k DS1 is enabled
-        cols = cmp_damage.loc[:, ('D4011.021a')].columns
-        for col in cols:
-            loc, drct, group = col
-            sub = cmp_damage.loc[:, ('D2021.011a', *col)]
-            indx = sub[sub == 2].index
-            cmp_damage.loc[
-                indx, ('C3021.001k', str(int(loc)-1), drct, group)] = 1
+        # # when D4011.021a reaches DS2 --> C3021.001k DS1 is enabled
+        # cols = cmp_damage.loc[:, ('D4011.021a')].columns
+        # for col in cols:
+        #     loc, drct, group = col
+        #     sub = cmp_damage.loc[:, ('D2021.011a', *col)]
+        #     indx = sub[sub == 2].index
+        #     cmp_damage.loc[
+        #         indx, ('C3021.001k', str(int(loc)-1), drct, group)] = 1
         self.cmp_damage = cmp_damage
 
     def read_cmp_repair_cost_input(self, cmp_repair_cost_input_path):

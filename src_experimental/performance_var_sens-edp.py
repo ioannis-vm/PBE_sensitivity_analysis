@@ -12,6 +12,7 @@ import seaborn as sns
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from p_58_assessment import P58_Assessment
 
 
 idx = pd.IndexSlice
@@ -26,32 +27,23 @@ logging.basicConfig(
 logging.info('Start')
 logging.info('Defining functions and global variables')
 
-response_path = 'analysis/hazard_level_3/response_summary/response.csv'
 c_modeling_uncertainty = 0.00
 num_realizations = 100000
 replacement_threshold = 0.50
 perf_model_input_path = 'src_experimental/new_perf/input_cmp_quant.csv'
+response_path = 'analysis/hazard_level_3/response_summary/response.csv'
 cmp_fragility_input_path = 'src_experimental/new_perf/input_fragility.csv'
 cmp_repair_cost_input_path = 'src_experimental/new_perf/input_repair_cost.csv'
 
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-#                       FUNCTIONS                                #
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-
-from p_58_assessment import P58_Assessment
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 #                    Reading Input Data                          #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 asmt = P58_Assessment(num_realizations=1000)
-
 asmt.read_perf_model(perf_model_input_path)
 asmt.read_fragility_input(cmp_fragility_input_path)
 asmt.read_cmp_repair_cost_input(cmp_repair_cost_input_path)
-
-    
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
