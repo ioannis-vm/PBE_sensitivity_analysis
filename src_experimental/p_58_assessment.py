@@ -629,3 +629,46 @@ class P58_Assessment:
         self.gen_cmp_cost_RV()
         self.calc_cmp_cost()
         self.calc_total_cost()
+
+
+def calc_sens(yA: np.ndarray,
+              yB: np.ndarray,
+              yC: np.ndarray,
+              yD: np.ndarray) -> tuple[float, float]:
+    """
+    Calculate variance-based 1st-order and total effect sensitivity
+    indices based on the procedure outlined in Saltelli (2002) and
+    subsequent improvements discussed in Yun et al. (2017).
+
+    - Saltelli, Andrea. "Making best use of model evaluations to
+    compute sensitivity indices." Computer physics communications
+    145.2 (2002): 280-297.
+    - Yun, Wanying, et al. "An efficient sampling method for
+    variance-based sensitivity analysis." Structural Safety 65 (2017):
+    74-83.
+
+    Args:
+    yA (np.ndarray): One-dimensional numpy array containing realizations
+       of model evaluations of analysis 'A'.
+    yB (np.ndarray): One-dimensional numpy array containing realizations
+       of model evaluations of analysis 'B'
+       (every random variable resampled).
+    yC (np.ndarray): One-dimensional numpy array containing realizations
+       of model evaluations of analysis 'C'
+       (reusing all input realizations of B, except for a single one where
+        those of A are used).
+    yD (np.ndarray): One-dimensional numpy array containing realizations
+       of model evaluations of analysis 'C'
+       (reusing all input realizations of A, except for a single one where
+        those of B are used).
+    Returns:
+    s1, sT: First-order and total effect sensitivity indices
+    """
+
+    n = len(yA)
+    f0 = 1/n * np.sum(yA)
+    s1 = (1./n * (yA.T @ yC) - f0**2) / (1./n * (yA.T @ yA) - f0**2)
+    sT = 1. - (1/n * (yB.T @ yC) - f0**2) / \
+        (1/n * (yA.T @ yA) - f0**2)
+
+    return s1, sT
