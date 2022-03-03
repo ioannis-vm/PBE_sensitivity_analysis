@@ -56,9 +56,9 @@ logging.info('Start')
 c_modeling_uncertainty = 0.00
 num_realizations = 1000000
 replacement_threshold = 0.50
-perf_model_input_path = 'src_experimental/new_perf/input_cmp_quant.csv'
-cmp_fragility_input_path = 'src_experimental/new_perf/input_fragility.csv'
-cmp_repair_cost_input_path = 'src_experimental/new_perf/input_repair_cost.csv'
+perf_model_input_path = 'src/new_perf/input_cmp_quant.csv'
+cmp_fragility_input_path = 'src/new_perf/input_fragility.csv'
+cmp_repair_cost_input_path = 'src/new_perf/input_repair_cost.csv'
 
 
 if not os.path.exists(analysis_output_path):

@@ -1,3 +1,7 @@
+"""
+This code enables a direct comparison of the results obtained by
+Pelicun to the results obtained by our code.
+"""
 
 # pelicun
 
@@ -29,7 +33,7 @@ plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 # debug
 response_path = 'analysis/hazard_level_3/response_summary/response.csv'
-c_edp_stdev =  1.00       # uncertainty in building response
+c_edp_stdev = 1.00       # uncertainty in building response
 c_quant_stdev = 1.00      # uncertainty in the component quantities
 c_dm_stdev = 1.00         # in the fragility curves
 c_collapse_irrep_stdev = 1.00  # in the collapse or irreparable fragilities
