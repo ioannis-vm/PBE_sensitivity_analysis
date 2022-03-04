@@ -168,7 +168,7 @@ results_df.to_csv(f'{analysis_output_path}/total_cost_realizations.csv')
 
 s1, sT = calc_sens(yA, yB, yC, yD)
 # bootstrap
-num_repeats = 1000
+num_repeats = 10000
 bootstrap_sample_s1 = np.zeros(num_repeats)
 bootstrap_sample_sT = np.zeros(num_repeats)
 sel = np.random.choice(num_realizations, (num_repeats, num_realizations))

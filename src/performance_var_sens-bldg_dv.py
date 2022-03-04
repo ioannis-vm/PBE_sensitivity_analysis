@@ -170,7 +170,7 @@ results_df.to_csv(f'{analysis_output_path}/total_cost_realizations.csv')
 
 s1, sT = calc_sens(yA, yB, yC, yD)
 # bootstrap
-num_repeats = 1000
+num_repeats = 10000
 bootstrap_sample_s1 = np.zeros(num_repeats)
 bootstrap_sample_sT = np.zeros(num_repeats)
 sel = np.random.choice(num_realizations, (num_repeats, num_realizations))
@@ -210,6 +210,6 @@ xv = np.linspace(np.min(bootstrap_sample_sT),
 yv = stats.norm.pdf(xv, mean_sT, std_sT)
 ax2.plot(xv, yv, color='k')
 ax2.set_xlabel('$s_T$')
-fig.suptitle('Bootstrap PDF of Sensitivity Indices\nCMP DV RV group')
+fig.suptitle('Bootstrap PDF of Sensitivity Indices\nBuilding DV RV group')
 plt.savefig(f'{figures_output_path}/bootstrap_PDF.pdf')
 plt.close()
