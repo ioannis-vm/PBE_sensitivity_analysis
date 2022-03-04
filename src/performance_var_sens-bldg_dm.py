@@ -116,9 +116,14 @@ logging.info('\tAnalysis A finished')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 logging.info('Starting analysis C')
-asmt_C.edp_samples = asmt_A.edp_samples
+asmt_C.edp_samples = asmt_B.edp_samples
 asmt_C.cmp_quant_RV = asmt_B.cmp_quant_RV
-asmt_C.cmp_fragility_RV = asmt_B.cmp_fragility_RV
+temp = asmt_B.cmp_fragility_RV
+subset_cols = [('collapse', '0', '1', '0', 'DS1'),
+               ('irreparable', '0', '1', '0', 'DS1')]
+temp.loc[:, subset_cols] = \
+    asmt_A.cmp_fragility_RV.loc[:, subset_cols]
+asmt_C.cmp_fragility_RV = temp
 asmt_C.cmp_damage_consequence_RV = asmt_B.cmp_damage_consequence_RV
 asmt_C.cmp_cost_RV = asmt_B.cmp_cost_RV
 asmt_C.calc_cmp_damage()
@@ -132,9 +137,14 @@ logging.info('\tAnalysis C finished')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 logging.info('Starting analysis D')
-asmt_D.edp_samples = asmt_B.edp_samples
+asmt_D.edp_samples = asmt_A.edp_samples
 asmt_D.cmp_quant_RV = asmt_A.cmp_quant_RV
-asmt_D.cmp_fragility_RV = asmt_A.cmp_fragility_RV
+temp = asmt_A.cmp_fragility_RV
+subset_cols = [('collapse', '0', '1', '0', 'DS1'),
+               ('irreparable', '0', '1', '0', 'DS1')]
+temp.loc[:, subset_cols] = \
+    asmt_B.cmp_fragility_RV.loc[:, subset_cols]
+asmt_D.cmp_fragility_RV = temp
 asmt_D.cmp_damage_consequence_RV = asmt_A.cmp_damage_consequence_RV
 asmt_D.cmp_cost_RV = asmt_A.cmp_cost_RV
 asmt_D.calc_cmp_damage()
@@ -162,7 +172,7 @@ results_df.to_csv(f'{analysis_output_path}/total_cost_realizations.csv')
 
 s1, sT = calc_sens(yA, yB, yC, yD)
 # bootstrap
-num_repeats = 100
+num_repeats = 10000
 bootstrap_sample_s1 = np.zeros(num_repeats)
 bootstrap_sample_sT = np.zeros(num_repeats)
 sel = np.random.choice(num_realizations, (num_repeats, num_realizations))
@@ -202,6 +212,7 @@ xv = np.linspace(np.min(bootstrap_sample_sT),
 yv = stats.norm.pdf(xv, mean_sT, std_sT)
 ax2.plot(xv, yv, color='k')
 ax2.set_xlabel('$s_T$')
-fig.suptitle('Bootstrap PDF of Sensitivity Indices\nEDP RV group')
+fig.suptitle('Bootstrap PDF of Sensitivity Indices\nBuilding DM RV group')
+plt.show()
 plt.savefig(f'{figures_output_path}/bootstrap_PDF.pdf')
 plt.close()

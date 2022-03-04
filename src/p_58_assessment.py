@@ -25,12 +25,6 @@ import logging
 
 idx = pd.IndexSlice
 
-logging.basicConfig(
-    filename=None,
-    format='%(asctime)s %(message)s',
-    datefmt='%m/%d/%Y %I:%M:%S %p',
-    level=logging.DEBUG)
-
 # pylint: disable=unsubscriptable-object
 # pylint: disable=invalid-name
 
@@ -107,6 +101,7 @@ class P58_Assessment:
                 the total repair cost.
     """
 
+    logFile: str = field(default=None)
     num_realizations: int = field(default=1000)
     replacement_threshold: float = field(default=1.00)
     fix_epd_mean: bool = field(default=False)
@@ -128,6 +123,13 @@ class P58_Assessment:
     cmp_cost_RV: pd.DataFrame = field(init=False, repr=False)
     cmp_cost: pd.DataFrame = field(init=False, repr=False)
     total_cost: pd.DataFrame = field(init=False, repr=False)
+
+    def __post_init__(self):
+        logging.basicConfig(
+            filename=self.logFile,
+            format='%(asctime)s %(message)s',
+            datefmt='%m/%d/%Y %I:%M:%S %p',
+            level=logging.DEBUG)
 
     def gen_edp_samples(self, resp_path, c_mdl):
         logging.info('\tGenerating simulated demands')
@@ -666,9 +668,13 @@ def calc_sens(yA: np.ndarray,
     """
 
     n = len(yA)
-    f0 = 1/n * np.sum(yA)
-    s1 = (1./n * (yA.T @ yC) - f0**2) / (1./n * (yA.T @ yA) - f0**2)
-    sT = 1. - (1/n * (yB.T @ yC) - f0**2) / \
-        (1/n * (yA.T @ yA) - f0**2)
+    s1 = (1. - ((1./n) * np.sum((yB-yD)**2)) /
+          ((1./n) * np.sum(yB**2 + yD**2) -
+           ((1./n) * np.sum(yB))**2 -
+           ((1./n) * np.sum(yD))**2))
+    sT = (((1./n) * np.sum((yA-yD)**2)) /
+          ((1./n) * np.sum(yA**2 + yD**2) -
+           ((1./n) * np.sum(yA))**2 -
+           ((1./n) * np.sum(yD))**2))
 
     return s1, sT
