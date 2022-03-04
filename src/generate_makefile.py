@@ -93,6 +93,14 @@ mkf.add_rule(
      'rm -rf make/*'],
     phony=True)
 
+mkf.add_rule(
+    'clean_performance',
+    '',
+    ['rm -rf analysis/*/performance',
+     'rm -rf make/*/performance'],
+    phony=True
+)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Parsing raw PEER ground motion files #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -154,15 +162,6 @@ for hz in hazard_lvl_dirs:
             [
                 "python src/response.py '--gm_dir' 'analysis/"+hz+"/ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.01' '--gm_number' '"+gm+"' '--output_dir' 'analysis/"+hz+"/response/"+gm+"' && mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
             ])
-        # mkf.add_rule(
-        #     "make/"+hz+"/response/"+gm+"/response_obtained",
-        #     [
-        #         'make/'+hz+'/ground_motions/ground_motions_parsed',
-        #         'src/response.py',
-        #     ],
-        #     [
-        #         "mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
-        #     ])
 
 # response figures
 
@@ -264,6 +263,33 @@ mkf.add_rule(
 # ~~~~~~~~~~~~~~~~~~~~~~ #
 # Performance Evaluation #
 # ~~~~~~~~~~~~~~~~~~~~~~ #
+rvgroups = ['edp', 'cmp_quant', 'cmp_dm', 'cmp_dv', 'bldg_dm', 'bldg_dv']
 
+targets = []  # initialize
+for hz in hazard_lvl_dirs:
+    for rvgroup in rvgroups:
+        targets.append(f'make/{hz}/performance/{rvgroup}/performance_obtained')
+
+mkf.add_rule(
+    "make/performance/all_performance_evals_obtained",
+    targets,
+    ['mkdir -p make/performance && touch make/performance/all_performance_evals_obtained']
+)
+
+for hz in hazard_lvl_dirs:
+    for rvgroup in rvgroups:
+        mkf.add_rule(
+            f'make/{hz}/performance/{rvgroup}/performance_obtained',
+            [
+                f'src/performance_var_sens-{rvgroup}.py',
+                'src/performance_data/input_cmp_quant.csv',
+                'src/performance_data/input_fragility.csv',
+                'src/performance_data/input_repair_cost.csv',
+                'src/p_58_assessment.py',
+                f'analysis/{hz}/response_summary/response.csv',
+                
+            ],
+            [f"python src/performance_var_sens-{rvgroup}.py '--response_path' 'analysis/{hz}/response_summary/response.csv' '--analysis_output_path' 'analysis/{hz}/performance/{rvgroup}' '--figures_output_path' 'figures/{hz}/performance/{rvgroup}' && mkdir -p make/{hz}/performance/{rvgroup} && touch make/{hz}/performance/{rvgroup}/performance_obtained"]
+        )
 
 mkf.write_to_file('Makefile')

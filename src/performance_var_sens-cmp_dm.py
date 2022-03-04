@@ -175,9 +175,9 @@ s1, sT = calc_sens(yA, yB, yC, yD)
 num_repeats = 100000
 bootstrap_sample_s1 = np.zeros(num_repeats)
 bootstrap_sample_sT = np.zeros(num_repeats)
-sel = np.random.choice(num_realizations, (num_repeats, num_realizations))
 for j in range(num_repeats):
-    res = calc_sens(yA[sel[j]], yB[sel[j]], yC[sel[j]], yD[sel[j]])
+    sel = np.random.choice(num_realizations, num_realizations)
+    res = calc_sens(yA[sel], yB[sel], yC[sel], yD[sel])
     bootstrap_sample_s1[j] = res[0]
     bootstrap_sample_sT[j] = res[1]
 mean_s1 = bootstrap_sample_s1.mean()
