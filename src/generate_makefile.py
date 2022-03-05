@@ -149,7 +149,7 @@ for hz in hazard_lvl_dirs:
          for hz in hazard_lvl_dirs
          for gm in gms] +
         ['src/response_vectors.py'],
-        ["python src/response_vectors.py '--input_dir' 'analysis/"+hz+"/response' '--output_dir' 'analysis/"+hz+"/response_summary' '--num_levels' '$(num_levels)' '--num_inputs' '14' && touch make/"+hz+"/response/all_responses_obtained"])
+        ["python src/response_vectors.py '--input_dir' 'analysis/"+hz+"/response' '--output_dir' 'analysis/"+hz+"/response_summary' '--num_levels' '$(num_levels)' '--num_inputs' '14' && mkdir -p make/"+hz+"/response && touch make/"+hz+"/response/all_responses_obtained"])
 
 for hz in hazard_lvl_dirs:
     for gm in gms:
