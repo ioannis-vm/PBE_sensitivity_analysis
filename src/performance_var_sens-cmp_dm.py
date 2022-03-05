@@ -157,7 +157,7 @@ logging.info('\tAnalysis D finished')
 #                     Sensitivity Indices                        #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-logging.info('Calculating sensitivity indices for the EDPs')
+logging.info('Calculating sensitivity indices')
 yA = asmt_A.total_cost.to_numpy()
 yB = asmt_B.total_cost.to_numpy()
 yC = asmt_C.total_cost.to_numpy()
@@ -213,6 +213,6 @@ yv = stats.norm.pdf(xv, mean_sT, std_sT)
 ax2.plot(xv, yv, color='k')
 ax2.set_xlabel('$s_T$')
 fig.suptitle('Bootstrap PDF of Sensitivity Indices\nCMP DM RV group')
-plt.show()
+# plt.show()
 plt.savefig(f'{figures_output_path}/bootstrap_PDF.pdf')
 plt.close()

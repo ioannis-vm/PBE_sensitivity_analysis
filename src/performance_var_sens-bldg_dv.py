@@ -19,7 +19,6 @@ from p_58_assessment import calc_sens
 import argparse
 
 plt.rcParams["font.family"] = "serif"
-plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 # ~~~~~~~~~~~~~~~~~~~~~ #
 # setup argument parser #
@@ -155,7 +154,7 @@ logging.info('\tAnalysis D finished')
 #                     Sensitivity Indices                        #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-logging.info('Calculating sensitivity indices for the EDPs')
+logging.info('Calculating sensitivity indices')
 yA = asmt_A.total_cost.to_numpy()
 yB = asmt_B.total_cost.to_numpy()
 yC = asmt_C.total_cost.to_numpy()

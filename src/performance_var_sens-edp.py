@@ -19,7 +19,6 @@ from p_58_assessment import calc_sens
 import argparse
 
 plt.rcParams["font.family"] = "serif"
-plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 # ~~~~~~~~~~~~~~~~~~~~~ #
 # setup argument parser #
@@ -39,7 +38,6 @@ figures_output_path = args.figures_output_path
 # response_path = 'analysis/hazard_level_1/response_summary/response.csv'
 # analysis_output_path = 'analysis/hazard_level_1/performance/edp'
 # figures_output_path = 'figures/hazard_level_1/performance/edp'
-
 
 # ~~~~~~~~~~ #
 # parameters #
@@ -147,7 +145,7 @@ logging.info('\tAnalysis D finished')
 #                     Sensitivity Indices                        #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-logging.info('Calculating sensitivity indices for the EDPs')
+logging.info('Calculating sensitivity indices')
 yA = asmt_A.total_cost.to_numpy()
 yB = asmt_B.total_cost.to_numpy()
 yC = asmt_C.total_cost.to_numpy()
@@ -165,8 +163,8 @@ s1, sT = calc_sens(yA, yB, yC, yD)
 num_repeats = 10000
 bootstrap_sample_s1 = np.zeros(num_repeats)
 bootstrap_sample_sT = np.zeros(num_repeats)
-sel = np.random.choice(num_realizations, num_realizations)
 for j in range(num_repeats):
+    sel = np.random.choice(num_realizations, num_realizations)
     res = calc_sens(yA[sel], yB[sel], yC[sel], yD[sel])
     bootstrap_sample_s1[j] = res[0]
     bootstrap_sample_sT[j] = res[1]
