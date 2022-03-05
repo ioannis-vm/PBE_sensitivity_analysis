@@ -192,7 +192,7 @@ conf_int_sT = (stats.norm.ppf(0.025, mean_sT, std_s1),
 sens_results_df = pd.DataFrame(
     {'s1': s1, 'sT': sT, 's1_CI_l': conf_int_s1[0], 's1_CI_h': conf_int_s1[1],
      'sT_CI_l': conf_int_sT[0], 'sT_CI_h': conf_int_sT[1]},
-    index=['EDP'])
+    index=['cmp_dm'])
 sens_results_df.columns.name = 'Sensitivity Index'
 
 sens_results_df.to_csv(f'{analysis_output_path}/sensitividy_indices.csv')
