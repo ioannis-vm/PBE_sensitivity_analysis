@@ -25,6 +25,8 @@ import logging
 
 idx = pd.IndexSlice
 
+np.random.seed(42)
+
 # pylint: disable=unsubscriptable-object
 # pylint: disable=invalid-name
 
@@ -660,21 +662,36 @@ def calc_sens(yA: np.ndarray,
        (reusing all input realizations of B, except for a single one where
         those of A are used).
     yD (np.ndarray): One-dimensional numpy array containing realizations
-       of model evaluations of analysis 'C'
+       of model evaluations of analysis 'D'
        (reusing all input realizations of A, except for a single one where
         those of B are used).
     Returns:
     s1, sT: First-order and total effect sensitivity indices
     """
 
+    # simplest method
+    # n = len(yA)
+    # f0 = 1./n * np.sum(yA)
+    # s1 = ((1./n)*(np.dot(yA, yC)) - f0**2)\
+    #     / ((1./n)*(np.dot(yA, yA))-f0**2)
+    # sT = 1. - ((1./n)*np.dot(yB, yC) - f0**2)\
+    #     / ((1./n)*np.dot(yA, yA) - f0**2)
+
+    # full-use method
     n = len(yA)
-    s1 = (1. - ((1./n) * np.sum((yB-yD)**2)) /
-          ((1./n) * np.sum(yB**2 + yD**2) -
-           ((1./n) * np.sum(yB))**2 -
-           ((1./n) * np.sum(yD))**2))
-    sT = (((1./n) * np.sum((yA-yD)**2)) /
-          ((1./n) * np.sum(yA**2 + yD**2) -
-           ((1./n) * np.sum(yA))**2 -
-           ((1./n) * np.sum(yD))**2))
+    f0_sq = 1./(2.*n) * np.sum(yA * yB + yC * yD)
+    s1 = ((1/(2.*n)) * (np.sum(yA * yC) + np.sum(yB * yD)) - f0_sq) / ((1./(2.*n)) * (np.sum(yA**2 + yB**2)) - f0_sq)
+    sT = 1 - ((1/(2.*n)) * (np.sum(yB * yC) + np.sum(yA * yD)) - f0_sq) / ((1./(2.*n)) * (np.sum(yA**2 + yB**2)) - f0_sq)
+
+    # # Jansen's method
+    # n = len(yA)
+    # s1 = (1. - ((1./n) * np.sum((yB-yD)**2)) /
+    #       ((1./n) * np.sum(yB**2 + yD**2) -
+    #        ((1./n) * np.sum(yB))**2 -
+    #        ((1./n) * np.sum(yD))**2))
+    # sT = (((1./n) * np.sum((yA-yD)**2)) /
+    #       ((1./n) * np.sum(yA**2 + yD**2) -
+    #        ((1./n) * np.sum(yA))**2 -
+    #        ((1./n) * np.sum(yD))**2))
 
     return s1, sT
