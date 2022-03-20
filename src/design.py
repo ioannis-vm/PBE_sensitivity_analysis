@@ -1,8 +1,8 @@
 import sys
-sys.path.append("../OpenSeesPy_Building_Modeler")
+sys.path.append("../OpenSees_Model_Builder/src")
 
 import numpy as np
-import modeler
+import model
 import solver
 import time
 import pickle
@@ -58,11 +58,11 @@ def get_floor_displacements(building, fxx, direction):
     linear_gravity_analysis.run()
 
     u1_el = linear_gravity_analysis.node_displacements[
-        parent_nodes[0].uniq_id][0][direction]
+        str(parent_nodes[0].uid)][0][direction]
     u2_el = linear_gravity_analysis.node_displacements[
-        parent_nodes[1].uniq_id][0][direction]
+        str(parent_nodes[1].uid)][0][direction]
     u3_el = linear_gravity_analysis.node_displacements[
-        parent_nodes[2].uniq_id][0][direction]
+        str(parent_nodes[2].uid)][0][direction]
 
     return np.array([u1_el, u2_el, u3_el])
 
@@ -81,7 +81,7 @@ def cs(T, Sds, Sd1, R, Ie):
 
 
 # Define a building
-b = modeler.Building()
+b = model.Model()
 
 hi = np.array([15.00, 13.00, 13.00]) * 12.00  # in
 
@@ -122,8 +122,6 @@ sections = dict(
         level_3="W24X94")
     )
 
-RBS_ends = {'type': 'RBS', 'dist': (17.50+17.5)/(25.*12.),
-            'length': 17.5, 'factor': 0.60, 'n_sub': 15}
 
 
 # define materials
@@ -144,7 +142,7 @@ wsections.add(sections['secondary_beams'])
 
 for sec in wsections:
     b.add_sections_from_json(
-        "../OpenSeesPy_Building_Modeler/section_data/sections.json",
+        "../OpenSees_Model_Builder/section_data/sections.json",
         'W',
         [sec])
 
@@ -153,12 +151,12 @@ for sec in wsections:
 
 
 # strong column - weak beam checks
-zc1 = b.sections.retrieve(sections['lateral_cols']['level_1']).properties['Zx']
-zc2 = b.sections.retrieve(sections['lateral_cols']['level_2']).properties['Zx']
-zc3 = b.sections.retrieve(sections['lateral_cols']['level_3']).properties['Zx']
-b1_sec = b.sections.retrieve(sections['lateral_beams']['level_1']).properties
-b2_sec = b.sections.retrieve(sections['lateral_beams']['level_2']).properties
-b3_sec = b.sections.retrieve(sections['lateral_beams']['level_3']).properties
+zc1 = b.sections.registry[sections['lateral_cols']['level_1']].properties['Zx']
+zc2 = b.sections.registry[sections['lateral_cols']['level_2']].properties['Zx']
+zc3 = b.sections.registry[sections['lateral_cols']['level_3']].properties['Zx']
+b1_sec = b.sections.registry[sections['lateral_beams']['level_1']].properties
+b2_sec = b.sections.registry[sections['lateral_beams']['level_2']].properties
+b3_sec = b.sections.registry[sections['lateral_beams']['level_3']].properties
 c_1 = b1_sec['bf'] * (1. - 0.60) / 2.
 c_2 = b2_sec['bf'] * (1. - 0.60) / 2.
 zb1 = b1_sec['Zx'] - 2. * c_1 * b1_sec['tf'] * (b1_sec['d'] - b1_sec['tf'])
@@ -170,27 +168,29 @@ scwbr2 = (zc2 + zc3) / (2. * zb2)
 print("SCWB ratios: %.3f, %.3f\n" % (scwbr1, scwbr2))
 
 
-
-# for sec in hsssections:
-#     b.add_sections_from_json(
-#         "../OpenSeesPy_Building_Modeler/section_data/sections.json",
-#         'HSS',
-#         [sec])
-
 #
 # define structural members
 #
 
 elastic_modeling_type = {'type': 'elastic'}
-lat_col_ends = {'type': 'steel_W_PZ_IMK', 'dist': 0.05,
+lat_col_ends = {'type': 'steel_W_PZ_IMK', 'end_dist': 0.05,
                 'Lb/ry': 60., 'L/H': 1.0, 'pgpye': 0.005,
                 'doubler plate thickness': 0.00}
+RBS_ends = {'type': 'RBS', 'end_dist': (17.50+17.5)/(25.*12.),
+            'rbs_length': 17.5, 'rbs_reduction': 0.60, 'rbs_n_sub': 10}
+lat_bm_ends = RBS_ends
 fiber_modeling_type = {'type': 'fiber', 'n_x': 10, 'n_y': 25}
-pinned_ends = {'type': 'pinned', 'dist': 0.001}
-
+pinned_ends = {'type': 'pinned', 'end_dist': 0.001}
+fixedpinned_ends = {'type': 'fixed-pinned', 'end_dist': 0.005,
+                    'doubler plate thickness': 0.00}
+grav_col_ends = fixedpinned_ends
+col_gtransf = 'Corotational'
 gtransf = 'Corotational'
+lat_col_modeling_type=elastic_modeling_type
+lat_bm_modeling_type=elastic_modeling_type
+grav_bm_ends=pinned_ends
 
-nsub = 15  # element subdivision
+nsub = 1  # element subdivision
 
 # generate a dictionary containing coordinates given gridline tag names
 # (here we won't use the native gridline objects,
@@ -216,15 +216,16 @@ for level_counter in range(3):
     b.set_active_section(sections['gravity_cols'][level_tag])
     for tag in ['A', 'F']:
         pt = point[tag]['1']
-        b.add_column_at_point(
-            pt[0], pt[1], n_sub=1,
-            model_as=fiber_modeling_type, geomTransf=gtransf)
+        col = b.add_column_at_point(
+            pt, n_sub=1, ends=grav_col_ends,
+            model_as=elastic_modeling_type, geom_transf=col_gtransf)
     for tag1 in ['B', 'C', 'D', 'E']:
         for tag2 in ['2', '3', '4']:
             pt = point[tag1][tag2]
-            b.add_column_at_point(
-                pt[0], pt[1], n_sub=1,
-                model_as=fiber_modeling_type, geomTransf=gtransf)
+            col = b.add_column_at_point(
+                pt, n_sub=1, ends=grav_col_ends,
+                model_as=elastic_modeling_type, geom_transf=col_gtransf)
+
     # define X-dir frame columns
     b.set_active_section(sections['lateral_cols'][level_tag])
     b.set_active_angle(np.pi/2.00)
@@ -232,18 +233,16 @@ for level_counter in range(3):
         for tag2 in ['1', '5']:
             pt = point[tag1][tag2]
             b.add_column_at_point(
-                pt[0], pt[1], n_sub=nsub,
-                ends=lat_col_ends,
-                model_as=fiber_modeling_type, geomTransf=gtransf)
+                pt, n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geom_transf=col_gtransf)
     # deffine Y-dir frame columns
     b.set_active_angle(0.00)
     for tag1 in ['A', 'F']:
         for tag2 in ['5', '4', '3', '2']:
             pt = point[tag1][tag2]
             b.add_column_at_point(
-                pt[0], pt[1], n_sub=nsub,
-                ends=lat_col_ends,
-                model_as=fiber_modeling_type, geomTransf=gtransf)
+                pt, n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geom_transf=col_gtransf)
     # define X-dir frame beams
     b.set_active_section(sections['lateral_beams'][level_tag])
     b.set_active_placement('top_center')
@@ -254,8 +253,8 @@ for level_counter in range(3):
             b.add_beam_at_points(
                 point[tag2_start[j]][tag1],
                 point[tag2_end[j]][tag1],
-                ends=RBS_ends,
-                model_as=fiber_modeling_type, n_sub=nsub,
+                ends=lat_bm_ends,
+                model_as=lat_bm_modeling_type, n_sub=nsub,
                 snap_i='bottom_center',
                 snap_j='top_center')
     # define Y-dir frame beams
@@ -266,8 +265,8 @@ for level_counter in range(3):
             b.add_beam_at_points(
                 point[tag1][tag2_start[j]],
                 point[tag1][tag2_end[j]],
-                ends=RBS_ends,
-                model_as=fiber_modeling_type, n_sub=nsub,
+                ends=lat_bm_ends,
+                model_as=lat_bm_modeling_type, n_sub=nsub,
                 snap_i='bottom_center',
                 snap_j='top_center')
     # define perimeter gravity beams
@@ -279,26 +278,58 @@ for level_counter in range(3):
             b.add_beam_at_points(
                 point[tag1][tag2_start[j]],
                 point[tag1][tag2_end[j]],
-                ends=pinned_ends)
-    for tag1 in ['1', '5']:
-        tag2_start = ['A', 'E']
-        tag2_end = ['B', 'F']
-        for j in range(len(tag2_start)):
-            b.add_beam_at_points(
-                point[tag2_start[j]][tag1],
-                point[tag2_end[j]][tag1],
-                ends=pinned_ends)
+                ends=grav_bm_ends,
+                snap_i='bottom_center',
+                snap_j='top_center')
+    b.add_beam_at_points(
+        point['A']['1'],
+        point['B']['1'],
+        snap_j='top_center',
+        ends=grav_bm_ends)
+    b.add_beam_at_points(
+        point['E']['1'],
+        point['F']['1'],
+        snap_i='bottom_center',
+        ends=grav_bm_ends)
+    b.add_beam_at_points(
+        point['A']['5'],
+        point['B']['5'],
+        snap_j='top_center',
+        ends=grav_bm_ends)
+    b.add_beam_at_points(
+        point['E']['5'],
+        point['F']['5'],
+        snap_i='bottom_center',
+        ends=grav_bm_ends)
     # define interior gravity beams
     for tag1 in ['B', 'C', 'D', 'E']:
         b.set_active_section(
             sections['gravity_beams_interior_25'][level_tag])
-        tag2_start = ['1', '2', '3', '4']
-        tag2_end = ['2', '3', '4', '5']
+        tag2_start = ['2', '3']
+        tag2_end = ['3', '4']
         for j in range(len(tag2_start)):
             b.add_beam_at_points(
                 point[tag1][tag2_start[j]],
                 point[tag1][tag2_end[j]],
-                ends=pinned_ends)
+                snap_i='bottom_center',
+                snap_j='top_center',
+                ends=grav_bm_ends)
+        tag2_start = ['1']
+        tag2_end = ['2']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag1][tag2_start[j]],
+                point[tag1][tag2_end[j]],
+                snap_j='top_center',
+                ends=grav_bm_ends)
+        tag2_start = ['4']
+        tag2_end = ['5']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag1][tag2_start[j]],
+                point[tag1][tag2_end[j]],
+                snap_i='bottom_center',
+                ends=grav_bm_ends)
     for tag1 in ['2', '3', '4']:
         tag2_start = ['A', 'B', 'C', 'D', 'E']
         tag2_end = ['B', 'C', 'D', 'E', 'F']
@@ -312,7 +343,7 @@ for level_counter in range(3):
             b.add_beam_at_points(
                 point[tag2_start[j]][tag1],
                 point[tag2_end[j]][tag1],
-                ends=pinned_ends)
+                ends=grav_bm_ends)
     # define secondary beams
     b.set_active_section(sections['secondary_beams'])
     for tag1 in ['A', 'B', 'C', 'D', 'E']:
@@ -320,10 +351,10 @@ for level_counter in range(3):
         tag2_end = ['2', '3', '4', '5']
         if tag1 in ['A', 'E']:
             shifts = 32.5/4. * 12.  # in
-            num = 3  # secondary beams
+            num = 3
         else:
             shifts = 25.0/3. * 12  # in
-            num = 2  # secondary beams
+            num = 2
         shift = 0.00
         for i in range(num):
             shift += shifts
@@ -355,7 +386,6 @@ b.select_perimeter_beams_story('1')
 # the tributary area of the 1st story cladding support is
 # half the height of the 1st story and half the height of the second
 # we get lb/ft, so we divide by 12 to convert this to lb/in
-# which is what OpenSeesPy_Building_Modeler uses.
 b.selection.add_UDL(np.array((0.00, 0.00,
                               -((10./12.**2) * (hi[0] + hi[1]) / 2.00))))
 
@@ -374,7 +404,6 @@ b.selection.clear()
 
 b.preprocess(assume_floor_slabs=True, self_weight=True,
              steel_panel_zones=True, elevate_column_splices=0.25)
-
 
 
 print()
@@ -440,18 +469,19 @@ print('T_max = %.2f s\n' % (T_max))
 # run modal analysis
 # (must be done here to get the period)
 
-b.set_global_restraints([0, 1, 0, 1, 0, 1])
-modal_analysis = solver.ModalAnalysis(b, num_modes=3)
+num_modes = 6
+modal_analysis = solver.ModalAnalysis(b, num_modes=num_modes)
 modal_analysis.run()
+gammasX, mstarsX = modal_analysis.modal_participation_factors('x')
+gammasY, mstarsY = modal_analysis.modal_participation_factors('y')
+ts = modal_analysis.periods
 
-ti = modal_analysis.periods
+print('T_1 = %.2f s\n' % (ts[1]))
 
-print('T_1 = %.2f s\n' % (ti[0]))
-
-vb_elf = np.sum(wi) * cs(ti[0], Sds, Sd1, R, Ie)
+vb_elf = np.sum(wi) * cs(ts[1], Sds, Sd1, R, Ie)
 print('V_b_elf = %.2f kips \n' % (vb_elf))
 
-cvx = np.reshape(wi, (-1)) * hi_add**k(ti[0]) / np.sum(wi * hi_add**k(ti[0]))
+cvx = np.reshape(wi, (-1)) * hi_add**k(ts[1]) / np.sum(wi * hi_add**k(ts[1]))
 
 fx = vb_elf * cvx
 
@@ -481,42 +511,39 @@ print('      Design is based on modal analysis.')
 # modal
 #
 
-wi = np.reshape(wi, (-1, 1))
-mi = wi / 386.22
-mi_mat = np.diag((mi.T)[0])
+modal_q0 = np.zeros(num_modes)
+modal_dr1 = np.zeros(num_modes)
+modal_dr2 = np.zeros(num_modes)
+modal_dr3 = np.zeros(num_modes)
+
+for i in range(num_modes):
+    modal_q0[i] = gammasX[i] * cs(ts[i], Sds, Sd1, R, Ie) / (2.*np.pi / ts[i])**2 * 386.22
+    modal_dr1[i] = (modal_analysis.node_displacements[str(p_nodes[0].uid)][i][0]) * modal_q0[i]
+    modal_dr2[i] = (modal_analysis.node_displacements[str(p_nodes[1].uid)][i][0] - modal_analysis.node_displacements[str(p_nodes[0].uid)][i][0]) * modal_q0[i]
+    modal_dr3[i] = (modal_analysis.node_displacements[str(p_nodes[2].uid)][i][0] - modal_analysis.node_displacements[str(p_nodes[1].uid)][i][0]) * modal_q0[i]
+
+dr1 = np.sqrt(np.sum(modal_dr1**2)) / (15.*12.) * Cd / Ie
+dr2 = np.sqrt(np.sum(modal_dr2**2)) / (13.*12.) * Cd / Ie
+dr3 = np.sqrt(np.sum(modal_dr3**2)) / (13.*12.) * Cd / Ie
+
+print("Drift capacity ratios, X direction (MODAL):")
+print("%.2f %.2f %.2f" % (dr1/0.02, dr2/0.02, dr3/0.02))
 
 
-cols = []
-num_modeshapes = len(hi)
-for i in range(num_modeshapes):
-    cols.append(np.array(modal_analysis.table_shape(i+1)['ux'])[1::])
+modal_q0 = np.zeros(num_modes)
+modal_dr1 = np.zeros(num_modes)
+modal_dr2 = np.zeros(num_modes)
+modal_dr3 = np.zeros(num_modes)
 
-phi = np.column_stack(cols)
-lnh = np.ones(len(wi)) @  mi_mat @ phi
-mn = np.diag(phi.T @ mi_mat @ phi)
-gamma = lnh / mn
-mnstar = lnh**2 / mn
-mnstar_ratio = mnstar / np.sum(mi)
+for i in range(num_modes):
+    modal_q0[i] = gammasY[i] * cs(ts[i], Sds, Sd1, R, Ie) / (2.*np.pi / ts[i])**2 * 386.22
+    modal_dr1[i] = (modal_analysis.node_displacements[str(p_nodes[0].uid)][i][1]) * modal_q0[i]
+    modal_dr2[i] = (modal_analysis.node_displacements[str(p_nodes[1].uid)][i][1] - modal_analysis.node_displacements[str(p_nodes[0].uid)][i][1]) * modal_q0[i]
+    modal_dr3[i] = (modal_analysis.node_displacements[str(p_nodes[2].uid)][i][1] - modal_analysis.node_displacements[str(p_nodes[1].uid)][i][1]) * modal_q0[i]
 
-vb_modal = []
-for i in range(num_modeshapes):
-    vb_modal.append(
-        cs(ti[i], Sds, Sd1, R, Ie) * mnstar[i] * 386.22
-        )
+dr1 = np.sqrt(np.sum(modal_dr1**2)) / (15.*12.) * Cd / Ie
+dr2 = np.sqrt(np.sum(modal_dr2**2)) / (13.*12.) * Cd / Ie
+dr3 = np.sqrt(np.sum(modal_dr3**2)) / (13.*12.) * Cd / Ie
 
-print('V_b modal = %.2f kips \n' % (np.sum(vb_modal)))
-
-# Modal responses
-cols = []
-for i in range(num_modeshapes):
-    cols.append(gamma[i] * phi[:, i] *
-                (cs(ti[i], Sds, Sd1, R, Ie) * 386.22) /
-                (2. * np.pi / ti[i])**2)
-u_el_modes = np.column_stack(cols)
-# modal combination (S.R.S.S.)
-u_el = [np.sqrt(np.sum((u_el_modes[i, :])**2)) for i in range(len(hi))]
-dr_el = np.concatenate(([u_el[0]], np.diff(u_el))) / hi
-dr = Cd / Ie * dr_el
-
-print("Drift capacity ratios, X direction (Modal):")
-print(dr/0.02)
+print("Drift capacity ratios, Y direction (MODAL):")
+print("%.2f %.2f %.2f" % (dr1/0.02, dr2/0.02, dr3/0.02))
