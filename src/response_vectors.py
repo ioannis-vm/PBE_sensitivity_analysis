@@ -92,7 +92,8 @@ for level in range(num_levels+1):
             response_file = \
                 f'{response_dir}/FA-{level}-{direction}.csv'
             contents = np.genfromtxt(response_file)
-            peak = np.max(np.abs(contents))
+            # convert to G units
+            peak = np.max(np.abs(contents)) / 386.22
             peak_edp.append(peak)
         edps[tag] = np.array(peak_edp)
 
