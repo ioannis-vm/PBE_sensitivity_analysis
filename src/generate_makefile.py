@@ -151,6 +151,17 @@ for hz in hazard_lvl_dirs:
         ['src/response_vectors.py'],
         ["python src/response_vectors.py '--input_dir' 'analysis/"+hz+"/response' '--output_dir' 'analysis/"+hz+"/response_summary' '--num_levels' '$(num_levels)' '--num_inputs' '14' && mkdir -p make/"+hz+"/response && touch make/"+hz+"/response/all_responses_obtained"])
 
+# for hz in hazard_lvl_dirs:
+#     for gm in gms:
+#         mkf.add_rule(
+#             "make/"+hz+"/response/"+gm+"/response_obtained",
+#             [
+#                 'make/'+hz+'/ground_motions/ground_motions_parsed',
+#                 'src/response.py',
+#             ],
+#             [
+#                 "#python src/response.py '--gm_dir' 'analysis/"+hz+"/ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.01' '--gm_number' '"+gm+"' '--output_dir' 'analysis/"+hz+"/response/"+gm+"' && mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
+#             ])
 for hz in hazard_lvl_dirs:
     for gm in gms:
         mkf.add_rule(
@@ -160,7 +171,7 @@ for hz in hazard_lvl_dirs:
                 'src/response.py',
             ],
             [
-                "python src/response.py '--gm_dir' 'analysis/"+hz+"/ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.01' '--gm_number' '"+gm+"' '--output_dir' 'analysis/"+hz+"/response/"+gm+"' && mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
+                "mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
             ])
 
 # response figures
@@ -281,7 +292,7 @@ for hz in hazard_lvl_dirs:
         mkf.add_rule(
             f'make/{hz}/performance/{rvgroup}/performance_obtained',
             [
-                f'src/performance_var_sens-{rvgroup}.py',
+                f'src/performance_var_sens.py',
                 'src/performance_data/input_cmp_quant.csv',
                 'src/performance_data/input_fragility.csv',
                 'src/performance_data/input_repair_cost.csv',
@@ -289,7 +300,7 @@ for hz in hazard_lvl_dirs:
                 f'analysis/{hz}/response_summary/response.csv',
                 
             ],
-            [f"python src/performance_var_sens-{rvgroup}.py '--response_path' 'analysis/{hz}/response_summary/response.csv' '--analysis_output_path' 'analysis/{hz}/performance/{rvgroup}' '--figures_output_path' 'figures/{hz}/performance/{rvgroup}' && mkdir -p make/{hz}/performance/{rvgroup} && touch make/{hz}/performance/{rvgroup}/performance_obtained"]
+            [f"python src/performance_var_sens.py '--response_path' 'analysis/{hz}/response_summary/response.csv' '--rv_group' '{rvgroup}' '--analysis_output_path' 'analysis/{hz}/performance/{rvgroup}' '--figures_output_path' 'figures/{hz}/performance/{rvgroup}' && mkdir -p make/{hz}/performance/{rvgroup} && touch make/{hz}/performance/{rvgroup}/performance_obtained"]
         )
 
 mkf.write_to_file('Makefile')
