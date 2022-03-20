@@ -4,7 +4,15 @@ Gather and summarize variance-based sensitivity analysis results
 
 import numpy as np
 import pandas as pd
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+from collections import OrderedDict
+
+
+mpl.rcParams['errorbar.capsize'] = 1.5
+mpl.rcParams["font.family"] = "serif"
+mpl.rcParams["mathtext.fontset"] = "dejavuserif"
+mpl.rcParams['text.usetex']=True
 
 idx = pd.IndexSlice
 
@@ -27,6 +35,99 @@ all_df.index.names = ['hazard level', 'RV group']
 
 
 
+# # export to latex
+
+# # first-order sensitiviy indices
+# my_order = ['edp', 'cmp_dm', 'cmp_dv', 'cmp_quant', 'bldg_dv', 'bldg_dm']
+
+# data = OrderedDict()
+
+# for rvgroup in my_order:
+#     vals = []
+#     for hzlvl in hz_lvls:
+#         val = all_df.loc[(hzlvl, rvgroup), 's1']
+#         val_h = all_df.loc[(hzlvl, rvgroup), 's1_CI_h']
+#         val_l = all_df.loc[(hzlvl, rvgroup), 's1_CI_l']
+#         diff = (val_h - val_l)/2.
+#         add_conf = True
+#         if val < 0.0:
+#             val = 0.00
+#             add_conf = False
+#         if np.isnan(diff):
+#             add_conf = False
+#         if diff < 0.001:
+#             add_conf = False
+#         if add_conf:
+#             vals.append(f'{val:.3f}±{diff:.3f}')
+#         else:
+#             vals.append(f'{val:.3f}')
+#     data[rvgroup] = vals
+
+# output_table = pd.DataFrame.from_dict(data)
+# output_table.index = range(1, 9)
+# output_table.index.name = 'Hazard Level'
+
+
+# data_num = OrderedDict()
+
+# for rvgroup in my_order:
+#     vals = []
+#     for hzlvl in hz_lvls:
+#         val = all_df.loc[(hzlvl, rvgroup), 's1']
+#         vals.append(val)
+#     data_num[rvgroup] = vals
+
+# output_tab_num = pd.DataFrame.from_dict(data_num)
+# output_tab_num.mean(axis=0)
+
+# print(output_table.to_latex())
+
+
+# # total-effect sensitiviy indices
+
+# data = OrderedDict()
+
+# for rvgroup in my_order:
+#     vals = []
+#     for hzlvl in hz_lvls:
+#         val = all_df.loc[(hzlvl, rvgroup), 'sT']
+#         val_h = all_df.loc[(hzlvl, rvgroup), 'sT_CI_h']
+#         val_l = all_df.loc[(hzlvl, rvgroup), 'sT_CI_l']
+#         diff = (val_h - val_l)/2.
+#         add_conf = True
+#         if val < 0.0:
+#             val = 0.00
+#             add_conf = False
+#         if np.isnan(diff):
+#             add_conf = False
+#         if diff < 0.001:
+#             add_conf = False
+#         if add_conf:
+#             vals.append(f'{val:.3f}±{diff:.3f}')
+#         else:
+#             vals.append(f'{val:.3f}')
+#     data[rvgroup] = vals
+
+# output_table = pd.DataFrame.from_dict(data)
+# output_table.index = range(1, 9)
+# output_table.index.name = 'Hazard Level'
+
+# print(output_table.to_latex())
+
+
+# data_num = OrderedDict()
+
+# for rvgroup in my_order:
+#     vals = []
+#     for hzlvl in hz_lvls:
+#         val = all_df.loc[(hzlvl, rvgroup), 'sT']
+#         vals.append(val)
+#     data_num[rvgroup] = vals
+
+# output_tab_num = pd.DataFrame.from_dict(data_num)
+# output_tab_num.mean(axis=0)
+
+# print(output_table.to_latex())
 
 
 
@@ -38,11 +139,7 @@ all_df.index.names = ['hazard level', 'RV group']
 
 
 
-
-
-
-
-def bar_plot(ax, data, errors, colors=None, total_width=0.8, single_width=1, legend=True):
+def bar_plot(ax, data, errors, colors=None, total_width=0.8, single_width=1, legend_title=None):
     """Draws a bar plot with multiple bars per data point.
 
     Parameters
@@ -98,29 +195,70 @@ def bar_plot(ax, data, errors, colors=None, total_width=0.8, single_width=1, leg
 
         # Draw a bar for every value of that type
         for x, y in enumerate(values):
-            bar = ax.bar(x + x_offset, y, width=bar_width * single_width, color=colors[i % len(colors)])
+            bar = ax.bar(x + x_offset, y, yerr=errors[name][x], width=bar_width * single_width, color=colors[i % len(colors)], edgecolor='k')
 
         # Add a handle to the last drawn bar, which we'll need for the legend
         bars.append(bar[0])
 
     # Draw legend if we need
-    if legend:
-        ax.legend(bars, data.keys())
+    if legend_title:
+        ax.legend(bars, data.keys(), frameon=False, title=legend_title, ncol=2)
+
+    # change the style of the axis spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.set(ylim=(0.0, 1.0))
+    # add some space between the axis and the plot
+    ax.spines['left'].set_position(('outward', 8))
+    ax.spines['bottom'].set_position(('outward', 5))
 
 
 
+
+
+
+# I think I will keep this one.
+
+data = {}
+erbr = {}
+
+my_order = ['edp', 'cmp_dm', 'cmp_dv', 'cmp_quant', 'bldg_dv', 'bldg_dm']
+my_order_names = ['EDP', 'C-DM', 'C-DV', 'C-QNT', 'B-DV', 'B-DM']
+hz_lvls_names = [f'{i}' for i in range(1, 9)]
+
+colors=plt.cm.Pastel2(np.arange(8))
+
+for i, hzlvl in enumerate(hz_lvls):
+    vals = []
+    ers = []
+    for rvgroup in my_order:
+        vals.append(all_df.loc[(hzlvl, rvgroup), 's1'])
+        ers.append(all_df.loc[(hzlvl, rvgroup), 's1_CI_h'] - all_df.loc[(hzlvl, rvgroup), 's1_CI_l'])
+    data[hz_lvls_names[i]] = vals
+    erbr[hz_lvls_names[i]] = ers
+
+fig, [ax1, ax2] = plt.subplots(1, 2, figsize=(8, 4))
+bar_plot(ax1, data, erbr, colors, total_width=.8, single_width=1.)
+ax1.set_xticks(range(6), my_order_names)
+ax1.set(ylabel='$s_1$')
 
 
 data = {}
-errs = {}
+erbr = {}
 
-for rvg in rvgroups:
-    vals = list(all_df.loc[idx[:, rvg], 's1'])
-    evals = list(all_df.loc[idx[:, rvg], 's1_CI_h'] - all_df.loc[idx[:, rvg], 's1_CI_l'])
-    data[rvg] = vals
-    errs[rvg] = evals
+for i, hzlvl in enumerate(hz_lvls):
+    vals = []
+    ers = []
+    for rvgroup in my_order:
+        vals.append(all_df.loc[(hzlvl, rvgroup), 'sT'])
+        ers.append(all_df.loc[(hzlvl, rvgroup), 'sT_CI_h'] - all_df.loc[(hzlvl, rvgroup), 'sT_CI_l'])
+    data[hz_lvls_names[i]] = vals
+    erbr[hz_lvls_names[i]] = ers
 
-fig, ax = plt.subplots()
-bar_plot(ax, data, evals, total_width=.8, single_width=.9)
-# plt.xticks(range(8), hz_lvls)
-plt.show()
+bar_plot(ax2, data, erbr, colors=colors, total_width=.8, single_width=1, legend_title='Hazard Level')
+ax2.set_xticks(range(6), my_order_names)
+ax2.set(ylabel='$s_T$')
+
+plt.subplots_adjust(left=0.08, right=0.99, top=0.96, bottom=0.09)
+
+plt.savefig('test.pdf')
