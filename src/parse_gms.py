@@ -12,10 +12,12 @@ sys.path.append("src")
 import numpy as np
 import os
 from scipy.interpolate import interp1d
+import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 from ground_motion_utils import import_PEER
 from ground_motion_utils import response_spectrum
 import argparse
+
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["mathtext.fontset"] = "dejavuserif"
@@ -150,6 +152,38 @@ for i in range(num_records):
     # store the records
     ground_motions.append([ag_x, ag_y, ag_z])
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# trimming ~ determine usable range #
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+for gm in range(num_records):
+
+    integrated = integrate.cumulative_trapezoid(np.abs(ground_motions[gm][0]))
+    integrated /= integrated[-1]
+
+    istart = 0
+    iend = 0
+    for i in range(len(integrated)):
+        if integrated[i] < 0.0005:
+            istart = i
+        if integrated[i] < 0.95:
+            iend = i
+    if iend > int(60/0.005):
+        iend = int(60/0.005)
+
+    for direction in [0, 1, 2]:
+        ground_motions[gm][direction] = ground_motions[gm][direction][istart:iend]
+
+    # num_pts = len(ground_motions[gm][0])
+    # t_vals = np.linspace(0.00, num_pts*0.005, num_pts)
+    # fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(4, 4))
+    # ax1.plot(t_vals, ground_motions[gm][0])
+    # ax2.plot(t_vals[1::], integrated)
+    # ax1.axvline(t_vals[istart])
+    # ax1.axvline(t_vals[iend])
+    # plt.show()
+    
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # calculate response spectra #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~ #

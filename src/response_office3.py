@@ -8,13 +8,15 @@ suitable for subsequent use in PELICUN.
 """
 
 import sys
-sys.path.append("../OpenSeesPy_Building_Modeler")
+sys.path.append("../OpenSees_Model_Builder/src")
 
 import numpy as np
-import modeler
+from scipy import integrate
+import model
 import solver
 import time
 import pickle
+import sys
 import os
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
@@ -43,14 +45,14 @@ output_folder = args.output_dir  # 'response/test_case'
 # # debug
 # ground_motion_dir = 'analysis/hazard_level_8/ground_motions/parsed'
 # ground_motion_dt = 0.005
-# analysis_dt = 0.01
+# analysis_dt = 0.001
 # gm_number = 1
-# output_folder = 'analysis/hazard_level_8/response/gm1'
+# output_folder = 'analysis/TEST'
 
 
-# # ~~~~~~~~~~~~~~~~~~~~ #
-# # function definitions #
-# # ~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~~ #
+# function definitions #
+# ~~~~~~~~~~~~~~~~~~~~ #
 
 
 def get_duration(time_history_path, dt):
@@ -63,6 +65,7 @@ def get_duration(time_history_path, dt):
     num_points = len(values)
     return float(num_points) * dt
 
+
 # ~~~~~~~~ #
 # analysis #
 # ~~~~~~~~ #
@@ -70,7 +73,7 @@ def get_duration(time_history_path, dt):
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 
-b = modeler.Building()
+b = model.Model()
 
 hi = np.array([15.00, 13.00, 13.00]) * 12.00  # in
 
@@ -107,6 +110,7 @@ sections = dict(
         level_3="W24X94")
     )
 
+# define materials
 b.set_active_material('steel02-fy50')
 
 # define sections
@@ -122,33 +126,20 @@ wsections.add(sections['secondary_beams'])
 
 for sec in wsections:
     b.add_sections_from_json(
-        "../OpenSeesPy_Building_Modeler/section_data/sections.json",
+        "../OpenSees_Model_Builder/section_data/sections.json",
         'W',
         [sec])
-
-nsub = 15  # element subdivision
-pinned_ends = {'type': 'pinned', 'dist': 0.005}
-fixedpinned_ends = {'type': 'fixed-pinned', 'dist': 0.005}
-elastic_modeling_type = {'type': 'elastic'}
-grav_col_ends = fixedpinned_ends
-lat_bm_ends = {'type': 'steel_W_IMK', 'dist': 0.05,
-               'Lb/ry': 60., 'L/H': 0.50, 'RBS_factor': 0.60,
-               'composite action': True,
-               'doubler plate thickness': 0.00}
-lat_bm_modeling = {'type': 'elastic'}
-lat_col_ends = {'type': 'steel_W_PZ_IMK', 'dist': 0.05,
-                'Lb/ry': 60., 'L/H': 1.0, 'pgpye': 0.05,
-                'doubler plate thickness': 0.00}
-lat_col_modeling_type = {'type': 'elastic'}
-lat_bm_modeling_type = {'type': 'elastic'}
-grav_bm_ends = {'type': 'steel W shear tab', 'dist': 0.005,
-                'composite action': True}
-col_gtransf = 'Corotational'
-
 
 #
 # define structural members
 #
+pinned_ends = {'type': 'pinned', 'end_dist': 0.005}
+fixedpinned_ends = {'type': 'fixed-pinned', 'end_dist': 0.005,
+                    'doubler plate thickness': 0.00}
+elastic_modeling_type = {'type': 'elastic'}
+col_gtransf = 'Corotational'
+nsub = 1  # element subdivision
+grav_col_ends = fixedpinned_ends
 
 # generate a dictionary containing coordinates given gridline tag names
 # (here we won't use the native gridline objects,
@@ -158,6 +149,19 @@ x_grd_tags = ['A', 'B', 'C', 'D', 'E', 'F']
 y_grd_tags = ['5', '4', '3', '2', '1']
 x_grd_locs = np.array([0.00, 32.5, 57.5, 82.5, 107.5, 140.00]) * 12.00  # (in)
 y_grd_locs = np.array([0.00, 25.00, 50.00, 75.00, 100.00]) * 12.00  # (in)
+
+lat_bm_ends = {'type': 'steel_W_IMK', 'end_dist': 0.05,
+               'Lb/ry': 60., 'L/H': 0.50, 'RBS_factor': 0.60,
+               'composite action': True,
+               'doubler plate thickness': 0.00}
+lat_bm_modeling = {'type': 'elastic'}
+lat_col_ends = {'type': 'steel_W_PZ_IMK', 'end_dist': 0.05,
+                'Lb/ry': 60., 'L/H': 1.0, 'pgpye': 0.05,
+                'doubler plate thickness': 0.00}
+lat_col_modeling_type = {'type': 'elastic'}
+lat_bm_modeling_type = {'type': 'elastic'}
+grav_bm_ends = {'type': 'steel W shear tab', 'end_dist': 0.005,
+                'composite action': True}
 
 for i in range(len(x_grd_tags)):
     point[x_grd_tags[i]] = {}
@@ -175,14 +179,14 @@ for level_counter in range(3):
     for tag in ['A', 'F']:
         pt = point[tag]['1']
         col = b.add_column_at_point(
-            pt[0], pt[1], n_sub=1, ends=grav_col_ends,
-            model_as=elastic_modeling_type, geomTransf=col_gtransf)
+            pt, n_sub=1, ends=grav_col_ends,
+            model_as=elastic_modeling_type, geom_transf=col_gtransf)
     for tag1 in ['B', 'C', 'D', 'E']:
         for tag2 in ['2', '3', '4']:
             pt = point[tag1][tag2]
             col = b.add_column_at_point(
-                pt[0], pt[1], n_sub=1, ends=grav_col_ends,
-                model_as=elastic_modeling_type, geomTransf=col_gtransf)
+                pt, n_sub=1, ends=grav_col_ends,
+                model_as=elastic_modeling_type, geom_transf=col_gtransf)
 
     # define X-dir frame columns
     b.set_active_section(sections['lateral_cols'][level_tag])
@@ -191,16 +195,16 @@ for level_counter in range(3):
         for tag2 in ['1', '5']:
             pt = point[tag1][tag2]
             b.add_column_at_point(
-                pt[0], pt[1], n_sub=nsub, ends=lat_col_ends,
-                model_as=lat_col_modeling_type, geomTransf=col_gtransf)
+                pt, n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geom_transf=col_gtransf)
     # deffine Y-dir frame columns
     b.set_active_angle(0.00)
     for tag1 in ['A', 'F']:
         for tag2 in ['5', '4', '3', '2']:
             pt = point[tag1][tag2]
             b.add_column_at_point(
-                pt[0], pt[1], n_sub=nsub, ends=lat_col_ends,
-                model_as=lat_col_modeling_type, geomTransf=col_gtransf)
+                pt, n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geom_transf=col_gtransf)
     # define X-dir frame beams
     b.set_active_section(sections['lateral_beams'][level_tag])
     b.set_active_placement('top_center')
@@ -236,25 +240,57 @@ for level_counter in range(3):
             b.add_beam_at_points(
                 point[tag1][tag2_start[j]],
                 point[tag1][tag2_end[j]],
-                ends=grav_bm_ends)
-    for tag1 in ['1', '5']:
-        tag2_start = ['A', 'E']
-        tag2_end = ['B', 'F']
-        for j in range(len(tag2_start)):
-            b.add_beam_at_points(
-                point[tag2_start[j]][tag1],
-                point[tag2_end[j]][tag1],
-                ends=grav_bm_ends)
+                ends=grav_bm_ends,
+                snap_i='bottom_center',
+                snap_j='top_center')
+    b.add_beam_at_points(
+        point['A']['1'],
+        point['B']['1'],
+        snap_j='top_center',
+        ends=grav_bm_ends)
+    b.add_beam_at_points(
+        point['E']['1'],
+        point['F']['1'],
+        snap_i='bottom_center',
+        ends=grav_bm_ends)
+    b.add_beam_at_points(
+        point['A']['5'],
+        point['B']['5'],
+        snap_j='top_center',
+        ends=grav_bm_ends)
+    b.add_beam_at_points(
+        point['E']['5'],
+        point['F']['5'],
+        snap_i='bottom_center',
+        ends=grav_bm_ends)
     # define interior gravity beams
     for tag1 in ['B', 'C', 'D', 'E']:
         b.set_active_section(
             sections['gravity_beams_interior_25'][level_tag])
-        tag2_start = ['1', '2', '3', '4']
-        tag2_end = ['2', '3', '4', '5']
+        tag2_start = ['2', '3']
+        tag2_end = ['3', '4']
         for j in range(len(tag2_start)):
             b.add_beam_at_points(
                 point[tag1][tag2_start[j]],
                 point[tag1][tag2_end[j]],
+                snap_i='bottom_center',
+                snap_j='top_center',
+                ends=grav_bm_ends)
+        tag2_start = ['1']
+        tag2_end = ['2']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag1][tag2_start[j]],
+                point[tag1][tag2_end[j]],
+                snap_j='top_center',
+                ends=grav_bm_ends)
+        tag2_start = ['4']
+        tag2_end = ['5']
+        for j in range(len(tag2_start)):
+            b.add_beam_at_points(
+                point[tag1][tag2_start[j]],
+                point[tag1][tag2_end[j]],
+                snap_i='bottom_center',
                 ends=grav_bm_ends)
     for tag1 in ['2', '3', '4']:
         tag2_start = ['A', 'B', 'C', 'D', 'E']
@@ -288,8 +324,8 @@ for level_counter in range(3):
                 b.add_beam_at_points(
                     point[tag1][tag2_start[j]] + np.array([shift, 0.00]),
                     point[tag1][tag2_end[j]] + np.array([shift, 0.00]),
-                    offset_i=np.array([0., 0., 0.]),
-                    offset_j=np.array([0., 0., 0.]),
+                    offset_i=np.array([0., 0., -10.]),
+                    offset_j=np.array([0., 0., -10.]),
                     ends=pinned_ends)
 
 #
@@ -330,17 +366,41 @@ b.selection.clear()
 b.preprocess(assume_floor_slabs=True, self_weight=True,
              steel_panel_zones=True, elevate_column_splices=0.25)
 
+# b.plot_building_geometry(extrude_frames=True)
+# b.plot_building_geometry(extrude_frames=False, frame_axes=False)
 
-# # retrieve some info used in the for loops
-# num_levels = len(b.levels.level_list) - 1
-# level_heights = []
-# for level in b.levels.level_list:
-#     level_heights.append(level.elevation)
-# level_heights = np.diff(level_heights)
 
+# modal_analysis = solver.ModalAnalysis(b, num_modes=6)
+# modal_analysis.run()
+
+# modal_analysis.deformed_shape(step=0, scaling=0.00, extrude_frames=True)
+
+
+
+# retrieve some info used in the for loops
+num_levels = len(b.levels.registry) - 1
+level_heights = []
+for level in b.levels.registry.values():
+    level_heights.append(level.elevation)
+level_heights = np.diff(level_heights)
+
+
+base_node = list(b.levels.registry['base'].nodes_primary.registry.values())[0].uid
+lvl1_node = b.levels.registry['1'].parent_node.uid
+lvl2_node = b.levels.registry['2'].parent_node.uid
+lvl3_node = b.levels.registry['3'].parent_node.uid
 
 # define analysis object
-nlth = solver.NLTHAnalysis(b)
+nlth = solver.NLTHAnalysis(
+    b,
+    output_directory=f'{output_folder}',
+    disk_storage=True,
+    store_fiber=False,
+    store_forces=False,
+    store_reactions=False,
+    store_release_force_defo=False,
+    specific_nodes=[base_node, lvl1_node,
+                    lvl2_node, lvl3_node])
 
 # get the corresponding ground motion duration
 gm_X_filepath = ground_motion_dir + '/' + str(gm_number) + 'x.txt'
@@ -353,19 +413,102 @@ dz = get_duration(gm_Z_filepath, ground_motion_dt)
 duration = np.min(np.array((dx, dy, dz)))  # note: actually should be =
 
 
+damping = {'type': 'rayleigh',
+           'ratio': 0.03,
+           'periods': [1.00, 0.10]}
+# damping = {'type': 'modal',
+#            'num_modes': 50,
+#            'ratio': 0.03}
+
 # run the nlth analysis
-nlth.run(analysis_dt,
-         ground_motion_dir + '/' + str(gm_number) + 'x.txt',
-         ground_motion_dir + '/' + str(gm_number) + 'y.txt',
-         ground_motion_dir + '/' + str(gm_number) + 'z.txt',
-         ground_motion_dt,
-         finish_time=0.00,
-         damping_ratio=0.03,
-         printing=False,
-         data_retention='default')
+metadata = nlth.run(analysis_dt,
+                    ground_motion_dir + '/' + str(gm_number) + 'x.txt',
+                    ground_motion_dir + '/' + str(gm_number) + 'y.txt',
+                    ground_motion_dir + '/' + str(gm_number) + 'z.txt',
+                    ground_motion_dt,
+                    finish_time=0.20,
+                    damping=damping,
+                    printing=True)
 
-# store analysis results using pickle
-prepend = output_folder + '/'
 
-with open(prepend + "nlth_obj.pcl", 'wb') as f:
-    pickle.dump(nlth, f)
+# plot_ground_motion(ground_motion_dir + '/' + str(gm_number) + 'x.txt', ground_motion_dt)
+
+
+if not metadata['analysis_finished_successfully']:
+    print('Analysis failed.')
+    # print(args)
+    sys.exit()
+
+# reopen shelves
+nlth = solver.NLTHAnalysis(
+    b, output_directory=f'{output_folder}',
+    disk_storage=True,
+    store_fiber=False,
+    store_forces=False,
+    store_reactions=False)
+nlth.read_results()
+
+time_vec = np.array(nlth.time_vector)
+resp_a = {}
+resp_v = {}
+resp_u = {}
+resp_a[0] = nlth.retrieve_node_abs_acceleration(base_node)
+resp_a[1] = nlth.retrieve_node_abs_acceleration(lvl1_node)
+resp_a[2] = nlth.retrieve_node_abs_acceleration(lvl2_node)
+resp_a[3] = nlth.retrieve_node_abs_acceleration(lvl3_node)
+resp_v[0] = nlth.retrieve_node_abs_velocity(base_node)
+resp_v[1] = nlth.retrieve_node_abs_velocity(lvl1_node)
+resp_v[2] = nlth.retrieve_node_abs_velocity(lvl2_node)
+resp_v[3] = nlth.retrieve_node_abs_velocity(lvl3_node)
+# resp_u[0] = nlth.retrieve_node_displacement(base_node)  # always 0 - fixed
+resp_u[1] = nlth.retrieve_node_displacement(lvl1_node)
+resp_u[2] = nlth.retrieve_node_displacement(lvl2_node)
+resp_u[3] = nlth.retrieve_node_displacement(lvl3_node)
+
+
+# ~~~~~~~~~~~~~~~~ #
+# collect response #
+# ~~~~~~~~~~~~~~~~ #
+
+
+# ground acceleration, velocity and displacement
+# interpolation functions
+
+if not os.path.exists(output_folder):
+    os.mkdir(output_folder)
+
+time_vec = np.array(nlth.time_vector)
+np.savetxt(f'{output_folder}/time.csv',
+           time_vec)
+num_levels = len(level_heights)
+
+for direction in range(2):
+    # store response time-histories
+    # ground acceleration
+    np.savetxt(f'{output_folder}/FA-0-{direction+1}.csv',
+               resp_a[0][:, direction])
+    # ground velocity
+    np.savetxt(f'{output_folder}/FV-0-{direction+1}.csv',
+               resp_v[0][:, direction])
+    for lvl in range(num_levels):
+        # story drifts
+        if lvl == 0:
+            u = resp_u[1][:, direction]
+            dr = u / level_heights[lvl]
+        else:
+            uprev = resp_u[lvl][:, direction]
+            u = resp_u[lvl + 1][:, direction]
+            dr = (u - uprev) / level_heights[lvl]
+        # story accelerations
+        a = resp_a[lvl + 1][:, direction]
+        # story velocities
+        v = resp_v[lvl + 1][:, direction]
+
+        np.savetxt(f'{output_folder}/ID-{lvl+1}-{direction+1}.csv', dr)
+        np.savetxt(f'{output_folder}/FA-{lvl+1}-{direction+1}.csv', a)
+        np.savetxt(f'{output_folder}/FV-{lvl+1}-{direction+1}.csv', v)
+
+    # global building drift
+    bdr = resp_u[3][:, direction]
+    bdr /= np.sum(level_heights)
+    np.savetxt(f'{output_folder}/BD-{direction+1}.csv', bdr)

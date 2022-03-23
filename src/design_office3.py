@@ -91,9 +91,6 @@ b.add_level("1", hi[0])
 b.add_level("2", hi[0]+hi[1])
 b.add_level("3", hi[0]+hi[1]+hi[2])
 
-# heavier design - same design drift
-# double strength
-
 sections = dict(
     gravity_cols=dict(
         level_1="W14X90",
@@ -113,13 +110,13 @@ sections = dict(
         level_3="W10X100"),
     secondary_beams="W14X30",
     lateral_cols=dict(
-        level_1="W14X426",
-        level_2="W14X426",
+        level_1="W14X455",
+        level_2="W14X455",
         level_3="W14X342"),
     lateral_beams=dict(
-        level_1="W24X192",
-        level_2="W24X192",
-        level_3="W24X94")
+        level_1="W24X279",
+        level_2="W24X279",
+        level_3="W24X131")
     )
 
 
@@ -439,8 +436,10 @@ Cd = 5.5
 R = 8.0
 Ie = 1.0
 
-Sds = 1.206
-Sd1 = 1.1520
+# Sds = 1.206
+# Sd1 = 1.1520
+Sds = 1.58
+Sd1 = 1.38
 Tshort = Sd1/Sds
 
 # period estimation (Table 12.8-2)
@@ -485,26 +484,26 @@ cvx = np.reshape(wi, (-1)) * hi_add**k(ts[1]) / np.sum(wi * hi_add**k(ts[1]))
 
 fx = vb_elf * cvx
 
-#
-# ELF
-#
+# #
+# # ELF
+# #
 
-u1_el, u2_el, u3_el = get_floor_displacements(b, fx, 0)
+# u1_el, u2_el, u3_el = get_floor_displacements(b, fx, 0)
 
-u1 = Cd / Ie * u1_el
-u2 = Cd / Ie * u2_el
-u3 = Cd / Ie * u3_el
+# u1 = Cd / Ie * u1_el
+# u2 = Cd / Ie * u2_el
+# u3 = Cd / Ie * u3_el
 
-dr1 = u1 / (15.*12.)
-dr2 = (u2 - u1) / (13.*12.)
-dr3 = (u3 - u2) / (13.*12.)
+# dr1 = u1 / (15.*12.)
+# dr2 = (u2 - u1) / (13.*12.)
+# dr3 = (u3 - u2) / (13.*12.)
 
-print("Drift capacity ratios, X direction (ELF):")
-print("%.2f %.2f %.2f" % (dr1/0.02, dr2/0.02, dr3/0.02))
+# print("Drift capacity ratios, X direction (ELF):")
+# print("%.2f %.2f %.2f" % (dr1/0.02, dr2/0.02, dr3/0.02))
 
-print('Note: ELF always leads to a stiffer design.')
-print('      Values are provided for reference.')
-print('      Design is based on modal analysis.')
+# print('Note: ELF always leads to a stiffer design.')
+# print('      Values are provided for reference.')
+# print('      Design is based on modal analysis.')
 
 
 #

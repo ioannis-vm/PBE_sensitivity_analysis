@@ -9,6 +9,12 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 
 
+output_directory = 'analysis/merged/performance'
+
+if not os.path.exists(output_directory):
+    os.makedirs(output_directory)
+
+
 mpl.rcParams['errorbar.capsize'] = 1.5
 mpl.rcParams["font.family"] = "serif"
 mpl.rcParams["mathtext.fontset"] = "dejavuserif"
@@ -35,99 +41,99 @@ all_df.index.names = ['hazard level', 'RV group']
 
 
 
-# # export to latex
+# export to latex
 
-# # first-order sensitiviy indices
-# my_order = ['edp', 'cmp_dm', 'cmp_dv', 'cmp_quant', 'bldg_dv', 'bldg_dm']
+# first-order sensitiviy indices
+my_order = ['edp', 'cmp_dm', 'cmp_dv', 'cmp_quant', 'bldg_dv', 'bldg_dm']
 
-# data = OrderedDict()
+data = OrderedDict()
 
-# for rvgroup in my_order:
-#     vals = []
-#     for hzlvl in hz_lvls:
-#         val = all_df.loc[(hzlvl, rvgroup), 's1']
-#         val_h = all_df.loc[(hzlvl, rvgroup), 's1_CI_h']
-#         val_l = all_df.loc[(hzlvl, rvgroup), 's1_CI_l']
-#         diff = (val_h - val_l)/2.
-#         add_conf = True
-#         if val < 0.0:
-#             val = 0.00
-#             add_conf = False
-#         if np.isnan(diff):
-#             add_conf = False
-#         if diff < 0.001:
-#             add_conf = False
-#         if add_conf:
-#             vals.append(f'{val:.3f}±{diff:.3f}')
-#         else:
-#             vals.append(f'{val:.3f}')
-#     data[rvgroup] = vals
+for rvgroup in my_order:
+    vals = []
+    for hzlvl in hz_lvls:
+        val = all_df.loc[(hzlvl, rvgroup), 's1']
+        val_h = all_df.loc[(hzlvl, rvgroup), 's1_CI_h']
+        val_l = all_df.loc[(hzlvl, rvgroup), 's1_CI_l']
+        diff = (val_h - val_l)/2.
+        add_conf = True
+        if val < 0.0:
+            val = 0.00
+            add_conf = False
+        if np.isnan(diff):
+            add_conf = False
+        if diff < 0.001:
+            add_conf = False
+        if add_conf:
+            vals.append(f'{val:.3f}±{diff:.3f}')
+        else:
+            vals.append(f'{val:.3f}')
+    data[rvgroup] = vals
 
-# output_table = pd.DataFrame.from_dict(data)
-# output_table.index = range(1, 9)
-# output_table.index.name = 'Hazard Level'
-
-
-# data_num = OrderedDict()
-
-# for rvgroup in my_order:
-#     vals = []
-#     for hzlvl in hz_lvls:
-#         val = all_df.loc[(hzlvl, rvgroup), 's1']
-#         vals.append(val)
-#     data_num[rvgroup] = vals
-
-# output_tab_num = pd.DataFrame.from_dict(data_num)
-# output_tab_num.mean(axis=0)
-
-# print(output_table.to_latex())
+output_table = pd.DataFrame.from_dict(data)
+output_table.index = range(1, 9)
+output_table.index.name = 'Hazard Level'
 
 
-# # total-effect sensitiviy indices
+data_num = OrderedDict()
 
-# data = OrderedDict()
+for rvgroup in my_order:
+    vals = []
+    for hzlvl in hz_lvls:
+        val = all_df.loc[(hzlvl, rvgroup), 's1']
+        vals.append(val)
+    data_num[rvgroup] = vals
 
-# for rvgroup in my_order:
-#     vals = []
-#     for hzlvl in hz_lvls:
-#         val = all_df.loc[(hzlvl, rvgroup), 'sT']
-#         val_h = all_df.loc[(hzlvl, rvgroup), 'sT_CI_h']
-#         val_l = all_df.loc[(hzlvl, rvgroup), 'sT_CI_l']
-#         diff = (val_h - val_l)/2.
-#         add_conf = True
-#         if val < 0.0:
-#             val = 0.00
-#             add_conf = False
-#         if np.isnan(diff):
-#             add_conf = False
-#         if diff < 0.001:
-#             add_conf = False
-#         if add_conf:
-#             vals.append(f'{val:.3f}±{diff:.3f}')
-#         else:
-#             vals.append(f'{val:.3f}')
-#     data[rvgroup] = vals
+output_tab_num = pd.DataFrame.from_dict(data_num)
+output_tab_num.mean(axis=0)
 
-# output_table = pd.DataFrame.from_dict(data)
-# output_table.index = range(1, 9)
-# output_table.index.name = 'Hazard Level'
-
-# print(output_table.to_latex())
+with open(f'{output_directory}/s1.txt', 'w') as file:
+    file.writelines(output_table.to_latex())
 
 
-# data_num = OrderedDict()
+# total-effect sensitiviy indices
 
-# for rvgroup in my_order:
-#     vals = []
-#     for hzlvl in hz_lvls:
-#         val = all_df.loc[(hzlvl, rvgroup), 'sT']
-#         vals.append(val)
-#     data_num[rvgroup] = vals
+data = OrderedDict()
 
-# output_tab_num = pd.DataFrame.from_dict(data_num)
-# output_tab_num.mean(axis=0)
+for rvgroup in my_order:
+    vals = []
+    for hzlvl in hz_lvls:
+        val = all_df.loc[(hzlvl, rvgroup), 'sT']
+        val_h = all_df.loc[(hzlvl, rvgroup), 'sT_CI_h']
+        val_l = all_df.loc[(hzlvl, rvgroup), 'sT_CI_l']
+        diff = (val_h - val_l)/2.
+        add_conf = True
+        if val < 0.0:
+            val = 0.00
+            add_conf = False
+        if np.isnan(diff):
+            add_conf = False
+        if diff < 0.001:
+            add_conf = False
+        if add_conf:
+            vals.append(f'{val:.3f}±{diff:.3f}')
+        else:
+            vals.append(f'{val:.3f}')
+    data[rvgroup] = vals
 
-# print(output_table.to_latex())
+output_table = pd.DataFrame.from_dict(data)
+output_table.index = range(1, 9)
+output_table.index.name = 'Hazard Level'
+
+data_num = OrderedDict()
+
+for rvgroup in my_order:
+    vals = []
+    for hzlvl in hz_lvls:
+        val = all_df.loc[(hzlvl, rvgroup), 'sT']
+        vals.append(val)
+    data_num[rvgroup] = vals
+
+output_tab_num = pd.DataFrame.from_dict(data_num)
+output_tab_num.mean(axis=0)
+
+with open(f'{output_directory}/sT.txt', 'w') as file:
+    file.writelines(output_table.to_latex())
+
 
 
 
@@ -217,8 +223,6 @@ def bar_plot(ax, data, errors, colors=None, total_width=0.8, single_width=1, leg
 
 
 
-# I think I will keep this one.
-
 data = {}
 erbr = {}
 
@@ -261,4 +265,4 @@ ax2.set(ylabel='$s_T$')
 
 plt.subplots_adjust(left=0.08, right=0.99, top=0.96, bottom=0.09)
 
-plt.savefig('test.pdf')
+plt.savefig(f'{output_directory}/sens_idx.pdf')

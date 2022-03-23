@@ -48,7 +48,7 @@ figures_output_path = args.figures_output_path
 
 c_modeling_uncertainty = np.sqrt(0.25**2+0.25**2)
 # c_modeling_uncertainty = 0.00
-num_realizations = 100000
+num_realizations = 50000
 replacement_threshold = 0.40
 perf_model_input_path = 'src/performance_data/input_cmp_quant.csv'
 cmp_fragility_input_path = 'src/performance_data/input_fragility.csv'

@@ -83,7 +83,7 @@ mkf.add_rule(
 
 mkf.add_rule(
     'clean',
-    '',
+    [''],
     ['rm -rf analysis/*/ground_motions/parsed',
      'rm -rf figures/*',
      'rm -rf analysis/*/response',
@@ -94,12 +94,17 @@ mkf.add_rule(
     phony=True)
 
 mkf.add_rule(
+    'clean_ground_motions',
+    [''],
+    ['rm -rf analysis/*/ground_motions/parsed'],
+    phony=True)
+
+mkf.add_rule(
     'clean_performance',
-    '',
+    [''],
     ['rm -rf analysis/*/performance',
      'rm -rf make/*/performance'],
-    phony=True
-)
+    phony=True)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Parsing raw PEER ground motion files #
