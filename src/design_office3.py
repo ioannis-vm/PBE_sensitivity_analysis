@@ -8,6 +8,7 @@ import time
 import pickle
 from scipy.interpolate import interp1d
 import argparse
+import pandas as pd
 
 # ~~~~~~~~~~~~~~~~~~~~ #
 # function definitions #
@@ -110,30 +111,34 @@ sections = dict(
         level_3="W10X100"),
     secondary_beams="W14X30",
     lateral_cols=dict(
-        level_1="W14X455",
-        level_2="W14X455",
-        level_3="W14X342"),
+        exterior=dict(
+            level_1="W14X370",
+            level_2="W14X370",
+            level_3="W14X311"),
+        interior=dict(
+            level_1="W14X605",
+            level_2="W14X605",
+            level_3="W14X500")),
     lateral_beams=dict(
-        level_1="W24X279",
-        level_2="W24X279",
-        level_3="W24X131")
+        level_1="W24X207",
+        level_2="W24X207",
+        level_3="W18X130")
     )
-
-
 
 # define materials
 b.set_active_material('steel02-fy50')
 
 # define sections
 wsections = set()
-hsssections = set()
 for lvl_tag in ['level_1', 'level_2', 'level_3']:
     wsections.add(sections['gravity_beams_perimeter'][lvl_tag])
     wsections.add(sections['gravity_beams_interior_32'][lvl_tag])
     wsections.add(sections['gravity_beams_interior_25'][lvl_tag])
-    wsections.add(sections['lateral_cols'][lvl_tag])
     wsections.add(sections['lateral_beams'][lvl_tag])
     wsections.add(sections['gravity_cols'][lvl_tag])
+for function in ['exterior', 'interior']:
+    for lvl_tag in ['level_1', 'level_2', 'level_3']:
+        wsections.add(sections['lateral_cols'][function][lvl_tag])
 wsections.add(sections['secondary_beams'])
 
 
@@ -142,27 +147,6 @@ for sec in wsections:
         "../OpenSees_Model_Builder/section_data/sections.json",
         'W',
         [sec])
-
-
-
-
-
-# strong column - weak beam checks
-zc1 = b.sections.registry[sections['lateral_cols']['level_1']].properties['Zx']
-zc2 = b.sections.registry[sections['lateral_cols']['level_2']].properties['Zx']
-zc3 = b.sections.registry[sections['lateral_cols']['level_3']].properties['Zx']
-b1_sec = b.sections.registry[sections['lateral_beams']['level_1']].properties
-b2_sec = b.sections.registry[sections['lateral_beams']['level_2']].properties
-b3_sec = b.sections.registry[sections['lateral_beams']['level_3']].properties
-c_1 = b1_sec['bf'] * (1. - 0.60) / 2.
-c_2 = b2_sec['bf'] * (1. - 0.60) / 2.
-zb1 = b1_sec['Zx'] - 2. * c_1 * b1_sec['tf'] * (b1_sec['d'] - b1_sec['tf'])
-zb2 = b2_sec['Zx'] - 2. * c_2 * b2_sec['tf'] * (b2_sec['d'] - b2_sec['tf'])
-
-scwbr1 = (zc1 + zc2) / (2. * zb1)
-scwbr2 = (zc2 + zc3) / (2. * zb2)
-
-print("SCWB ratios: %.3f, %.3f\n" % (scwbr1, scwbr2))
 
 
 #
@@ -174,7 +158,7 @@ lat_col_ends = {'type': 'steel_W_PZ_IMK', 'end_dist': 0.05,
                 'Lb/ry': 60., 'L/H': 1.0, 'pgpye': 0.005,
                 'doubler plate thickness': 0.00}
 RBS_ends = {'type': 'RBS', 'end_dist': (17.50+17.5)/(25.*12.),
-            'rbs_length': 17.5, 'rbs_reduction': 0.60, 'rbs_n_sub': 10}
+            'rbs_length': 17.5, 'rbs_reduction': 0.60, 'rbs_n_sub': 2}
 lat_bm_ends = RBS_ends
 fiber_modeling_type = {'type': 'fiber', 'n_x': 10, 'n_y': 25}
 pinned_ends = {'type': 'pinned', 'end_dist': 0.001}
@@ -224,9 +208,16 @@ for level_counter in range(3):
                 model_as=elastic_modeling_type, geom_transf=col_gtransf)
 
     # define X-dir frame columns
-    b.set_active_section(sections['lateral_cols'][level_tag])
     b.set_active_angle(np.pi/2.00)
-    for tag1 in ['B', 'C', 'D', 'E']:
+    b.set_active_section(sections['lateral_cols']['exterior'][level_tag])
+    for tag1 in ['B', 'E']:
+        for tag2 in ['1', '5']:
+            pt = point[tag1][tag2]
+            b.add_column_at_point(
+                pt, n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geom_transf=col_gtransf)
+    b.set_active_section(sections['lateral_cols']['interior'][level_tag])
+    for tag1 in ['C', 'D']:
         for tag2 in ['1', '5']:
             pt = point[tag1][tag2]
             b.add_column_at_point(
@@ -234,8 +225,16 @@ for level_counter in range(3):
                 model_as=lat_col_modeling_type, geom_transf=col_gtransf)
     # deffine Y-dir frame columns
     b.set_active_angle(0.00)
+    b.set_active_section(sections['lateral_cols']['exterior'][level_tag])
     for tag1 in ['A', 'F']:
-        for tag2 in ['5', '4', '3', '2']:
+        for tag2 in ['5', '2']:
+            pt = point[tag1][tag2]
+            b.add_column_at_point(
+                pt, n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geom_transf=col_gtransf)
+    b.set_active_section(sections['lateral_cols']['interior'][level_tag])
+    for tag1 in ['A', 'F']:
+        for tag2 in ['4', '3']:
             pt = point[tag1][tag2]
             b.add_column_at_point(
                 pt, n_sub=nsub, ends=lat_col_ends,
@@ -364,12 +363,6 @@ for level_counter in range(3):
                     ends=pinned_ends)
 
 
-#
-# define surface loads
-#
-
-# to validate design - only use dead loads (ASCE 7 sec. 12.7.2)
-
 b.set_active_levels(['1', '2'])
 b.assign_surface_DL((75.+15.+20.)/(12.**2))
 
@@ -383,6 +376,7 @@ b.select_perimeter_beams_story('1')
 # the tributary area of the 1st story cladding support is
 # half the height of the 1st story and half the height of the second
 # we get lb/ft, so we divide by 12 to convert this to lb/in
+# which is what OpenSeesPy_Building_Modeler uses.
 b.selection.add_UDL(np.array((0.00, 0.00,
                               -((10./12.**2) * (hi[0] + hi[1]) / 2.00))))
 
@@ -401,6 +395,133 @@ b.selection.clear()
 
 b.preprocess(assume_floor_slabs=True, self_weight=True,
              steel_panel_zones=True, elevate_column_splices=0.25)
+
+linear_gravity_analysis = solver.LinearGravityAnalysis(b)
+linear_gravity_analysis.run()
+
+# store column axial loads for design checks
+col_uids = dict(
+    exterior=dict(level_1='2709',
+                  level_2='3147',
+                  level_3='3585'),
+    interior=dict(level_1='2773',
+                  level_2='3211',
+                  level_3='3649'))
+col_puc = dict(exterior=dict(), interior=dict())
+for key1 in col_uids.keys():
+    for key2 in col_uids[key1].keys():
+        col_puc[key1][key2] = linear_gravity_analysis.element_forces[
+            col_uids[key1][key2]][0][8] / 1000.  # kips
+# store beam gravity UDL for design checks
+# kips/in
+we = dict(
+    level_1=-b.dct_line_elements[482].udl_total()[1] / 1000.,
+    level_2=-b.dct_line_elements[1271].udl_total()[1] / 1000.,
+    level_3=-b.dct_line_elements[2060].udl_total()[1] / 1000.
+)
+
+
+# strong column - weak beam
+sh = 26.25  # in
+ext_res = []
+int_res = []
+lvl_tags = list(sections['lateral_beams'].keys())
+for place in ['exterior', 'interior']:
+    for lvl_num in range(len(lvl_tags)-1):
+        this_lvl = lvl_tags[lvl_num]
+        level_above = lvl_tags[lvl_num + 1]
+        beam_sec = b.sections.registry[sections['lateral_beams'][this_lvl]].properties
+        # in3
+        zc_below = b.sections.registry[sections['lateral_cols'][place][this_lvl]].properties['Zx']
+        # in2
+        ac_below = b.sections.registry[sections['lateral_cols'][place][this_lvl]].properties['A']
+        # in3
+        zc_above = b.sections.registry[sections['lateral_cols'][place][level_above]].properties['Zx']
+        # in2
+        ac_above = b.sections.registry[sections['lateral_cols'][place][level_above]].properties['A']
+        # kip-in
+        mc_below = zc_below * (50.00 - col_puc[place][this_lvl]/ac_below)
+        # kip-in
+        mc_above = zc_above * (50.00 - col_puc[place][this_lvl]/ac_above)
+        # kips
+        vc_star = (mc_below + mc_above) / ((hi[lvl_num] - beam_sec['d']))
+        # kip-in
+        sigma_mc_star = (mc_below + mc_above) + vc_star * (beam_sec['d'])/2.
+        # in
+        c_rbs = beam_sec['bf'] * (1. - 0.60) / 2.
+        # in3
+        z_rbs = beam_sec['Zx'] - 2. * c_rbs * beam_sec['tf'] * (beam_sec['d'] - beam_sec['tf'])
+        # kip-in
+        m_pr = 1.15 * 1.10 * 50 * z_rbs
+        # kip
+        v_e = (2 * m_pr) / (25.*12. - 2. * sh)
+        # kip
+        v_g = we[this_lvl] * (25.*12. - 2. * sh) / 2.
+        dc = b.sections.registry[sections['lateral_cols'][place][this_lvl]].properties['d']
+        if place == 'exterior':
+            sigm_mb_star = 1.00 * (m_pr + v_e * (sh + dc/2.) + v_g*(sh + dc/2.))
+            ext_res.append(sigma_mc_star / sigm_mb_star)
+        if place == 'interior':
+            sigm_mb_star = 2.00 * (m_pr + v_e * (sh + dc/2.))
+            int_res.append(sigma_mc_star / sigm_mb_star)
+scwb_check = pd.DataFrame({'exterior': ext_res, 'interior': int_res}, index=lvl_tags[:-1])
+print()
+print('Strong Column - Weak Beam Check')
+print(scwb_check)
+print()
+
+
+# doubler plate requirement check
+ext_res = []
+int_res = []
+ext_doubler_thickness = []
+int_doubler_thickness = []
+lvl_tags = list(sections['lateral_beams'].keys())
+for place in ['exterior', 'interior']:
+    for lvl_num in range(len(lvl_tags)):
+        this_lvl = lvl_tags[lvl_num]
+        beam_sec = b.sections.registry[sections['lateral_beams'][this_lvl]].properties
+        col_sec = b.sections.registry[sections['lateral_cols'][place][this_lvl]].properties
+        assert(col_sec['d'] / col_sec['tw'] < 35.09), 'Error: Column not seismically compact'
+        # in
+        c_rbs = beam_sec['bf'] * (1. - 0.60) / 2.
+        # in3
+        z_rbs = beam_sec['Zx'] - 2. * c_rbs * beam_sec['tf'] * (beam_sec['d'] - beam_sec['tf'])
+        # kip-in
+        m_pr = 1.15 * 1.10 * 50 * z_rbs
+        # kip
+        ve = 2. * m_pr / (25.*12. - 2. * sh)
+        # kip-in
+        m_f = m_pr + ve * sh
+        # kips
+        r_n = 0.60 * 50 * col_sec['d'] * col_sec['tw'] * (1.00 + (3. * col_sec['bf'] * (col_sec['tf'])**2) / (col_sec['d'] * beam_sec['d'] * col_sec['tw']))
+        if place == 'interior':
+            r_u = 2 * m_f / (beam_sec['d'] - beam_sec['tf'])
+            int_res.append(r_u/r_n)
+            tdoub = (r_u-r_n) / (0.60 * 50. * col_sec['d'])
+            tdoub = max(tdoub, 0.00)
+            int_doubler_thickness.append(tdoub/col_sec['tw'])
+        else:
+            r_u = m_f / (beam_sec['d'] - beam_sec['tf'])
+            ext_res.append(r_u/r_n)
+            tdoub = (r_u-r_n) / (0.60 * 50. * col_sec['d'])
+            tdoub = max(tdoub, 0.00)
+            ext_doubler_thickness.append(tdoub/col_sec['tw'])
+
+pz_check = pd.DataFrame({'exterior': ext_res, 'interior': int_res}, index=lvl_tags)
+# print()
+# print('Doubler Plate Requirement Check')
+# print(pz_check)
+# print()
+
+doubler_thickness = pd.DataFrame({'exterior': ext_doubler_thickness, 'interior': int_doubler_thickness}, index=lvl_tags)
+print()
+print('Required Doubler Plate Thickness')
+print(doubler_thickness)
+print()
+
+
+
 
 
 print()
@@ -436,11 +557,23 @@ Cd = 5.5
 R = 8.0
 Ie = 1.0
 
-# Sds = 1.206
-# Sd1 = 1.1520
 Sds = 1.58
 Sd1 = 1.38
 Tshort = Sd1/Sds
+
+# multi-period design spectrum
+mlp_periods = np.array(
+    (0.00, 0.01, 0.02, 0.03, 0.05,
+     0.075, 0.1, 0.15, 0.2, 0.25,
+     0.3, 0.4, 0.5, 0.75, 1.,
+     1.5, 2., 3., 4., 5., 7.5, 10.))
+mlp_des_spc = np.array(
+    (0.66, 0.67, 0.66, 0.67, 0.74,
+     0.90, 1.03, 1.22, 1.36, 0.48,
+     0.62, 1.75, 1.73, 1.51, 1.32,
+     0.98, 0.77, 0.51, 0.35, 0.26,
+     0.14, 0.083))
+design_spectrum_ifun = interp1d(mlp_periods, mlp_des_spc, kind='linear')
 
 # period estimation (Table 12.8-2)
 
@@ -516,7 +649,7 @@ modal_dr2 = np.zeros(num_modes)
 modal_dr3 = np.zeros(num_modes)
 
 for i in range(num_modes):
-    modal_q0[i] = gammasX[i] * cs(ts[i], Sds, Sd1, R, Ie) / (2.*np.pi / ts[i])**2 * 386.22
+    modal_q0[i] = gammasX[i] * (design_spectrum_ifun(ts[i]) / (R/Ie)) / (2.*np.pi / ts[i])**2 * 386.22
     modal_dr1[i] = (modal_analysis.node_displacements[str(p_nodes[0].uid)][i][0]) * modal_q0[i]
     modal_dr2[i] = (modal_analysis.node_displacements[str(p_nodes[1].uid)][i][0] - modal_analysis.node_displacements[str(p_nodes[0].uid)][i][0]) * modal_q0[i]
     modal_dr3[i] = (modal_analysis.node_displacements[str(p_nodes[2].uid)][i][0] - modal_analysis.node_displacements[str(p_nodes[1].uid)][i][0]) * modal_q0[i]
@@ -535,7 +668,7 @@ modal_dr2 = np.zeros(num_modes)
 modal_dr3 = np.zeros(num_modes)
 
 for i in range(num_modes):
-    modal_q0[i] = gammasY[i] * cs(ts[i], Sds, Sd1, R, Ie) / (2.*np.pi / ts[i])**2 * 386.22
+    modal_q0[i] = gammasY[i] * (design_spectrum_ifun(ts[i]) / (R/Ie)) / (2.*np.pi / ts[i])**2 * 386.22
     modal_dr1[i] = (modal_analysis.node_displacements[str(p_nodes[0].uid)][i][1]) * modal_q0[i]
     modal_dr2[i] = (modal_analysis.node_displacements[str(p_nodes[1].uid)][i][1] - modal_analysis.node_displacements[str(p_nodes[0].uid)][i][1]) * modal_q0[i]
     modal_dr3[i] = (modal_analysis.node_displacements[str(p_nodes[2].uid)][i][1] - modal_analysis.node_displacements[str(p_nodes[1].uid)][i][1]) * modal_q0[i]

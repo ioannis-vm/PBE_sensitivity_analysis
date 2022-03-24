@@ -43,11 +43,11 @@ gm_number = int(args.gm_number.replace('gm', ''))
 output_folder = args.output_dir  # 'response/test_case'
 
 # # debug
-# ground_motion_dir = 'analysis/hazard_level_8/ground_motions/parsed'
+# ground_motion_dir = 'analysis/office3/hazard_level_8/ground_motions/parsed'
 # ground_motion_dt = 0.005
 # analysis_dt = 0.001
 # gm_number = 1
-# output_folder = 'analysis/TEST'
+# output_folder = 'analysis/office3/TEST'
 
 
 # ~~~~~~~~~~~~~~~~~~~~ #
@@ -64,7 +64,6 @@ def get_duration(time_history_path, dt):
     values = np.genfromtxt(time_history_path)
     num_points = len(values)
     return float(num_points) * dt
-
 
 # ~~~~~~~~ #
 # analysis #
@@ -101,14 +100,20 @@ sections = dict(
         level_3="W10X100"),
     secondary_beams="W14X30",
     lateral_cols=dict(
-        level_1="W14X426",
-        level_2="W14X426",
-        level_3="W14X342"),
+        exterior=dict(
+            level_1="W14X370",
+            level_2="W14X370",
+            level_3="W14X311"),
+        interior=dict(
+            level_1="W14X605",
+            level_2="W14X605",
+            level_3="W14X500")),
     lateral_beams=dict(
-        level_1="W24X192",
-        level_2="W24X192",
-        level_3="W24X94")
+        level_1="W24X207",
+        level_2="W24X207",
+        level_3="W18X130")
     )
+
 
 # define materials
 b.set_active_material('steel02-fy50')
@@ -119,10 +124,13 @@ for lvl_tag in ['level_1', 'level_2', 'level_3']:
     wsections.add(sections['gravity_beams_perimeter'][lvl_tag])
     wsections.add(sections['gravity_beams_interior_32'][lvl_tag])
     wsections.add(sections['gravity_beams_interior_25'][lvl_tag])
-    wsections.add(sections['lateral_cols'][lvl_tag])
     wsections.add(sections['lateral_beams'][lvl_tag])
     wsections.add(sections['gravity_cols'][lvl_tag])
+for function in ['exterior', 'interior']:
+    for lvl_tag in ['level_1', 'level_2', 'level_3']:
+        wsections.add(sections['lateral_cols'][function][lvl_tag])
 wsections.add(sections['secondary_beams'])
+
 
 for sec in wsections:
     b.add_sections_from_json(
@@ -189,9 +197,16 @@ for level_counter in range(3):
                 model_as=elastic_modeling_type, geom_transf=col_gtransf)
 
     # define X-dir frame columns
-    b.set_active_section(sections['lateral_cols'][level_tag])
     b.set_active_angle(np.pi/2.00)
-    for tag1 in ['B', 'C', 'D', 'E']:
+    b.set_active_section(sections['lateral_cols']['exterior'][level_tag])
+    for tag1 in ['B', 'E']:
+        for tag2 in ['1', '5']:
+            pt = point[tag1][tag2]
+            b.add_column_at_point(
+                pt, n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geom_transf=col_gtransf)
+    b.set_active_section(sections['lateral_cols']['interior'][level_tag])
+    for tag1 in ['C', 'D']:
         for tag2 in ['1', '5']:
             pt = point[tag1][tag2]
             b.add_column_at_point(
@@ -199,8 +214,16 @@ for level_counter in range(3):
                 model_as=lat_col_modeling_type, geom_transf=col_gtransf)
     # deffine Y-dir frame columns
     b.set_active_angle(0.00)
+    b.set_active_section(sections['lateral_cols']['exterior'][level_tag])
     for tag1 in ['A', 'F']:
-        for tag2 in ['5', '4', '3', '2']:
+        for tag2 in ['5', '2']:
+            pt = point[tag1][tag2]
+            b.add_column_at_point(
+                pt, n_sub=nsub, ends=lat_col_ends,
+                model_as=lat_col_modeling_type, geom_transf=col_gtransf)
+    b.set_active_section(sections['lateral_cols']['interior'][level_tag])
+    for tag1 in ['A', 'F']:
+        for tag2 in ['4', '3']:
             pt = point[tag1][tag2]
             b.add_column_at_point(
                 pt, n_sub=nsub, ends=lat_col_ends,
@@ -426,7 +449,7 @@ metadata = nlth.run(analysis_dt,
                     ground_motion_dir + '/' + str(gm_number) + 'y.txt',
                     ground_motion_dir + '/' + str(gm_number) + 'z.txt',
                     ground_motion_dt,
-                    finish_time=0.20,
+                    finish_time=0.00,
                     damping=damping,
                     printing=True)
 
