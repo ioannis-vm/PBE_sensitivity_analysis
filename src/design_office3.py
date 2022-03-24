@@ -601,7 +601,7 @@ print('T_max = %.2f s\n' % (T_max))
 # run modal analysis
 # (must be done here to get the period)
 
-num_modes = 6
+num_modes = 24
 modal_analysis = solver.ModalAnalysis(b, num_modes=num_modes)
 modal_analysis.run()
 gammasX, mstarsX = modal_analysis.modal_participation_factors('x')
@@ -610,12 +610,12 @@ ts = modal_analysis.periods
 
 print('T_1 = %.2f s\n' % (ts[1]))
 
-vb_elf = np.sum(wi) * cs(ts[1], Sds, Sd1, R, Ie)
-print('V_b_elf = %.2f kips \n' % (vb_elf))
+# vb_elf = np.sum(wi) * cs(ts[1], Sds, Sd1, R, Ie)
+# print('V_b_elf = %.2f kips \n' % (vb_elf))
 
-cvx = np.reshape(wi, (-1)) * hi_add**k(ts[1]) / np.sum(wi * hi_add**k(ts[1]))
+# cvx = np.reshape(wi, (-1)) * hi_add**k(ts[1]) / np.sum(wi * hi_add**k(ts[1]))
 
-fx = vb_elf * cvx
+# fx = vb_elf * cvx
 
 # #
 # # ELF

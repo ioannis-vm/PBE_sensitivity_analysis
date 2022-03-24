@@ -61,6 +61,8 @@ hazard_lvl_dirs = ['hazard_level_' + str(i+1)
 
 gms = ['gm'+str(i+1) for i in range(14)]
 
+cases = ['office3_sp', 'office3_mp']
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 mkf = Makefile()
@@ -82,60 +84,66 @@ mkf.add_rule(
 
 
 mkf.add_rule(
-    'clean',
+    'clean_all',
     [''],
-    ['rm -rf analysis/*/ground_motions/parsed',
+    ['rm -rf analysis/office3_mp/*/ground_motions/parsed',
+     'rm -rf analysis/office3_sp/*/ground_motions/parsed',
      'rm -rf figures/*',
-     'rm -rf analysis/*/response',
-     'rm -rf analysis/*/response_summary',
-     'rm -rf analysis/*/performance',
-     'rm -rf analysis/*/pelicun_log.txt',
+     'rm -rf analysis/office3_mp/*/response',
+     'rm -rf analysis/office3_sp/*/response',
+     'rm -rf analysis/office3_mp/*/response_summary',
+     'rm -rf analysis/office3_sp/*/response_summary',
+     'rm -rf analysis/office3_mp/*/performance',
+     'rm -rf analysis/office3_sp/*/performance',
+     'rm -rf analysis/office3_mp/merged',
+     'rm -rf analysis/office3_sp/merged',
+     'rm -rf analysis/office3_mp/site_hazard',
+     'rm -rf analysis/office3_sp/site_hazard',
      'rm -rf make/*'],
     phony=True)
 
-mkf.add_rule(
-    'clean_ground_motions',
-    [''],
-    ['rm -rf analysis/*/ground_motions/parsed'],
-    phony=True)
+# mkf.add_rule(
+#     'clean_ground_motions',
+#     [''],
+#     ['rm -rf analysis/*/ground_motions/parsed'],
+#     phony=True)
 
-mkf.add_rule(
-    'clean_performance',
-    [''],
-    ['rm -rf analysis/*/performance',
-     'rm -rf make/*/performance'],
-    phony=True)
+# mkf.add_rule(
+#     'clean_performance',
+#     [''],
+#     ['rm -rf analysis/*/performance',
+#      'rm -rf make/*/performance'],
+#     phony=True)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Parsing raw PEER ground motion files #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
+prereqs = []
+for hz in hazard_lvl_dirs:
+    for case in cases:
+        prereqs.append(f"make/{case}/{hz}/ground_motions/ground_motions_parsed")
+
 mkf.add_rule(
     "make/all_ground_motions_parsed",
-    ["make/"+hz+"/ground_motions/ground_motions_parsed"
-     for hz in hazard_lvl_dirs],
+    prereqs,
     ["touch make/all_ground_motions_parsed"])
 
-for hz in hazard_lvl_dirs:
-    input_dir = 'analysis/' + hz + '/ground_motions/peer_raw'
-    output_dir = 'analysis/' + hz + '/ground_motions/parsed'
-    plot_dir = 'figures/' + hz + '/ground_motions'
-    mkf.add_rule(
-        "make/"+hz+"/ground_motions/ground_motions_parsed",
-        [
-            'analysis/'+hz+'/ground_motions/peer_raw/_SearchResults.csv',
-            'src/parse_gms.py',
-            'src/ground_motion_utils.py'],
-        [
-            "python src/parse_gms.py '--input_dir' '"+input_dir+"' '--output_dir' '"+output_dir+"' '--plot_dir' '"+plot_dir+"'",
-            "mkdir -p make/"+hz+"/ground_motions && touch make/"+hz+"/ground_motions/ground_motions_parsed"
-        ])
-
-# merging of generated ground motion figures
-mkf.add_rule(
-    "make/all_ground_motion_figures_merged",
-    ["make/all_ground_motions_parsed"],
-    ["bash -c \"mkdir -p figures/merged/ground_motions && gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=figures/merged/ground_motions/RS.pdf -dBATCH $$(find . -name 'RS.pdf' | sort | tr '\\n' ' ' | sed -r 's/\.\///g')\" && bash -c \"mkdir -p figures/merged/ground_motions && gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=figures/merged/ground_motions/time_history.pdf -dBATCH $$(find . -name 'time_history.pdf' | sort | tr '\\n' ' ' | sed -r 's/\.\///g')\" && touch make/all_ground_motion_figures_merged"])
+for case in cases:
+    for hz in hazard_lvl_dirs:
+        input_dir = f'analysis/{case}/{hz}/ground_motions/peer_raw'
+        output_dir = f'analysis/{case}/{hz}/ground_motions/parsed'
+        plot_dir = f'figures/{case}/{hz}/ground_motions'
+        mkf.add_rule(
+            f"make/{case}/{hz}/ground_motions/ground_motions_parsed",
+            [
+                f'analysis/{case}/{hz}/ground_motions/peer_raw/_SearchResults.csv',
+                'src/parse_gms.py',
+                'src/ground_motion_utils.py'],
+            [
+                f"python src/parse_gms.py '--input_dir' '{input_dir}' '--output_dir' '{output_dir}' '--plot_dir' '{plot_dir}'",
+                f"mkdir -p make/{case}/{hz}/ground_motions && touch make/{case}/{hz}/ground_motions/ground_motions_parsed"
+            ])
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Running NLTH analysis to get the building response #
