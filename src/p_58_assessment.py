@@ -130,11 +130,11 @@ class P58_Assessment:
         logging.basicConfig(
             filename=self.logFile,
             format='%(asctime)s %(message)s',
-            datefmt='%m/%d/%Y %I:%M:%S %p',
-            level=logging.DEBUG)
+            datefmt='%m/%d/%Y %I:%M:%S %p')
+        self.logger = logging.getLogger('p_58_assessment')
 
     def gen_edp_samples(self, resp_path, c_mdl):
-        logging.info('\tGenerating simulated demands')
+        self.logger.info('\tGenerating simulated demands')
         data = pd.read_csv(
             resp_path, header=0, index_col=0,
             low_memory=False)
@@ -212,7 +212,7 @@ class P58_Assessment:
         self.perf_model = perf_model
 
     def gen_cmp_quant_RV(self):
-        logging.info('\tSampling component quantities')
+        self.logger.info('\tSampling component quantities')
         # initialize empty dataframe
         cmp_quant_RV = pd.DataFrame(
             np.full((self.num_realizations, self.perf_model.shape[0]), 0.00),
@@ -254,7 +254,7 @@ class P58_Assessment:
         self.cmp_fragility_input = cmp_fragility_input
 
     def gen_cmp_fragility_RV(self):
-        logging.info('\tSampling component damage state thresholds')
+        self.logger.info('\tSampling component damage state thresholds')
         # instantiate a dataframe with the right indices
         all_groups = self.perf_model.index.values
         comp_ids_uniq = set()
@@ -308,7 +308,7 @@ class P58_Assessment:
         self.cmp_fragility_RV = cmp_fragility_RV
 
     def calc_cmp_damage(self):
-        logging.info('\tDetermining component damage')
+        self.logger.info('\tDetermining component damage')
         all_groups = self.perf_model.index.values
         cmp_damage = pd.DataFrame(
             np.full((self.num_realizations,
@@ -400,7 +400,7 @@ class P58_Assessment:
         return nds
 
     def gen_cmp_damage_consequence_RV(self):
-        logging.info('\tDetermining damage consequences')
+        self.logger.info('\tDetermining damage consequences')
         # pick damage state consequence
         # generate columns
         cols = []
@@ -517,7 +517,7 @@ class P58_Assessment:
         self.cmp_dmg_quant_eco = cmp_dmg_quant_eco
 
     def gen_cmp_cost_RV(self):
-        logging.info('\tSampling component repair cost random variables')
+        self.logger.info('\tSampling component repair cost random variables')
         cmp_cost_RV = pd.DataFrame(
             np.random.uniform(
                 0.00, 1.00,
@@ -529,7 +529,7 @@ class P58_Assessment:
         self.cmp_cost_RV = cmp_cost_RV
 
     def calc_cmp_cost(self):
-        logging.info('\tCalculating component repair cost')
+        self.logger.info('\tCalculating component repair cost')
         cmp_cost = pd.DataFrame(
             np.zeros((self.num_realizations, len(self.cmp_dmg_quant.columns))),
             columns=self.cmp_dmg_quant.columns,
@@ -597,7 +597,7 @@ class P58_Assessment:
         self.cmp_cost = cmp_cost
 
     def calc_total_cost(self):
-        logging.info('\tSummarizing cost')
+        self.logger.info('\tSummarizing cost')
         total_cost = self.cmp_cost.sum(axis=1)
         # consider replacement cost threshold value
         col = ('replacement', '0', '1', '0', 'DS1', '1')

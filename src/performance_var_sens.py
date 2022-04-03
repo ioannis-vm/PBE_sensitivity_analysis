@@ -71,15 +71,15 @@ if not os.path.exists(figures_output_path):
 logging.basicConfig(
     filename=f'{analysis_output_path}/info_all.txt',
     format='%(asctime)s %(message)s',
-    datefmt='%m/%d/%Y %I:%M:%S %p',
-    level=logging.DEBUG)
+    datefmt='%m/%d/%Y %I:%M:%S %p')
+logger = logging.getLogger('perf_var_sens')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 #                       Analysis A                               #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-logging.info('Starting analysis A')
+logger.info('Starting analysis A')
 asmt_A = P58_Assessment(
     num_realizations=num_realizations,
     replacement_threshold=replacement_threshold)
@@ -87,14 +87,14 @@ asmt_A.read_perf_model(perf_model_input_path)
 asmt_A.read_fragility_input(cmp_fragility_input_path)
 asmt_A.read_cmp_repair_cost_input(cmp_repair_cost_input_path)
 asmt_A.run(response_path, c_modeling_uncertainty)
-logging.info('\tAnalysis A finished')
+logger.info('\tAnalysis A finished')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 #                       Analysis B                               #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-logging.info('Starting analysis B')
+logger.info('Starting analysis B')
 asmt_B = P58_Assessment(
     num_realizations=num_realizations,
     replacement_threshold=replacement_threshold)
@@ -102,7 +102,7 @@ asmt_B.read_perf_model(perf_model_input_path)
 asmt_B.read_fragility_input(cmp_fragility_input_path)
 asmt_B.read_cmp_repair_cost_input(cmp_repair_cost_input_path)
 asmt_B.run(response_path, c_modeling_uncertainty)
-logging.info('\tAnalysis B finished')
+logger.info('\tAnalysis B finished')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -125,7 +125,7 @@ asmt_D.read_cmp_repair_cost_input(cmp_repair_cost_input_path)
 
 if rv_group == 'bldg_dm':
 
-    logging.info('Starting analysis C')
+    logger.info('Starting analysis C')
     asmt_C.edp_samples = asmt_B.edp_samples
     asmt_C.cmp_quant_RV = asmt_B.cmp_quant_RV
     temp = asmt_B.cmp_fragility_RV.copy()
@@ -140,9 +140,9 @@ if rv_group == 'bldg_dm':
     asmt_C.calc_cmp_dmg_quant()
     asmt_C.calc_cmp_cost()
     asmt_C.calc_total_cost()
-    logging.info('\tAnalysis C finished')
+    logger.info('\tAnalysis C finished')
 
-    logging.info('Starting analysis D')
+    logger.info('Starting analysis D')
     asmt_D.edp_samples = asmt_A.edp_samples
     asmt_D.cmp_quant_RV = asmt_A.cmp_quant_RV
     temp = asmt_A.cmp_fragility_RV.copy()
@@ -157,11 +157,11 @@ if rv_group == 'bldg_dm':
     asmt_D.calc_cmp_dmg_quant()
     asmt_D.calc_cmp_cost()
     asmt_D.calc_total_cost()
-    logging.info('\tAnalysis D finished')
+    logger.info('\tAnalysis D finished')
 
 elif rv_group == 'bldg_dv':
 
-    logging.info('Starting analysis C')
+    logger.info('Starting analysis C')
     asmt_C.edp_samples = asmt_B.edp_samples
     asmt_C.cmp_quant_RV = asmt_B.cmp_quant_RV
     asmt_C.cmp_fragility_RV = asmt_B.cmp_fragility_RV
@@ -175,9 +175,9 @@ elif rv_group == 'bldg_dv':
     asmt_C.cmp_cost_RV = temp
     asmt_C.calc_cmp_cost()
     asmt_C.calc_total_cost()
-    logging.info('\tAnalysis C finished')
+    logger.info('\tAnalysis C finished')
 
-    logging.info('Starting analysis D')
+    logger.info('Starting analysis D')
     asmt_D.edp_samples = asmt_A.edp_samples
     asmt_D.cmp_quant_RV = asmt_A.cmp_quant_RV
     asmt_D.cmp_fragility_RV = asmt_A.cmp_fragility_RV
@@ -191,11 +191,11 @@ elif rv_group == 'bldg_dv':
     asmt_D.cmp_cost_RV = temp
     asmt_D.calc_cmp_cost()
     asmt_D.calc_total_cost()
-    logging.info('\tAnalysis D finished')
+    logger.info('\tAnalysis D finished')
 
 elif rv_group == 'cmp_dm':
 
-    logging.info('Starting analysis C')
+    logger.info('Starting analysis C')
     asmt_C.edp_samples = asmt_B.edp_samples
     asmt_C.cmp_quant_RV = asmt_B.cmp_quant_RV
     temp = asmt_A.cmp_fragility_RV.copy()
@@ -210,9 +210,9 @@ elif rv_group == 'cmp_dm':
     asmt_C.calc_cmp_dmg_quant()
     asmt_C.calc_cmp_cost()
     asmt_C.calc_total_cost()
-    logging.info('\tAnalysis C finished')
+    logger.info('\tAnalysis C finished')
 
-    logging.info('Starting analysis D')
+    logger.info('Starting analysis D')
     asmt_D.edp_samples = asmt_A.edp_samples
     asmt_D.cmp_quant_RV = asmt_A.cmp_quant_RV
     temp = asmt_B.cmp_fragility_RV.copy()
@@ -227,12 +227,12 @@ elif rv_group == 'cmp_dm':
     asmt_D.calc_cmp_dmg_quant()
     asmt_D.calc_cmp_cost()
     asmt_D.calc_total_cost()
-    logging.info('\tAnalysis D finished')
+    logger.info('\tAnalysis D finished')
 
 
 elif rv_group == 'cmp_dv':
 
-    logging.info('Starting analysis C')
+    logger.info('Starting analysis C')
     asmt_C.edp_samples = asmt_B.edp_samples
     asmt_C.cmp_quant_RV = asmt_B.cmp_quant_RV
     asmt_C.cmp_fragility_RV = asmt_B.cmp_fragility_RV
@@ -245,9 +245,9 @@ elif rv_group == 'cmp_dv':
     asmt_C.calc_cmp_dmg_quant()
     asmt_C.calc_cmp_cost()
     asmt_C.calc_total_cost()
-    logging.info('\tAnalysis C finished')
+    logger.info('\tAnalysis C finished')
 
-    logging.info('Starting analysis D')
+    logger.info('Starting analysis D')
     asmt_D.edp_samples = asmt_A.edp_samples
     asmt_D.cmp_quant_RV = asmt_A.cmp_quant_RV
     asmt_D.cmp_fragility_RV = asmt_A.cmp_fragility_RV
@@ -260,11 +260,11 @@ elif rv_group == 'cmp_dv':
     asmt_D.calc_cmp_dmg_quant()
     asmt_D.calc_cmp_cost()
     asmt_D.calc_total_cost()
-    logging.info('\tAnalysis D finished')
+    logger.info('\tAnalysis D finished')
 
 elif rv_group == 'cmp_quant':
 
-    logging.info('Starting analysis C')
+    logger.info('Starting analysis C')
     asmt_C.edp_samples = asmt_B.edp_samples
     asmt_C.cmp_quant_RV = asmt_A.cmp_quant_RV
     asmt_C.cmp_fragility_RV = asmt_B.cmp_fragility_RV
@@ -274,9 +274,9 @@ elif rv_group == 'cmp_quant':
     asmt_C.calc_cmp_dmg_quant()
     asmt_C.calc_cmp_cost()
     asmt_C.calc_total_cost()
-    logging.info('\tAnalysis C finished')
+    logger.info('\tAnalysis C finished')
 
-    logging.info('Starting analysis D')
+    logger.info('Starting analysis D')
     asmt_D.edp_samples = asmt_A.edp_samples
     asmt_D.cmp_quant_RV = asmt_B.cmp_quant_RV
     asmt_D.cmp_fragility_RV = asmt_A.cmp_fragility_RV
@@ -286,11 +286,11 @@ elif rv_group == 'cmp_quant':
     asmt_D.calc_cmp_dmg_quant()
     asmt_D.calc_cmp_cost()
     asmt_D.calc_total_cost()
-    logging.info('\tAnalysis D finished')
+    logger.info('\tAnalysis D finished')
 
 elif rv_group == 'edp':
 
-    logging.info('Starting analysis C')
+    logger.info('Starting analysis C')
     asmt_C.edp_samples = asmt_A.edp_samples
     asmt_C.cmp_quant_RV = asmt_B.cmp_quant_RV
     asmt_C.cmp_fragility_RV = asmt_B.cmp_fragility_RV
@@ -300,9 +300,9 @@ elif rv_group == 'edp':
     asmt_C.calc_cmp_dmg_quant()
     asmt_C.calc_cmp_cost()
     asmt_C.calc_total_cost()
-    logging.info('\tAnalysis C finished')
+    logger.info('\tAnalysis C finished')
 
-    logging.info('Starting analysis D')
+    logger.info('Starting analysis D')
     asmt_D.edp_samples = asmt_B.edp_samples
     asmt_D.cmp_quant_RV = asmt_A.cmp_quant_RV
     asmt_D.cmp_fragility_RV = asmt_A.cmp_fragility_RV
@@ -312,13 +312,13 @@ elif rv_group == 'edp':
     asmt_D.calc_cmp_dmg_quant()
     asmt_D.calc_cmp_cost()
     asmt_D.calc_total_cost()
-    logging.info('\tAnalysis D finished')
+    logger.info('\tAnalysis D finished')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 #                     Sensitivity Indices                        #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-logging.info('Calculating sensitivity indices')
+logger.info('Calculating sensitivity indices')
 yA = asmt_A.total_cost.to_numpy()
 yB = asmt_B.total_cost.to_numpy()
 yC = asmt_C.total_cost.to_numpy()
