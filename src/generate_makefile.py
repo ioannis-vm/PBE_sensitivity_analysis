@@ -148,12 +148,16 @@ for case in cases:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Running NLTH analysis to get the building response #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+prereqs = []
+for hz in hazard_lvl_dirs:
+    for case in cases:
+        prereqs.append(
+            "make/{case}/{hz}/response/all_responses_obtained")
 
 mkf.add_rule(
-    "make/all_responses_obtained",
-    ["make/"+hz+"/response/all_responses_obtained"
-     for hz in hazard_lvl_dirs],
-    [])
+    "make/all_response_summaries_obtained",
+    prereqs,
+    ["touch make/all_response_summaries_obtained"])
 
 for hz in hazard_lvl_dirs:
     mkf.add_rule(
@@ -164,28 +168,8 @@ for hz in hazard_lvl_dirs:
         ['src/response_vectors.py'],
         ["python src/response_vectors.py '--input_dir' 'analysis/"+hz+"/response' '--output_dir' 'analysis/"+hz+"/response_summary' '--num_levels' '$(num_levels)' '--num_inputs' '14' && mkdir -p make/"+hz+"/response && touch make/"+hz+"/response/all_responses_obtained"])
 
-# for hz in hazard_lvl_dirs:
-#     for gm in gms:
-#         mkf.add_rule(
-#             "make/"+hz+"/response/"+gm+"/response_obtained",
-#             [
-#                 'make/'+hz+'/ground_motions/ground_motions_parsed',
-#                 'src/response.py',
-#             ],
-#             [
-#                 "#python src/response.py '--gm_dir' 'analysis/"+hz+"/ground_motions/parsed' '--gm_dt' '0.005' '--analysis_dt' '0.01' '--gm_number' '"+gm+"' '--output_dir' 'analysis/"+hz+"/response/"+gm+"' && mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
-#             ])
-for hz in hazard_lvl_dirs:
-    for gm in gms:
-        mkf.add_rule(
-            "make/"+hz+"/response/"+gm+"/response_obtained",
-            [
-                'make/'+hz+'/ground_motions/ground_motions_parsed',
-                'src/response.py',
-            ],
-            [
-                "mkdir -p make/"+hz+"/response/"+gm+" && touch make/"+hz+"/response/"+gm+"/response_obtained"
-            ])
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need to update
 
 # response figures
 
