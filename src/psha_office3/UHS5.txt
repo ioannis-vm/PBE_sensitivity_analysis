@@ -11,7 +11,7 @@ Num Points: 21
 Info: 
 IMR Param List:
 ---------------
-IMR = NGAWest2 2014 Averaged Attenuation Relationship; IMR Weights = ['Abrahamson, Silva & Kamai (2014)': 0.22, 'Boore, Stewart, Seyhan & Atkinson (2014)': 0.22, 'Campbell & Bozorgnia (2014)': 0.22, 'Chiou & Youngs (2014)': 0.22, 'Idriss (2014)': 0.12]; Std Dev Type = Total; Tectonic Region = Active Shallow Crust; Additional Epistemic Uncertainty = null; Component = RotD50; Gaussian Truncation = None
+IMR = NGAWest2 2014 Averaged No Idriss; IMR Weights = ['Abrahamson, Silva & Kamai (2014)': 0.25, 'Boore, Stewart, Seyhan & Atkinson (2014)': 0.25, 'Campbell & Bozorgnia (2014)': 0.25, 'Chiou & Youngs (2014)': 0.25]; Std Dev Type = Total; Tectonic Region = Active Shallow Crust; Additional Epistemic Uncertainty = null; Component = RotD50; Gaussian Truncation = None
 
 Site Param List: 
 ----------------
@@ -19,11 +19,11 @@ Longitude = -122.259; Latitude = 37.871; Vs30 = 733.4; Vs30 Type = Inferred; Dep
 
 IML/Prob Param List: 
 ---------------
-Map Type = IML@Prob; Probability = 8.565087535852278E-4
+Map Type = IML@Prob; Probability = 0.003018246899582855
 
 Forecast Param List: 
 --------------------
-Eqk Rup Forecast = Mean UCERF3; Mean UCERF3 Presets = null; Apply Aftershock Filter = true; Aleatory Mag-Area StdDev = 0.0; Background Seismicity = Include; Treat Background Seismicity As = Point Sources; Fault Grid Spacing = 1.0; Probability Model = Poisson; Sect Upper Depth Averaging Tolerance = 100.0; Use Mean Upper Depth = false; Rup Mag Averaging Tolerance = 1.0; Rupture Rake To Use = Def. Model Mean; Fault Model(s) = Both; Ignore Cache = false
+Eqk Rup Forecast = Mean UCERF3; Mean UCERF3 Presets = null; Apply Aftershock Filter = true; Aleatory Mag-Area StdDev = 0.0; Background Seismicity = Include; Treat Background Seismicity As = Point Sources; Fault Grid Spacing = 1.0; Probability Model = Poisson; Sect Upper Depth Averaging Tolerance = 100.0; Use Mean Upper Depth = true; Rup Mag Averaging Tolerance = 1.0; Rupture Rake To Use = Def. Model Mean; Fault Model(s) = Both; Ignore Cache = false
 
 TimeSpan Param List: 
 --------------------
@@ -36,26 +36,26 @@ Duration = 1.0
 Maximum Distance = 200.0; Pt Src Dist Corr = None
 
 X, Y Data:
-0.01	0.8250851
-0.02	0.8476782
-0.03	0.9436544
-0.05	1.2005205
-0.075	1.5478548
-0.1	1.7649508
-0.15	2.0044231
-0.2	1.9491187
-0.25	1.7841499
-0.3	1.6188339
-0.4	1.3550872
-0.5	1.1659195
-0.75	0.82919633
-1.0	0.62878954
-1.5	0.3954695
-2.0	0.2821064
-3.0	0.18280344
-4.0	0.13212574
-5.0	0.10497278
-7.5	0.06317388
-10.0	0.040410057
+0.01	0.4808495
+0.02	0.49336293
+0.03	0.5462651
+0.05	0.7055394
+0.075	0.906459
+0.1	1.0357524
+0.15	1.1608387
+0.2	1.1220579
+0.25	1.0286843
+0.3	0.92932785
+0.4	0.7728091
+0.5	0.65652496
+0.75	0.46380273
+1.0	0.34643054
+1.5	0.21705128
+2.0	0.1551999
+3.0	0.09675672
+4.0	0.06891362
+5.0	0.052572746
+7.5	0.029946439
+10.0	0.01947165
 
 

@@ -41,10 +41,10 @@ input_dir = args.input_dir
 output_dir = args.output_dir
 plot_dir = args.plot_dir
 
-# # debug
-# input_dir = 'analysis/hazard_level_8/ground_motions/peer_raw'
-# output_dir = 'analysis/hazard_level_8/ground_motions/parsed'
-# plot_dir = 'figures/hazard_level_8/ground_motions'
+# input_dir = 'analysis/office3/hazard_level_8/ground_motions/peer_raw'
+# output_dir = 'analysis/office3/hazard_level_8/ground_motions/parsed'
+# plot_dir = 'figures/office3/hazard_level_8/ground_motions'
+# # temp = '8'
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -92,9 +92,67 @@ record_metadata = parse_SearchResults(
 target_spectrum = parse_SearchResults(
     '-- Scaled Spectra used in Search & Scaling --',
     (0, 1), 1)
-
 target_spectrum = np.asarray(
     target_spectrum, dtype=np.float64, order='C')
+
+suite_mean_spectrum = parse_SearchResults(
+    '-- Scaled Spectra used in Search & Scaling --',
+    (0, 2), 1)
+suite_mean_spectrum = np.asarray(
+    suite_mean_spectrum, dtype=np.float64, order='C')
+suite_mean_plus_spectrum = parse_SearchResults(
+    '-- Scaled Spectra used in Search & Scaling --',
+    (0, 3), 1)
+suite_mean_plus_spectrum = np.asarray(
+    suite_mean_plus_spectrum, dtype=np.float64, order='C')
+suite_mean_minus_spectrum = parse_SearchResults(
+    '-- Scaled Spectra used in Search & Scaling --',
+    (0, 4), 1)
+suite_mean_minus_spectrum = np.asarray(
+    suite_mean_minus_spectrum, dtype=np.float64, order='C')
+
+temp = int(input_dir.replace('analysis/office3/hazard_level_', '').replace('/ground_motions/peer_raw', ''))
+xx = suite_mean_spectrum
+with open(f'/home/john_vm/Downloads/mean_{temp}.txt', 'w') as f:
+    for i in range(len(xx)):
+        f.write(f'{xx[i, 0]} {xx[i, 1]}\n')
+xx = suite_mean_plus_spectrum
+with open(f'/home/john_vm/Downloads/mean_plus_{temp}.txt', 'w') as f:
+    for i in range(len(xx)):
+        f.write(f'{xx[i, 0]} {xx[i, 1]}\n')
+xx = suite_mean_minus_spectrum
+with open(f'/home/john_vm/Downloads/mean_minus_{temp}.txt', 'w') as f:
+    for i in range(len(xx)):
+        f.write(f'{xx[i, 0]} {xx[i, 1]}\n')
+xx = target_spectrum
+with open(f'/home/john_vm/Downloads/target_{temp}.txt', 'w') as f:
+    for i in range(len(xx)):
+        f.write(f'{xx[i, 0]} {xx[i, 1]}\n')
+
+
+
+
+
+num_records = len(record_metadata)
+
+record_spectra = []
+for i in range(num_records):
+    rec_spec = parse_SearchResults(
+        '-- Scaled Spectra used in Search & Scaling --',
+        (0, 4+i), 1)
+    rec_spec = np.asarray(
+        rec_spec, dtype=np.float64, order='C')
+    record_spectra.append(rec_spec)
+
+
+
+# plt.plot(target_spectrum[:, 0], target_spectrum[:, 1])
+# plt.xscale('log')
+# plt.yscale('log')
+# for i in range(num_records):
+#     plt.plot(record_spectra[i][:, 0], record_spectra[i][:, 1])
+# plt.show()
+
 
 
 # ~~~~~~~~~~~~~~ #
@@ -102,7 +160,6 @@ target_spectrum = np.asarray(
 # ~~~~~~~~~~~~~~ #
 
 ground_motions = []
-num_records = len(record_metadata)
 
 for i in range(num_records):
 
@@ -169,8 +226,8 @@ for gm in range(num_records):
             istart = i
         if integrated[i] < 0.95:
             iend = i
-    if iend > int(60/0.005):
-        iend = int(60/0.005)
+    if iend > int(180/0.005):
+        iend = int(180/0.005)
 
     for direction in [0, 1, 2]:
         ground_motions[gm][direction] = ground_motions[gm][direction][istart:iend]
@@ -188,32 +245,33 @@ for gm in range(num_records):
 # calculate response spectra #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-response_spectra = []
-n_pts = 200
-sa_mat = np.full((n_pts, 180), 0.00)
+# not necessary. using PEER results instead.
+# response_spectra = []
+# n_pts = 200
+# sa_mat = np.full((n_pts, 180), 0.00)
+# for i in range(num_records):
+#     rs_x = response_spectrum(ground_motions[i][0], 0.005, 0.05, n_Pts=n_pts)
+#     rs_y = response_spectrum(ground_motions[i][1], 0.005, 0.05, n_Pts=n_pts)
+#     periods = rs_x[:, 0]
+#     x_vec = rs_x[:, 1]
+#     y_vec = rs_y[:, 1]
+#     xy = np.column_stack((x_vec, y_vec))
+#     angles = np.linspace(0.00, 180.00, 180)
+#     for j, ang in enumerate(np.nditer(angles)):
+#         rot_mat = np.array(
+#             [
+#                 [np.cos(ang)],
+#                 [np.sin(ang)]
+#             ]
+#         )
+#         sa_mat[:, j] = np.abs(np.reshape(xy @ rot_mat, (1, -1)))
+#     rotd50 = np.median(sa_mat, axis=1)
+#     response_spectra.append(np.column_stack((periods, rotd50)))
+#     # store response spectra
 
 for i in range(num_records):
-
-    rs_x = response_spectrum(ground_motions[i][0], 0.005, 0.05, n_Pts=n_pts)
-    rs_y = response_spectrum(ground_motions[i][1], 0.005, 0.05, n_Pts=n_pts)
-    periods = rs_x[:, 0]
-    x_vec = rs_x[:, 1]
-    y_vec = rs_y[:, 1]
-    xy = np.column_stack((x_vec, y_vec))
-    angles = np.linspace(0.00, 180.00, 180)
-    for j, ang in enumerate(np.nditer(angles)):
-        rot_mat = np.array(
-            [
-                [np.cos(ang)],
-                [np.sin(ang)]
-            ]
-        )
-        sa_mat[:, j] = np.abs(np.reshape(xy @ rot_mat, (1, -1)))
-    rotd50 = np.median(sa_mat, axis=1)
-    response_spectra.append(np.column_stack((periods, rotd50)))
-    # store response spectra
     np.savetxt(f'{output_dir}/{i+1}RS.txt',
-               np.column_stack((periods, rotd50)))
+               record_spectra[i])
 
 
 
@@ -225,80 +283,80 @@ for i in range(num_records):
 # Plot 1: time-acceleration combined plot
 #
 
-direction_label = ['x', 'y', 'z']
+# direction_label = ['x', 'y', 'z']
 
-labels = []
-for i in range(num_records):
-    labels.append(record_metadata[i, 2].replace('"', '') +
-                  "\n" + record_metadata[i, 3].replace('"', ''))
+# labels = []
+# for i in range(num_records):
+#     labels.append(record_metadata[i, 2].replace('"', '') +
+#                   "\n" + record_metadata[i, 3].replace('"', ''))
 
-axs = []
-# plot the first record
-num_pts = len(ground_motions[0][0])
-t_vals = np.linspace(0.00, num_pts*0.005, num_pts)
-plt.figure(figsize=(10, num_records))
-axs.append(plt.subplot(num_records, 1, 1))
-plt.plot(t_vals, ground_motions[0][0],
-         'red', label=labels[0], linewidth=0.4)
-plt.plot(t_vals, ground_motions[0][1],
-         'green', linewidth=0.4)
-plt.plot(t_vals, ground_motions[0][2],
-         'blue', linewidth=0.4)
-plt.legend(loc='upper right')
-# and then the rest
-for i in range(1, num_records):
-    num_pts = len(ground_motions[i][0])
-    t_vals = np.linspace(0.00, num_pts*0.005, num_pts)
-    axs.append(plt.subplot(num_records, 1, i+1, sharex=axs[0], sharey=axs[0]))
-    plt.plot(t_vals, ground_motions[i][0],
-             'red', label=labels[i], linewidth=0.4)
-    plt.plot(t_vals, ground_motions[i][1],
-             'green', linewidth=0.4)
-    plt.plot(t_vals, ground_motions[i][2],
-             'blue', linewidth=0.4)
-    plt.legend(loc='upper right')
-# hide x-tickmarks except for the last plot
-for i in range(num_records-1):
-    plt.setp(axs[i].get_xticklabels(), visible=False)
+# axs = []
+# # plot the first record
+# num_pts = len(ground_motions[0][0])
+# t_vals = np.linspace(0.00, num_pts*0.005, num_pts)
+# plt.figure(figsize=(10, num_records))
+# axs.append(plt.subplot(num_records, 1, 1))
+# plt.plot(t_vals, ground_motions[0][0],
+#          'red', label=labels[0], linewidth=0.4)
+# plt.plot(t_vals, ground_motions[0][1],
+#          'green', linewidth=0.4)
+# plt.plot(t_vals, ground_motions[0][2],
+#          'blue', linewidth=0.4)
+# plt.legend(loc='upper right')
+# # and then the rest
+# for i in range(1, num_records):
+#     num_pts = len(ground_motions[i][0])
+#     t_vals = np.linspace(0.00, num_pts*0.005, num_pts)
+#     axs.append(plt.subplot(num_records, 1, i+1, sharex=axs[0], sharey=axs[0]))
+#     plt.plot(t_vals, ground_motions[i][0],
+#              'red', label=labels[i], linewidth=0.4)
+#     plt.plot(t_vals, ground_motions[i][1],
+#              'green', linewidth=0.4)
+#     plt.plot(t_vals, ground_motions[i][2],
+#              'blue', linewidth=0.4)
+#     plt.legend(loc='upper right')
+# # hide x-tickmarks except for the last plot
+# for i in range(num_records-1):
+#     plt.setp(axs[i].get_xticklabels(), visible=False)
 
-if not os.path.exists(plot_dir):
-    os.makedirs(plot_dir)
-plt.savefig(plot_dir + '/time_history.pdf')
-# plt.show()
-plt.close()
+# if not os.path.exists(plot_dir):
+#     os.makedirs(plot_dir)
+# plt.savefig(plot_dir + '/time_history.pdf')
+# # plt.show()
+# plt.close()
 
 #
 # Plot 2: Response spectrum
 #
 
 
-plt.figure(figsize=(10, 10))
-plt.plot(target_spectrum[:, 0],
-         target_spectrum[:, 1],
-         'k', linewidth=2, label='Target')
-for i, rs in enumerate(response_spectra):
-    plt.plot(rs[:, 0], rs[:, 1], linewidth=0.75, label=labels[i])
-rs_T = rs[:, 0]
-rs_SA = np.column_stack([rs[:, 1] for rs in response_spectra])
-rs_mean = np.mean(rs_SA, axis=1)
-rs_stdev = np.std(rs_SA, axis=1)
-plt.plot(rs_T, rs_mean, linewidth=2, color='red', label='$\mu$')
-plt.plot(rs_T, rs_mean+rs_stdev, linewidth=2, color='red',
-         linestyle='dashed', label='$\mu\pm\sigma$')
-plt.plot(rs_T, rs_mean-rs_stdev, linewidth=2, color='red', linestyle='dashed')
+# plt.figure(figsize=(10, 10))
+# plt.plot(target_spectrum[:, 0],
+#          target_spectrum[:, 1],
+#          'k', linewidth=2, label='Target')
+# for i, rs in enumerate(response_spectra):
+#     plt.plot(rs[:, 0], rs[:, 1], linewidth=0.75, label=labels[i])
+# rs_T = rs[:, 0]
+# rs_SA = np.column_stack([rs[:, 1] for rs in response_spectra])
+# rs_mean = np.mean(rs_SA, axis=1)
+# rs_stdev = np.std(rs_SA, axis=1)
+# plt.plot(rs_T, rs_mean, linewidth=2, color='red', label='$\mu$')
+# plt.plot(rs_T, rs_mean+rs_stdev, linewidth=2, color='red',
+#          linestyle='dashed', label='$\mu\pm\sigma$')
+# plt.plot(rs_T, rs_mean-rs_stdev, linewidth=2, color='red', linestyle='dashed')
+# # plt.xscale('log')
+# # plt.yscale('log')
+# plt.legend(bbox_to_anchor=(1.05, 1.00), loc='upper left')
+# plt.xlabel('Period T [s]')
+# plt.ylabel('PSA [g]')
 # plt.xscale('log')
 # plt.yscale('log')
-plt.legend(bbox_to_anchor=(1.05, 1.00), loc='upper left')
-plt.xlabel('Period T [s]')
-plt.ylabel('PSA [g]')
-plt.xscale('log')
-plt.yscale('log')
-plt.xlim((1e-2, 3))
-plt.ylim((1e-2, 6))
-plt.tight_layout()
-# plt.show()
-plt.savefig(plot_dir + '/RS.pdf')
-plt.close()
+# plt.xlim((1e-2, 3))
+# plt.ylim((1e-2, 6))
+# plt.tight_layout()
+# # plt.show()
+# plt.savefig(plot_dir + '/RS.pdf')
+# plt.close()
 
 # ~~~~~~~~~~~~~~~~~~~~ #
 # save results on disk #

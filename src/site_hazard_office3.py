@@ -65,6 +65,8 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import numpy as np
 import os
+import tikzplotlib
+import pandas as pd
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["mathtext.fontset"] = "dejavuserif"
@@ -74,7 +76,7 @@ plt.rcParams["mathtext.fontset"] = "dejavuserif"
 # (Tbar = (Tx + Ty) / 2)
 
 # ~~~~~~~~~~ #
-Tbar = 0.85  #
+Tbar = 0.82  #
 # ~~~~~~~~~~~#
 
 # long = -122.259
@@ -131,26 +133,26 @@ for mape in MAPEs:
 # Plot hazard curves #
 # ~~~~~~~~~~~~~~~~~~ #
 
-if not os.path.exists('figures/office3_mp/site_hazard'):
-    os.makedirs('figures/office3_mp/site_hazard')
-save_path = 'figures/office3_mp/site_hazard/hazard_curves.pdf'
+# if not os.path.exists('figures/office3/site_hazard'):
+#     os.makedirs('figures/office3/site_hazard')
+# save_path = 'figures/office3/site_hazard/hazard_curves.pdf'
 
-plt.figure(figsize=(12, 10))
-plt.grid(which='Major')
-plt.grid(which='Minor')
-for i in range(len(periods)):
-    plt.plot(accelerations[i], MAFEs[i], '-s',
-             label='T = ' + str(periods[i]) + ' s (OpenSHA)')
-plt.xscale('log')
-plt.yscale('log')
-plt.axhline(2e-2)
-plt.axhline(4e-4)
-plt.legend()
-plt.xlabel('Earthquake Intensity $e$ [g]')
-plt.ylabel('Mean annual frequency of exceedance $λ$')
-# plt.show()
-plt.savefig(save_path)
-plt.close()
+# plt.figure(figsize=(12, 10))
+# plt.grid(which='Major')
+# plt.grid(which='Minor')
+# for i in range(len(periods)):
+#     plt.plot(accelerations[i], MAFEs[i], '-s',
+#              label='T = ' + str(periods[i]) + ' s (OpenSHA)')
+# plt.xscale('log')
+# plt.yscale('log')
+# plt.axhline(2e-2)
+# plt.axhline(4e-4)
+# plt.legend()
+# plt.xlabel('Earthquake Intensity $e$ [g]')
+# plt.ylabel('Mean annual frequency of exceedance $λ$')
+# # plt.show()
+# plt.savefig(save_path)
+# plt.close()
 
 
 
@@ -173,51 +175,58 @@ target_acceleration = accelerations[0]  # they are the same for all curves
 # Define interpolation functions for the period-specific hazard curve
 
 # Interpolate: From intensity e [g] to MAFE λ
-fHazMAFEtoSa = interp1d(target_MAFE, target_acceleration,
-                        kind='linear')
+def fHazMAFEtoSa(mafe):
+    temp1 = interp1d(np.log(target_MAFE), np.log(target_acceleration),
+                    kind='cubic')
+    return np.exp(temp1(np.log(mafe)))
+
 # Interpolate: Inverse (From MAFE λ to intensity e [g])
-fHazSatoMAFE = interp1d(target_acceleration, target_MAFE,
-                        kind='linear')
+def fHazSatoMAFE(f):
+    temp2 = interp1d(np.log(target_acceleration), np.log(target_MAFE),
+                     kind='cubic')
+    return np.exp(temp2(np.log(f)))
 
 
-# Determine intensity range of interest (FEMA P-58-1 p. 4-10)
-if Tbar <= 1.00:
-    SaMin = 0.05
-else:
-    SaMin = 0.05/Tbar
+# Specify Intensity range
+# if Tbar <= 1.00:
+#     SaMin = 0.05
+# else:
+#     SaMin = 0.05/Tbar
 SaMax = fHazMAFEtoSa(2e-4)
+SaMin = 0.005  # g
 
 
-# plot target hazard curve
-save_path = 'figures/office3_mp/site_hazard/target_hazard_curve.pdf'
-plt.figure(figsize=(12, 10))
-plt.grid(which='Major')
-plt.grid(which='Minor')
-for i in range(len(periods)):
-    plt.plot(accelerations[i], MAFEs[i],  '-',
-             label='T = ' + str(periods[i]) + ' s',
-             linewidth=1.0)
-plt.plot(
-    target_acceleration, target_MAFE, '-s',
-    label='Target', color='k',
-    linewidth=3)
-plt.axvline(SaMin, color='k', linestyle='dashed')
-plt.axvline(SaMax, color='k', linestyle='dashed')
-plt.xscale('log')
-plt.yscale('log')
-plt.legend()
-plt.xlabel('Earthquake Intensity $e$ [g]')
-plt.ylabel('Mean annual frequency of exceedance $λ$')
-# plt.show()
-plt.savefig(save_path)
-plt.close()
+
+# # plot target hazard curve
+# save_path = 'figures/office3/site_hazard/target_hazard_curve.pdf'
+# plt.figure(figsize=(12, 10))
+# plt.grid(which='Major')
+# plt.grid(which='Minor')
+# for i in range(len(periods)):
+#     plt.plot(accelerations[i], MAFEs[i],  '-',
+#              label='T = ' + str(periods[i]) + ' s',
+#              linewidth=1.0)
+# plt.plot(
+#     target_acceleration, target_MAFE, '-s',
+#     label='Target', color='k',
+#     linewidth=3)
+# plt.axvline(SaMin, color='k', linestyle='dashed')
+# plt.axvline(SaMax, color='k', linestyle='dashed')
+# plt.xscale('log')
+# plt.yscale('log')
+# plt.legend()
+# plt.xlabel('Earthquake Intensity $e$ [g]')
+# plt.ylabel('Mean annual frequency of exceedance $λ$')
+# # plt.show()
+# plt.savefig(save_path)
+# plt.close()
 
 
 # Split intensity range to m intervals
 
-# ~~~~ #
-m = 8  #
-# ~~~~ #
+# ~~~~~ #
+m = 16  #
+# ~~~~~ #
 
 # Determine interval midpoints and endpoints
 
@@ -268,10 +277,13 @@ delta_e = np.array([e_Endpoints[i+1]-e_Endpoints[i]
 delta_lamda = np.array([MAFE_Endpoints[i]-MAFE_Endpoints[i+1]
                         for i in range(m)])
 
+for i, thing in enumerate(return_period_midpoints):
+    print(f'{thing:.0f}')
 
-# plot intensity range, interval points
 
-save_path = 'figures/office3_mp/site_hazard/hazard_levels.pdf'
+
+    
+save_path = 'figures/office3/site_hazard/hazard_levels.pdf'
 plt.figure(figsize=(8, 6))
 plt.grid(which='Major')
 plt.grid(which='Minor')
@@ -294,11 +306,13 @@ plt.axhline(mafe_des, color='blue', label='Design')
 plt.legend()
 plt.xlabel('Earthquake Intensity $e$ [g] ( Sa(T* = %.3f s) )' % (Tbar))
 plt.ylabel('Mean annual frequency of exceedance $λ$')
-plt.xlim((0.00, SaMax + 0.05))
-plt.ylim((1e-4, 1e-1))
+plt.xlim((0.00-0.05, SaMax + 0.05))
+plt.ylim((1e-4, 1))
 plt.yscale('log')
-# plt.show()
-plt.savefig(save_path)
+plt.show()
+# plt.savefig(save_path)
+# import tikzplotlib
+# tikzplotlib.save('hzcurv.tex')
 plt.close()
 
 
@@ -306,16 +320,21 @@ plt.close()
 # (will be used to obtain mean annual rate of exceedance of
 #  decision variables)
 
-if not os.path.exists('analysis/office3_mp/site_hazard'):
-    os.makedirs('analysis/office3_mp/site_hazard')
-np.savetxt('analysis/office3_mp/site_hazard/Hazard_Curve_Interval_Data.csv',
-           np.column_stack((e_Midpoints, delta_e,
-                            delta_lamda, return_period_midpoints)))
+if not os.path.exists('analysis/office3/site_hazard'):
+    os.makedirs('analysis/office3/site_hazard')
 
+interv_df = pd.DataFrame(
+    np.column_stack(
+        (e_Midpoints, delta_e,
+         delta_lamda,
+         MAFE_Midpoints,
+         MAPE_Midpoints,
+         return_period_midpoints)),
+    columns=['e', 'de', 'dl', 'freq', 'prob', 'T'],
+    index=range(1, m+1))
 
+interv_df.to_csv('analysis/office3/site_hazard/Hazard_Curve_Interval_Data.csv')
 
-for i, mape in enumerate(MAPE_Midpoints):
-    print(i+1, mape)
 
 # At this point, with the obtained midpoint probabilities of exceedance,
 # we have to go back to OpenSHA and:
@@ -382,22 +401,22 @@ for i, mape in enumerate(MAPE_Midpoints):
 # plt.close()
 
 
-idx_tmin = 6
-idx_tmax = 15
-
-# Uniform Hazard Spectra, corresponding to the middle region
+# Uniform Hazard Spectra
 uhss = [np.genfromtxt('src/psha_office3/UHS'+str(i)+'.txt', skip_header=38)
         for i in range(1, m+1)]
 
 # mean spectra and standard deviations (from deaggregation)
-meansTmin = [np.genfromtxt('src/psha_office3/mTmin'+str(i)+'.txt', skip_header=13)
+meansTmax = [np.genfromtxt('src/psha_office3/m'+str(i)+'.txt', skip_header=13)
              for i in range(1, m+1)]
-meansTmax = [np.genfromtxt('src/psha_office3/mTmax'+str(i)+'.txt', skip_header=13)
-             for i in range(1, m+1)]
-stdevsTmin = [np.genfromtxt('src/psha_office3/sTmin'+str(i)+'.txt', skip_header=13)
+stdevsTmax = [np.genfromtxt('src/psha_office3/s'+str(i)+'.txt', skip_header=13)
               for i in range(1, m+1)]
-stdevsTmax = [np.genfromtxt('src/psha_office3/sTmax'+str(i)+'.txt', skip_header=13)
-              for i in range(1, m+1)]
+
+
+# # export UHSs for presentation
+# filepath = '~/google_drive_encr/UCB/research/projects/299_report/presentation/data/target_spectrum/'
+# for i in range(m):
+#     pd.DataFrame(uhss[i]).to_csv(f'{filepath}/uhs_{i+1}.txt', index=None, sep=' ', header=None)
+
 
 
 def read_epsilon(filename):
@@ -412,9 +431,7 @@ def read_epsilon(filename):
     return epsilon
     
 
-epsTmin = [read_epsilon('src/psha_office3/DeagTmin'+str(i)+'.txt')
-           for i in range(1, m+1)]
-epsTmax = [read_epsilon('src/psha_office3/DeagTmax'+str(i)+'.txt')
+epsTmax = [read_epsilon('src/psha_office3/deag'+str(i)+'.txt')
            for i in range(1, m+1)]
 
 
@@ -457,7 +474,7 @@ def correl(t1, t2):
         cor = c_4
     return cor
 
-# # debug ~ compare with fig. 11
+# ~ compare with fig. 11
 # num = 200
 # x = np.logspace(-2.0, 1.0, num)
 # y = np.logspace(-2.0, 1.0, num)
@@ -475,49 +492,45 @@ def correl(t1, t2):
 # plt.close()
 
 
-cmssTmin = np.full((len(uhss[0][:, 0]), m), 0.00)
-cmssTmax = np.full((len(uhss[0][:, 0]), m), 0.00)
-cmp_spec = np.full((len(uhss[0][:, 0]), m), 0.00)
+cmss = np.full((len(uhss[0][:, 0]) + 1, m), 0.00)
 for i in range(m):
     ts = uhss[i][:, 0]
+    ts_expanded = ts.copy()
+    idx = np.argwhere(ts_expanded>Tbar)[0, 0]
+    ts_expanded = np.concatenate((ts_expanded[0:idx], np.array((Tbar,)), ts_expanded[idx::]), axis=0)
     uhs = uhss[i][:, 1]
-    fmTmin = interp1d(
-        meansTmin[i][:, 0], meansTmin[i][:, 1],
-        kind='linear')
+    fuhs = interp1d(
+        ts, uhs, kind='linear')
     fmTmax = interp1d(
         meansTmax[i][:, 0], meansTmax[i][:, 1],
-        kind='linear')
-    fsTmin = interp1d(
-        stdevsTmin[i][:, 0], stdevsTmin[i][:, 1],
         kind='linear')
     fsTmax = interp1d(
         stdevsTmax[i][:, 0], stdevsTmax[i][:, 1],
         kind='linear')
-    correlationsTmin = np.full(len(ts), 0.00)
-    correlationsTmax = np.full(len(ts), 0.00)
-    for j, t in enumerate(ts.tolist()):
-        correlationsTmin[j] = correl(t, ts[idx_tmin])
-        correlationsTmax[j] = correl(t, ts[idx_tmax])
-    eTmin = np.log(uhs[idx_tmin]/fmTmin(ts[idx_tmin]))/fsTmin(ts[idx_tmin])
-    # # debug print(f'%.2f %.2f' % (eTmin, epsTmin[i]))
-    eTmax = np.log(uhs[idx_tmax]/fmTmax(ts[idx_tmax]))/fsTmax(ts[idx_tmax])
-    # # debug print(f'%.2f %.2f' % (eTmax, epsTmax[i]))
-    cmssTmin[:, i] = fmTmin(ts) * np.exp(eTmin * correlationsTmin * fsTmin(ts))
-    # # debug print(uhs[idx_tmin]/cmssTmin[idx_tmin, i])
-    cmssTmax[:, i] = fmTmax(ts) * np.exp(eTmax * correlationsTmax * fsTmax(ts))
-    # # debug print(uhs[idx_tmax]/cmssTmax[idx_tmax, i])
-    cmp_spec[0:idx_tmin, i] = cmssTmin[0:idx_tmin, i]
-    cmp_spec[idx_tmin:idx_tmax, i] = uhss[i][idx_tmin:idx_tmax, 1]
-    cmp_spec[idx_tmax::, i] = cmssTmax[idx_tmax::, i]
+    correlationsTmin = np.full(len(ts_expanded), 0.00)
+    correlationsTmax = np.full(len(ts_expanded), 0.00)
+    for j, t in enumerate(ts_expanded.tolist()):
+        correlationsTmax[j] = correl(t, Tbar)
+    eTmax = np.log(fuhs(Tbar)/fmTmax(Tbar))/fsTmax(Tbar)
+    # print(f'%.2f %.2f' % (eTmax, epsTmax[i]))
+    cmss[:, i] = fmTmax(ts_expanded) * np.exp(eTmax * correlationsTmax * fsTmax(ts_expanded))
+    # print(uhs[idx_tmax]/cmssTmax[idx_tmax, i])
 
 
-# # uniform hazard spectra
+# # export nondirective CMSs for presentation
+# filepath = '~/google_drive_encr/UCB/research/projects/299_report/presentation/data/target_spectrum/'
+# for i in range(m):
+#     pd.DataFrame(np.column_stack((ts_expanded, cmss[:, i]))).to_csv(f'{filepath}/cms_{i+1}.txt', index=None, sep=' ', header=None)
+
+
+# # uniform hazard spectra & cms
 # plt.figure()
 # plt.grid(which='Major')
 # plt.grid(which='Minor')
 # for i, opsh in enumerate(uhss):
-#     plt.plot(opsh[:, 0], opsh[:, 1],
-#              label='R.P. = %.0f yrs' % return_period_midpoints[i])
+#     # plt.plot(opsh[:, 0], opsh[:, 1],
+#     #          label='R.P. = %.0f yrs' % return_period_midpoints[i])
+#     plt.plot(ts_expanded, cmss[:, i])
 # plt.xscale('log')
 # plt.yscale('log')
 # plt.xlabel('Period T [s]')
@@ -541,7 +554,7 @@ bay_coeff = np.array([
     [7.5, -0.29, 0.112],
     [10., -0.3, 0.115]
 ])
-fgeom = np.log(np.array([24.15, 14.41, 10.58, 8.77, 7.78, 7.06, 6.43, 5.84]))
+fgeom = np.log(np.array([37.76, 22.27, 16.40, 12.80, 10.52, 8.90, 7.97, 7.23, 6.67, 6.22, 5.90, 5.57, 5.38, 5.18, 4.97, 4.86]))
 fd = bay_coeff[:, 1] + bay_coeff[:, 2].reshape((-1, 1)).T * fgeom.reshape((-1, 1))
 f_fd = []
 for i in range(m):
@@ -549,42 +562,49 @@ for i in range(m):
         bay_coeff[:, 0], fd[i, :],
         kind='linear', fill_value=0.00, bounds_error=False))
 
-cmp_spec_drctv = np.full_like(cmp_spec, 0.00)
+cms_drctv = cmss.copy()
+
+
+
 for i in range(m):
-    cmp_spec_drctv[:, i] = cmp_spec[:, i] * np.exp(f_fd[i](ts))
+    cms_drctv[:, i] = cms_drctv[:, i] * np.exp(f_fd[i](ts_expanded))
 
 
 # # Composite Spectra
-# save_path = 'figures/office3_mp/site_hazard/composite_spectra.pdf'
+# save_path = 'figures/office3/site_hazard/composite_spectra.pdf'
 # plt.figure()
-# plt.grid(which='Major')
-# plt.grid(which='Minor')
+# # plt.grid(which='Major')
+# # plt.grid(which='Minor')
 # for i, opsh in enumerate(uhss):
-#     plt.plot(ts, cmp_spec[:, i], linestyle='dotted')
+#     plt.plot(ts_expanded, cms_drctv[:, i], linestyle='dotted')
 # plt.gca().set_prop_cycle(None)
 # for i, opsh in enumerate(uhss):
-#     plt.plot(ts, cmp_spec_drctv[:, i],
-#              label='R.P. = %.0f yrs' % return_period_midpoints[i])
-# plt.axvline(ts[idx_tmin], color='tab:grey', linestyle='dashed')
-# plt.axvline(ts[idx_tmax], color='tab:grey', linestyle='dashed')
+#     plt.plot(ts_expanded, cms_drctv[:, i],
+#              label='R.P. = %.0f yrs' % return_period_midpoints[i],
+#              color='k')
+# for i, opsh in enumerate(uhss):
+#     plt.plot(ts_expanded, cmss[:, i],
+#              label='R.P. = %.0f yrs' % return_period_midpoints[i],
+#              color='k', linestyle='dashed')
+# plt.axvline(Tbar, color='tab:grey', linestyle='dashed')
 # plt.xscale('log')
 # plt.yscale('log')
 # plt.xlabel('Period T [s]')
 # plt.ylabel('PSa [g] (RotD50)')
-# plt.title('Composite Spectra')
 # plt.xlim((1e-2, 1e1))
-# plt.legend()
+# # plt.legend()
 # plt.show()
 # # plt.savefig(save_path)
+# # tikzplotlib.save('target_spectra.tex')
 # plt.close()
 
-if not os.path.exists('analysis/office3_mp/site_hazard'):
-    os.makedirs('analysis/office3_mp/site_hazard')
+if not os.path.exists('analysis/office3/site_hazard'):
+    os.makedirs('analysis/office3/site_hazard')
 
 for i in range(m):
     np.savetxt(
-        'analysis/office3_mp/site_hazard/spectrum_'+str(i+1)+'.csv',
-        np.column_stack((ts, cmp_spec_drctv[:, i])),
+        'analysis/office3/site_hazard/spectrum_'+str(i+1)+'.csv',
+        np.column_stack((ts_expanded, cms_drctv[:, i])),
         header='Hazard Level '+str(i+1)+',\r\n,\r\nT (s),Sa (g)',
         delimiter=',', comments='', fmt='%.5f', newline='\r\n')
 

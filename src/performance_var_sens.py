@@ -26,33 +26,48 @@ plt.rcParams["font.family"] = "serif"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--response_path')
+parser.add_argument('--modeling_uncertainty_case')
+parser.add_argument('--repl_thr')
 parser.add_argument('--rv_group')
+parser.add_argument('--performance_data_path')
 parser.add_argument('--analysis_output_path')
-parser.add_argument('--figures_output_path')
+# parser.add_argument('--figures_output_path')
 
 args = parser.parse_args()
 response_path = args.response_path
+modeling_uncertainty_case = args.modeling_uncertainty_case
+replacement_threshold = float(args.repl_thr)
 rv_group = args.rv_group
+performance_data_path = args.performance_data_path
 analysis_output_path = args.analysis_output_path
-figures_output_path = args.figures_output_path
 
-# # debug ~ these will be set by `make`
-# response_path = 'analysis/hazard_level_7/response_summary/response.csv'
-# rv_group = 'edp'
-# analysis_output_path = 'analysis/hazard_level_7/performance/test'
-# figures_output_path = 'figures/hazard_level_7/performance/test'
+
+# response_path = 'analysis/office3/hazard_level_1/response_summary/response.csv'
+# rv_group = 'cmp_dm'
+# modeling_uncertainty_case = 'low'
+# replacement_threshold = 0.40
+
+# performance_data_path = 'src/performance_data_healthcare3'
+# analysis_output_path = '/tmp/test'
+# figures_output_path = '/tmp/test'
 
 # ~~~~~~~~~~ #
 # parameters #
 # ~~~~~~~~~~ #
 
-c_modeling_uncertainty = np.sqrt(0.25**2+0.25**2)
-# c_modeling_uncertainty = 0.00
-num_realizations = 50000
-replacement_threshold = 0.40
-perf_model_input_path = 'src/performance_data/input_cmp_quant.csv'
-cmp_fragility_input_path = 'src/performance_data/input_fragility.csv'
-cmp_repair_cost_input_path = 'src/performance_data/input_repair_cost.csv'
+if modeling_uncertainty_case == 'medium':
+    c_modeling_uncertainty = np.sqrt(0.25**2+0.25**2)
+elif modeling_uncertainty_case == 'low':
+    c_modeling_uncertainty = np.sqrt(0.10**2+0.10**2)
+else:
+    raise ValueError('Unknown modeling uncertainty case specified')
+
+# num_realizations = 200000
+# debug
+num_realizations = 10000
+perf_model_input_path = f'{performance_data_path}/input_cmp_quant.csv'
+cmp_fragility_input_path = f'{performance_data_path}/input_fragility.csv'
+cmp_repair_cost_input_path = f'{performance_data_path}/input_repair_cost.csv'
 
 desc = {'bldg_dm': 'Building DM',
         'bldg_dv': 'Building DV',
@@ -61,12 +76,11 @@ desc = {'bldg_dm': 'Building DM',
         'cmp_quant': 'Component Quantity',
         'edp': 'EDP'}
 
-
 if not os.path.exists(analysis_output_path):
     os.makedirs(analysis_output_path)
 
-if not os.path.exists(figures_output_path):
-    os.makedirs(figures_output_path)
+# if not os.path.exists(figures_output_path):
+#     os.makedirs(figures_output_path)
 
 logging.basicConfig(
     filename=f'{analysis_output_path}/info_all.txt',
@@ -291,7 +305,9 @@ elif rv_group == 'cmp_quant':
 elif rv_group == 'edp':
 
     logger.info('Starting analysis C')
-    asmt_C.edp_samples = asmt_A.edp_samples
+    asmt_C.edp_samples = asmt_A.edp_samples.copy()
+    asmt_C.edp_samples.loc[:, ('SA_0.82', '0', '1')] = \
+        asmt_B.edp_samples.loc[:, ('SA_0.82', '0', '1')]
     asmt_C.cmp_quant_RV = asmt_B.cmp_quant_RV
     asmt_C.cmp_fragility_RV = asmt_B.cmp_fragility_RV
     asmt_C.cmp_damage_consequence_RV = asmt_B.cmp_damage_consequence_RV
@@ -303,7 +319,9 @@ elif rv_group == 'edp':
     logger.info('\tAnalysis C finished')
 
     logger.info('Starting analysis D')
-    asmt_D.edp_samples = asmt_B.edp_samples
+    asmt_D.edp_samples = asmt_B.edp_samples.copy()
+    asmt_D.edp_samples.loc[:, ('SA_0.82', '0', '1')] = \
+        asmt_A.edp_samples.loc[:, ('SA_0.82', '0', '1')]
     asmt_D.cmp_quant_RV = asmt_A.cmp_quant_RV
     asmt_D.cmp_fragility_RV = asmt_A.cmp_fragility_RV
     asmt_D.cmp_damage_consequence_RV = asmt_A.cmp_damage_consequence_RV
@@ -324,14 +342,21 @@ yB = asmt_B.total_cost.to_numpy()
 yC = asmt_C.total_cost.to_numpy()
 yD = asmt_D.total_cost.to_numpy()
 
+# import seaborn as sns
+# sns.ecdfplot(yA)
+# plt.show()
+
 results_df = pd.DataFrame({'A': yA, 'B': yB, 'C': yC, 'D': yD},
                           index=range(num_realizations))
 
 results_df.to_csv(f'{analysis_output_path}/total_cost_realizations.csv')
 
 s1, sT = calc_sens(yA, yB, yC, yD)
+
 # bootstrap
-num_repeats = 10000
+# num_repeats = 50000
+# debug
+num_repeats = 1000
 bootstrap_sample_s1 = np.zeros(num_repeats)
 bootstrap_sample_sT = np.zeros(num_repeats)
 for j in range(num_repeats):
@@ -343,10 +368,16 @@ mean_s1 = bootstrap_sample_s1.mean()
 mean_sT = bootstrap_sample_sT.mean()
 std_s1 = bootstrap_sample_s1.std()
 std_sT = bootstrap_sample_sT.std()
-conf_int_s1 = (stats.norm.ppf(0.025, mean_s1, std_s1),
-               stats.norm.ppf(0.975, mean_s1, std_s1))
-conf_int_sT = (stats.norm.ppf(0.025, mean_sT, std_s1),
-               stats.norm.ppf(0.975, mean_sT, std_s1))
+if np.abs(std_s1) < 1e-10:
+    conf_int_s1 = (mean_s1, mean_s1)
+else:
+    conf_int_s1 = (stats.norm.ppf(0.025, mean_s1, std_s1),
+                   stats.norm.ppf(0.975, mean_s1, std_s1))
+if np.abs(std_sT) < 1e-10:
+    conf_int_sT = (mean_sT, mean_sT)
+else:
+    conf_int_sT = (stats.norm.ppf(0.025, mean_sT, std_sT),
+                   stats.norm.ppf(0.975, mean_sT, std_sT))
 
 sens_results_df = pd.DataFrame(
     {'s1': s1, 'sT': sT, 's1_CI_l': conf_int_s1[0], 's1_CI_h': conf_int_s1[1],
@@ -356,22 +387,23 @@ sens_results_df.columns.name = 'Sensitivity Index'
 
 sens_results_df.to_csv(f'{analysis_output_path}/sensitividy_indices.csv')
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
-ax1.hist(bootstrap_sample_s1, 50, density=True,
-         color='#eaeaea', edgecolor='black')
-xv = np.linspace(np.min(bootstrap_sample_s1),
-                 np.max(bootstrap_sample_s1), 10000)
-yv = stats.norm.pdf(xv, mean_s1, std_s1)
-ax1.plot(xv, yv, color='k')
-ax1.set_xlabel('$s_1$')
-ax2.hist(bootstrap_sample_sT, 50, density=True,
-         color='#eaeaea', edgecolor='black')
-xv = np.linspace(np.min(bootstrap_sample_sT),
-                 np.max(bootstrap_sample_sT), 10000)
-yv = stats.norm.pdf(xv, mean_sT, std_sT)
-ax2.plot(xv, yv, color='k')
-ax2.set_xlabel('$s_T$')
-fig.suptitle(f'Bootstrap PDF of Sensitivity Indices\n{desc[rv_group]} RV group')
+
+# fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
+# ax1.hist(bootstrap_sample_s1, 50, density=True,
+#          color='#eaeaea', edgecolor='black')
+# xv = np.linspace(np.min(bootstrap_sample_s1),
+#                  np.max(bootstrap_sample_s1), 10000)
+# yv = stats.norm.pdf(xv, mean_s1, std_s1)
+# ax1.plot(xv, yv, color='k')
+# ax1.set_xlabel('$s_1$')
+# ax2.hist(bootstrap_sample_sT, 50, density=True,
+#          color='#eaeaea', edgecolor='black')
+# xv = np.linspace(np.min(bootstrap_sample_sT),
+#                  np.max(bootstrap_sample_sT), 10000)
+# yv = stats.norm.pdf(xv, mean_sT, std_sT)
+# ax2.plot(xv, yv, color='k')
+# ax2.set_xlabel('$s_T$')
+# fig.suptitle(f'Bootstrap PDF of Sensitivity Indices\n{desc[rv_group]} RV group')
 # plt.show()
-plt.savefig(f'{figures_output_path}/bootstrap_PDF.pdf')
-plt.close()
+# # plt.savefig(f'{figures_output_path}/bootstrap_PDF.pdf')
+# plt.close()

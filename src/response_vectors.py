@@ -22,22 +22,35 @@ output_dir = args.output_dir
 num_levels = int(args.num_levels)
 num_inputs = int(args.num_inputs)
 
-# # debug
 # input_dir = "analysis/hazard_level_8/response"
 # num_inputs = 14
 # output_dir = "analysis/hazard_level_8/response_summary"
 # num_levels = 3
+
+# if input_dir == 'analysis/office3/hazard_level_10/response':
+#     response_dirs = [f'%s/gm%i' % (input_dir, i+1)
+#                      for input_dir, i in zip([input_dir]*num_inputs,
+#                                              [0,1,2,3,4,5,6,7,9,10,11,12,13])]
+#     num_inputs = 13
+# else:
+#     response_dirs = [f'%s/gm%i' % (input_dir, i+1)
+#                      for input_dir, i in zip([input_dir]*num_inputs,
+#                                              range(num_inputs))]
+response_dirs = [f'%s/gm%i' % (input_dir, i+1)
+                 for input_dir, i in zip([input_dir]*num_inputs,
+                                         range(num_inputs))]
+num_inputs = 14
 
 # ~~~~~~~~~~ #
 # parameters #
 # ~~~~~~~~~~ #
 
 # fundamental period of the building
-t_1 = 0.945
+t_1 = 0.82
 # yield global drift in the X and Y direction
 yield_drift = {}
-yield_drift[1] = 0.015
-yield_drift[2] = 0.015
+yield_drift[1] = 0.01
+yield_drift[2] = 0.01
 
 
 
@@ -49,9 +62,6 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 
-response_dirs = [f'%s/gm%i' % (input_dir, i+1)
-                 for input_dir, i in zip([input_dir]*num_inputs,
-                                         range(num_inputs))]
 
 first_column = np.arange(1, num_inputs+1)
 

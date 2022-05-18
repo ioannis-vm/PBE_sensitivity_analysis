@@ -1,0 +1,37 @@
+
+X-Axis: SA Period (sec)
+Y-Axis: Median SA (g)
+Number of Data Sets: 1
+
+
+DATASET #1
+
+Name: Abrahamson, Silva & Kamai (2014)
+Num Points: 22
+Info: DistanceRup = 5.9, DistanceJB = 0.0, DistanceX = 0.0, Vs30 = 733.4, Depth 2.5 km/sec = N/A, Depth 1.0 km/sec = N/A, Magnitude = 7.18, Rake = N/A, Dip = 90.0, Rupture Top Depth = 0.0, Down-Dip Width = 10.0, Focal Depth = 0.0
+
+X, Y Data:
+0.01	0.34860793
+0.02	0.3572197
+0.03	0.37534502
+0.05	0.42888257
+0.075	0.55202746
+0.1	0.66592366
+0.15	0.8412687
+0.2	0.8502192
+0.25	0.7677524
+0.3	0.6706076
+0.4	0.5265165
+0.5	0.44356075
+0.75	0.3126797
+1.0	0.235814
+1.5	0.15178876
+2.0	0.110365346
+3.0	0.06996769
+4.0	0.05215957
+5.0	0.040833462
+6.0	0.032544583
+7.5	0.024386575
+10.0	0.015589277
+
+

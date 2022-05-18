@@ -59,9 +59,9 @@ class P58_Assessment:
         is deemed irreparable, normalized by the expected replacement
         cost of the building. FEMA P-58 suggests using a
         value of 0.4~0.5.
-    fix_epd_mean (bool): Testing ~ fixes edp realizations
+    fix_edp_mean (bool): Testing ~ fixes edp realizations
                          to the mean.
-    fix_epd_mean (bool): Testing ~ fixes component quantity realizations
+    fix_edp_mean (bool): Testing ~ fixes component quantity realizations
                          to the mean.
     fix_cmp_dm_mean (bool): Testing ~ fixes component damage threshold
                          realizations to the mean.
@@ -106,7 +106,7 @@ class P58_Assessment:
     logFile: str = field(default=None)
     num_realizations: int = field(default=1000)
     replacement_threshold: float = field(default=1.00)
-    fix_epd_mean: bool = field(default=False)
+    fix_edp_mean: bool = field(default=False)
     fix_quant_mean: bool = field(default=False)
     fix_cmp_dm_mean: bool = field(default=False)
     fix_blg_dm_mean: bool = field(default=False)
@@ -133,6 +133,43 @@ class P58_Assessment:
             datefmt='%m/%d/%Y %I:%M:%S %p')
         self.logger = logging.getLogger('p_58_assessment')
 
+    # def gen_edp_samples(self, resp_path, c_mdl):
+    #     self.logger.info('\tGenerating simulated demands')
+    #     data = pd.read_csv(
+    #         resp_path, header=0, index_col=0,
+    #         low_memory=False)
+    #     data.drop('units', inplace=True)
+    #     data = data.astype(float)
+    #     index_labels = [label.split('-') for label in data.columns]
+    #     index_labels = np.array(index_labels)
+    #     additional_uncertainty = np.zeros(len(index_labels))
+    #     for i, ilb in enumerate(index_labels):
+    #         if ilb[0] != 'RID':
+    #             additional_uncertainty[i] = c_mdl
+    #         else:
+    #             additional_uncertainty[i] = 0.2
+    #     data.columns = pd.MultiIndex.from_arrays(index_labels.T)
+    #     raw_data = np.log(data.to_numpy())
+    #     mean_vec = np.mean(raw_data, axis=0)
+    #     covariance_mat = np.cov(raw_data.T)
+    #     correl_mat = np.corrcoef(raw_data.T)
+    #     sigma2_vec = np.diag(covariance_mat)
+    #     sigma2_inflated = sigma2_vec \
+    #         + additional_uncertainty**2
+    #     diagonal_mat = np.diag(np.sqrt(sigma2_inflated))
+    #     covariance_mat = diagonal_mat @ correl_mat @ diagonal_mat
+    #     z_mat = np.random.multivariate_normal(
+    #         mean_vec, covariance_mat,
+    #         size=self.num_realizations)
+    #     samples_raw = np.exp(z_mat)
+    #     samples = pd.DataFrame(samples_raw, index=None)
+    #     samples.columns = data.columns
+    #     samples.index.name = 'realization'
+    #     samples.sort_index(axis=1, inplace=True)
+    #     if self.fix_edp_mean:
+    #         samples.loc[:, :] = samples.mean(axis=0).to_numpy()
+    #     self.edp_samples = samples
+
     def gen_edp_samples(self, resp_path, c_mdl):
         self.logger.info('\tGenerating simulated demands')
         data = pd.read_csv(
@@ -143,7 +180,16 @@ class P58_Assessment:
         index_labels = [label.split('-') for label in data.columns]
         index_labels = np.array(index_labels)
         data.columns = pd.MultiIndex.from_arrays(index_labels.T)
-        raw_data = np.log(data.to_numpy())
+        filter_cols = []
+        for col in data.columns:
+            if col[0] == 'RID':
+                rid_col = col
+                continue
+            if 'SA_' in col[0]:
+                sa_col = col
+                continue
+            filter_cols.append(col)
+        raw_data = np.log(data.loc[:, filter_cols].to_numpy())
         mean_vec = np.mean(raw_data, axis=0)
         covariance_mat = np.cov(raw_data.T)
         correl_mat = np.corrcoef(raw_data.T)
@@ -155,12 +201,26 @@ class P58_Assessment:
             mean_vec, covariance_mat,
             size=self.num_realizations)
         samples_raw = np.exp(z_mat)
-        samples = pd.DataFrame(samples_raw, index=None)
-        samples.columns = data.columns
+        samples = pd.DataFrame(
+            np.zeros(
+                (self.num_realizations, len(data.columns))),
+            index=range(self.num_realizations),
+            columns=data.columns)
         samples.index.name = 'realization'
-        samples.sort_index(axis=1, inplace=True)
-        if self.fix_epd_mean:
+        samples.loc[:, filter_cols] = samples_raw
+        # now handle RID
+        samples.loc[:, rid_col] = np.random.choice(
+            data.loc[:, rid_col], size=self.num_realizations)
+        # now handle Sa(T*)
+        raw_sa = np.log(data.loc[:, sa_col].to_numpy())
+        mu = raw_sa.mean()
+        std = raw_sa.std()
+        samples.loc[:, sa_col] = np.exp(np.random.normal(
+            mu, std, self.num_realizations))
+
+        if self.fix_edp_mean:
             samples.loc[:, :] = samples.mean(axis=0).to_numpy()
+        samples.sort_index(axis=1, inplace=True)
         self.edp_samples = samples
 
     def read_perf_model(self, perf_model_input_path):
@@ -304,7 +364,6 @@ class P58_Assessment:
                     ('irreparable', '0', '1', '0', 'DS1')]
             cmp_fragility_RV.loc[:, cols] = \
                 cmp_fragility_RV.loc[:, cols].mean(axis=0).to_numpy()
-            
         self.cmp_fragility_RV = cmp_fragility_RV
 
     def calc_cmp_damage(self):
@@ -615,12 +674,13 @@ class P58_Assessment:
                     total_cost.loc[
                         non_replacement_idx] >
                     self.replacement_threshold * mean].index
-            sample = lognormal_transform(
-                self.cmp_cost_RV.loc[change_idx, col], delta, beta)
-            sample *= delta/np.median(sample)
-            total_cost[change_idx] = sample
-            if self.fix_blg_dv_mean:
-                total_cost[change_idx] = mean
+            if len(change_idx) != 0:
+                sample = lognormal_transform(
+                    self.cmp_cost_RV.loc[change_idx, col], delta, beta)
+                sample *= delta/np.median(sample)
+                total_cost[change_idx] = sample
+                if self.fix_blg_dv_mean:
+                    total_cost[change_idx] = mean
         self.total_cost = total_cost
 
     def run(self, response_path, c_mdl):

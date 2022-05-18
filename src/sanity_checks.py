@@ -10,13 +10,21 @@ from src.ground_motion_utils import response_spectrum
 # # Make sure no analysis failed #
 # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-# hz_paths = ['analysis/hazard_level_'+str(i) for i in range(8, 9)]
+# hz_paths = ['analysis/office3/hazard_level_'+str(i) for i in range(1, 16+1)]
 # gm_paths = ['/ground_motions/parsed/'+str(i)+'x.txt' for i in range(1, 15)]
 # re_paths = ['/response/gm'+str(i)+'/time.csv' for i in range(1, 15)]
 
 # d = {'analysis': [], 'gm_dur': [], 'out_dur': []}
 # for i, hz in enumerate(hz_paths):
 #     for j, gm in enumerate(gm_paths):
+#         # temp since that one failed.
+#         # Remove this next line
+#         # if hz == 'analysis/office3/hazard_level_10' and \
+#         #    gm == '/ground_motions/parsed/9x.txt':
+#         #     continue
+#         if hz == 'analysis/office3/hazard_level_10' and \
+#            gm == '/ground_motions/parsed/9x.txt':
+#             continue
 #         full_path = hz+gm
 #         full_res_path = hz+re_paths[j]
 #         count = len(open(full_path).readlines())
@@ -33,9 +41,7 @@ from src.ground_motion_utils import response_spectrum
 # for i in range(len(df)):
 #     diff = df.loc[i].gm_dur - df.loc[i].out_dur
 #     if np.abs(diff) > 1:
-#         print('%i %.0f' % (i,diff))
-
-
+#         print(df.loc[i].analysis)
 
 
 
@@ -241,110 +247,258 @@ from src.ground_motion_utils import response_spectrum
 
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-# Compare mean of suite versus target spectra   #
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# # Compare mean of suite versus target spectra   #
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+# import sys
+# sys.path.append("src")
+
+# import numpy as np
+# from scipy.interpolate import interp1d
+# import matplotlib.pyplot as plt
+# from ground_motion_utils import import_PEER
+# from ground_motion_utils import response_spectrum
+
+# plt.rcParams["font.family"] = "serif"
+# plt.rcParams["mathtext.fontset"] = "dejavuserif"
+
+# num_records = 14
+# all_ground_motions = []
+# for k in range(1, 9):
+#     ground_motions = []
+#     for i in range(num_records):
+#         ground_motions.append([
+#             np.genfromtxt(f'analysis/hazard_level_{k}/ground_motions/parsed/{i+1}x.txt'),
+#             np.genfromtxt(f'analysis/hazard_level_{k}/ground_motions/parsed/{i+1}y.txt')])
+#     all_ground_motions.append(ground_motions)
+
+
+# # calculate response spectra
+
+# all_response_spectra = []
+# for k in range(8):
+#     response_spectra = []
+#     n_pts = 200
+#     sa_mat = np.full((n_pts, 180), 0.00)
+
+#     for i in range(num_records):
+
+#         rs_x = response_spectrum(all_ground_motions[k][i][0], 0.005, 0.05, n_Pts=n_pts)
+#         rs_y = response_spectrum(all_ground_motions[k][i][1], 0.005, 0.05, n_Pts=n_pts)
+#         periods = rs_x[:, 0]
+#         x_vec = rs_x[:, 1]
+#         y_vec = rs_y[:, 1]
+#         xy = np.column_stack((x_vec, y_vec))
+#         angles = np.linspace(0.00, 180.00, 180)
+#         for j, ang in enumerate(np.nditer(angles)):
+#             rot_mat = np.array(
+#                 [
+#                     [np.cos(ang)],
+#                     [np.sin(ang)]
+#                 ]
+#             )
+#             sa_mat[:, j] = np.abs(np.reshape(xy @ rot_mat, (1, -1)))
+#         rotd50 = np.median(sa_mat, axis=1)
+#         response_spectra.append(np.column_stack((periods, rotd50)))
+#     all_response_spectra.append(response_spectra)
+
+# # read target spectra
+# target_spectra = [pd.read_csv(f'analysis/site_hazard/spectrum_{i+1}.csv', skiprows=2)
+#                   for i in range(8)]
+
+# target = target_spectra[0]
+
+
+
+# plt.figure(figsize=(6, 6))
+
+# for rs_list in all_response_spectra:
+#     # for rs in rs_list:
+#     #     plt.plot(rs[:, 0], rs[:, 1], linewidth=0.25)
+#     rs_T = rs[:, 0]
+#     rs_SA = np.column_stack([rs[:, 1] for rs in rs_list])
+#     rs_mean = np.mean(rs_SA, axis=1)
+#     plt.plot(rs_T, rs_mean, linewidth=2, color='black', label='$\mu$')
+
+# # for target in target_spectra:
+# #     plt.plot(target.loc[:, "T (s)"], target.loc[:, 'Sa (g)'], color='black', linestyle='dashed')
+
+# plt.xlabel('Period T [s]')
+# plt.ylabel('PSA [g]')
+# plt.xscale('log')
+# plt.yscale('log')
+# # plt.xlim((1e-2, 3))
+# # plt.ylim((1e-2, 6))
+# plt.tight_layout()
+# plt.show()
+# # plt.savefig(plot_dir + '/RS.pdf')
+# plt.close()
+
+
+
+# # compare my RotD50 spectra with those from the PEER metadata file.
+
+
+# peerspec = pd.read_csv("tmp/test.csv")
+
+
+# for i in range(14):
+#     plt.figure(figsize=(6, 6))
+#     plt.plot(peerspec.iloc[:, 0], peerspec.iloc[:, i+1])
+#     plt.plot(all_response_spectra[-1][i][:, 0], all_response_spectra[-1][i][:, 1], linestyle='dashed')
+#     plt.xlabel('Period T [s]')
+#     plt.ylabel('PSA [g]')
+#     plt.xscale('log')
+#     plt.yscale('log')
+#     plt.tight_layout()
+#     plt.show()
+#     plt.close()
+
+
+## Performance evaluation sanity checks
 
 import sys
-sys.path.append("src")
+sys.path.insert(0, "src")
+
+from p_58_assessment import P58_Assessment
+import numpy as np
+from tqdm import tqdm
+
+# check cases of building collapse
+
+num_hz = 16
+case = 'office3'
+modeling_uncertainty_case = 'medium'
+performance_data_path = f'src/performance_data_{case}'
+
+hazard_levels = [f'hazard_level_{i+1}' for i in range(num_hz)]
+
+num_collapse = []
+for hz in tqdm(hazard_levels):
+
+    response_path = f'analysis/office3/{hz}/response_summary/response.csv'
+
+    num_realizations = 1000
+    replacement_threshold = 0.40
+    perf_model_input_path = f'{performance_data_path}/input_cmp_quant.csv'
+    cmp_fragility_input_path = f'{performance_data_path}/input_fragility.csv'
+    cmp_repair_cost_input_path = f'{performance_data_path}/input_repair_cost.csv'
+    if modeling_uncertainty_case == 'medium':
+        c_modeling_uncertainty = np.sqrt(0.25**2+0.25**2)
+    elif modeling_uncertainty_case == 'low':
+        c_modeling_uncertainty = np.sqrt(0.10**2+0.10**2)
+    else:
+        raise ValueError('Unknown modeling uncertainty case specified')
+
+    asmt_A = P58_Assessment(
+        num_realizations=num_realizations,
+        replacement_threshold=replacement_threshold)
+    asmt_A.read_perf_model(perf_model_input_path)
+    asmt_A.read_fragility_input(cmp_fragility_input_path)
+    asmt_A.read_cmp_repair_cost_input(cmp_repair_cost_input_path)
+    asmt_A.run(response_path, c_modeling_uncertainty)
+
+    # col = (   'collapse', '0', '1', '0')  # accel
+    col = ('irreparable', '0', '1', '0')  # drift
+    num = asmt_A.cmp_damage.loc[:, col].sum()
+    num_collapse.append(num)
+
+num_collapse
+asmt_A.cmp_fragility_input.loc['irreparable', :]
+
+
+
+## weird variability in the response vectors
+
+import sys
+sys.path.insert(0, "src")
 
 import numpy as np
-from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
-from ground_motion_utils import import_PEER
-from ground_motion_utils import response_spectrum
 
-plt.rcParams["font.family"] = "serif"
-plt.rcParams["mathtext.fontset"] = "dejavuserif"
+# check cases of building collapse
 
-num_records = 14
-all_ground_motions = []
-for k in range(1, 9):
-    ground_motions = []
-    for i in range(num_records):
-        ground_motions.append([
-            np.genfromtxt(f'analysis/hazard_level_{k}/ground_motions/parsed/{i+1}x.txt'),
-            np.genfromtxt(f'analysis/hazard_level_{k}/ground_motions/parsed/{i+1}y.txt')])
-    all_ground_motions.append(ground_motions)
+num_hz = 16
+case = 'office3'
+hazard_levels = [f'hazard_level_{i+1}' for i in range(num_hz)]
 
+all_raw_data = []
+for j in range(num_hz):
+    resp_path = f'analysis/{case}/{hazard_levels[j]}/response_summary/response.csv'
 
-# calculate response spectra
+    data = pd.read_csv(
+        resp_path, header=0, index_col=0,
+        low_memory=False)
+    data.drop('units', inplace=True)
+    data = data.astype(float)
+    index_labels = [label.split('-') for label in data.columns]
+    index_labels = np.array(index_labels)
+    data.columns = pd.MultiIndex.from_arrays(index_labels.T)
+    filter_cols = []
+    for col in data.columns:
+        if col[0] == 'RID':
+            rid_col = col
+            continue
+        if 'SA_' in col[0]:
+            sa_col = col
+            continue
+        filter_cols.append(col)
+    raw_data = data.loc[:, filter_cols].to_numpy()
+    all_raw_data.append(raw_data)
 
-all_response_spectra = []
-for k in range(8):
-    response_spectra = []
-    n_pts = 200
-    sa_mat = np.full((n_pts, 180), 0.00)
-
-    for i in range(num_records):
-
-        rs_x = response_spectrum(all_ground_motions[k][i][0], 0.005, 0.05, n_Pts=n_pts)
-        rs_y = response_spectrum(all_ground_motions[k][i][1], 0.005, 0.05, n_Pts=n_pts)
-        periods = rs_x[:, 0]
-        x_vec = rs_x[:, 1]
-        y_vec = rs_y[:, 1]
-        xy = np.column_stack((x_vec, y_vec))
-        angles = np.linspace(0.00, 180.00, 180)
-        for j, ang in enumerate(np.nditer(angles)):
-            rot_mat = np.array(
-                [
-                    [np.cos(ang)],
-                    [np.sin(ang)]
-                ]
-            )
-            sa_mat[:, j] = np.abs(np.reshape(xy @ rot_mat, (1, -1)))
-        rotd50 = np.median(sa_mat, axis=1)
-        response_spectra.append(np.column_stack((periods, rotd50)))
-    all_response_spectra.append(response_spectra)
-
-# read target spectra
-target_spectra = [pd.read_csv(f'analysis/site_hazard/spectrum_{i+1}.csv', skiprows=2)
-                  for i in range(8)]
-
-target = target_spectra[0]
-
-
-
-plt.figure(figsize=(6, 6))
-
-for rs_list in all_response_spectra:
-    # for rs in rs_list:
-    #     plt.plot(rs[:, 0], rs[:, 1], linewidth=0.25)
-    rs_T = rs[:, 0]
-    rs_SA = np.column_stack([rs[:, 1] for rs in rs_list])
-    rs_mean = np.mean(rs_SA, axis=1)
-    plt.plot(rs_T, rs_mean, linewidth=2, color='black', label='$\mu$')
-
-# for target in target_spectra:
-#     plt.plot(target.loc[:, "T (s)"], target.loc[:, 'Sa (g)'], color='black', linestyle='dashed')
-
-plt.xlabel('Period T [s]')
-plt.ylabel('PSA [g]')
-plt.xscale('log')
-plt.yscale('log')
-# plt.xlim((1e-2, 3))
-# plt.ylim((1e-2, 6))
-plt.tight_layout()
+plt.figure()
+plt.scatter(range(22), all_raw_data[13].std(axis=0))
+plt.scatter(range(22), all_raw_data[14].std(axis=0))
 plt.show()
-# plt.savefig(plot_dir + '/RS.pdf')
-plt.close()
+
+plt.figure()
+plt.scatter(range(14), all_raw_data[13][:, 20])
+plt.scatter(range(14), all_raw_data[14][:, 20])
+plt.show()
+
+# it looks like the variance of the edps does not increase for the last two hazard levels.
 
 
+from p_58_assessment import P58_Assessment
+import numpy as np
+from tqdm import tqdm
 
-# compare my RotD50 spectra with those from the PEER metadata file.
+# check cases of building collapse
 
+num_hz = 16
+case = 'office3'
+modeling_uncertainty_case = 'medium'
+performance_data_path = f'src/performance_data_{case}'
 
-peerspec = pd.read_csv("tmp/test.csv")
+hazard_levels = [f'hazard_level_{i+1}' for i in range(num_hz)]
 
+ys = []
+for hz in tqdm(hazard_levels):
 
-for i in range(14):
-    plt.figure(figsize=(6, 6))
-    plt.plot(peerspec.iloc[:, 0], peerspec.iloc[:, i+1])
-    plt.plot(all_response_spectra[-1][i][:, 0], all_response_spectra[-1][i][:, 1], linestyle='dashed')
-    plt.xlabel('Period T [s]')
-    plt.ylabel('PSA [g]')
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.tight_layout()
-    plt.show()
-    plt.close()
+    response_path = f'analysis/office3/{hz}/response_summary/response.csv'
+
+    num_realizations = 1000
+    replacement_threshold = 0.40
+    perf_model_input_path = f'{performance_data_path}/input_cmp_quant.csv'
+    cmp_fragility_input_path = f'{performance_data_path}/input_fragility.csv'
+    cmp_repair_cost_input_path = f'{performance_data_path}/input_repair_cost.csv'
+    if modeling_uncertainty_case == 'medium':
+        c_modeling_uncertainty = np.sqrt(0.25**2+0.25**2)
+    elif modeling_uncertainty_case == 'low':
+        c_modeling_uncertainty = np.sqrt(0.10**2+0.10**2)
+    else:
+        raise ValueError('Unknown modeling uncertainty case specified')
+
+    asmt_A = P58_Assessment(
+        num_realizations=num_realizations,
+        replacement_threshold=replacement_threshold)
+    asmt_A.read_perf_model(perf_model_input_path)
+    asmt_A.read_fragility_input(cmp_fragility_input_path)
+    asmt_A.read_cmp_repair_cost_input(cmp_repair_cost_input_path)
+    asmt_A.run(response_path, c_modeling_uncertainty)
+    ys.append(asmt_A.total_cost)
+
+import seaborn as sns
+for i in range(num_hz):
+    sns.ecdfplot(ys[i])
+plt.show()
