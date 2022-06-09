@@ -128,24 +128,15 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-################
-# Custom rules #
-################
+#~~~~~~~~~~~~~~#
+# my own stuff #
+#~~~~~~~~~~~~~~#
 
 *~
-FEMA_P-58_Python_Implementation/
-OpenSeesPy_Building_Modeler/
-tmp/
-tmp_results/
-stochastic_ground_motions/
-ground_motions/test_case
-archive/
-pelicun_log.txt
-src/USGS_Data_Cache/
 analysis/
 figures/
 pelicun/
 nohup.out
 make/
-Makefile
 notes/
+Makefile
