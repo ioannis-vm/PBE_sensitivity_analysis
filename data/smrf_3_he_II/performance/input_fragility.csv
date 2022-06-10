@@ -1,0 +1,82 @@
+component,edp type,directional,DS1_delta,DS1_beta,DS2_delta,DS2_beta,DS3_delta,DS3_beta,DS4_delta,DS4_beta,description
+B1031.001,PID,1,0.04,0.4,0.08,0.4,0.11,0.4,,,Bolted shear tab gravity connections
+B1031.011a,PID,1,0.04,0.4,0.07,0.4,0.1,0.4,,,"Steel Column Base Plates, Column W < 150 plf"
+B1031.011b,PID,1,0.04,0.4,0.07,0.4,0.1,0.4,,,"Steel Column Base Plates, Column 150 plf < W < 300 plf"
+B1031.021a,PID,1,0.02,0.4,0.05,0.4,,,,,"Welded column splices, Column W < 150 plf"
+B1035.001,PID,1,0.03,0.3,0.04,0.3,0.05,0.3,,,"Post-Northridge RBS connection with welded web, beam one side of column only, beam depth <= W27"
+B1035.002,PID,1,0.03,0.3,0.04,0.3,0.05,0.3,,,"Post-Northridge RBS connection with welded web, beam one side of column only, beam depth >= W27"
+B1035.011,PID,1,0.03,0.3,0.04,0.3,0.05,0.3,,,"Post-Northridge RBS connection with welded web, beams both sides of column, beam depth <= W27"
+B1035.012,PID,1,0.03,0.3,0.04,0.3,0.05,0.3,,,"Post-Northridge RBS connection with welded web, beams both sides of column, beam depth >= W27"
+B2011.101,PID,1,0.01,0.4,0.0175,0.4,0.025,0.4,,,"Exterior Wall - Light framed wood walls with structural panel sheathing, gypsum wallboard no hold-downs"
+B2022.001,PID,1,0.0338,0.4,0.0383,0.4,,,,,"Curtain Walls - Generic Midrise Stick-Built Curtain wall, Config: Monolithic, Lamination: Unknown, Glass Type: Unknown, Details: Aspect ratio = 6:5,  Other details Unknown"
+B3011.011,PFA,0,1.1,0.4,1.4,0.4,,,,,"Concrete tile roof, tiles secured and compliant with UBC94"
+C1011.001a,PID,1,0.005,0.4,0.01,0.3,0.021,0.2,,,"Wall Partition, Type: Gypsum with metal studs, Full Height, Fixed Below, Fixed Above"
+C2011.001a,PID,1,0.02,0.4,0.035,0.4,0.05,0.4,,,Prefabricated steel stair with steel treads and landings with seismic joints that accommodate drift.
+C3021.001k,PFA,0,20,0.0001,,,,,,,Generic Floor Covering - Flooding of floor caused by failure of pipe - Retail - Dry
+C3027.001,PFA,0,0.5,0.5,,,,,,,"Raised Access Floor, non seismically rated."
+C3032.001b,PFA,0,1.01,0.25,1.45,0.25,1.69,0.25,,,"Suspended Ceiling, SDC A,B,C, Area (A): A < 250, Vert support only"
+C3032.001d,PFA,0,0.56,0.25,1.08,0.25,1.31,0.25,,,
+C3034.001,PFA,0,0.6,0.4,,,,,,,Independent Pendant Lighting - non seismic
+D1014.011.1,PFA,0,0.39,0.45,,,,,,,Traction Elevator (simultaneous consequence A)
+D1014.011.2,PFA,0,0.39,0.45,,,,,,,Traction Elevator (simultaneous consequence B)
+D1014.011.3,PFA,0,0.39,0.45,,,,,,,Traction Elevator (simultaneous consequence C)
+D1014.011.4,PFA,0,0.39,0.45,,,,,,,Traction Elevator (simultaneous consequence D)
+D2021.011a,PFA,0,1.5,0.4,2.6,0.4,,,,,"Cold or Hot Potable  - Small Diameter Threaded Steel - (2.5 inches in diameter or less), SDC A or B, PIPING FRAGILITY"
+D2031.013b,PFA,0,2.25,0.4,,,,,,,Sanitary waste piping
+D3031.012c,PFA,0,0.5,0.5,,,,,,,Chiller - Capacity: < 100 Ton - Vibration isolated equipment that is not snubbed or restrained - Combined anchorage/isolator & equipment fragility
+D3031.021a,PFA,0,0.5,0.4,,,,,,,Cooling Tower - Capacity: < 100 Ton - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D3041.011a,PFA,0,1.5,0.4,2.25,0.4,,,,,"HVAC Galvanized Sheet Metal Ducting less than 6 sq. ft in cross sectional area, SDC A or B"
+D3041.012a,PFA,0,1.5,0.4,2.25,0.4,,,,,"HVAC Galvanized Sheet Metal Ducting -  6 sq. ft cross sectional area or greater, SDC A or B"
+D3041.031a,PFA,0,1.3,0.4,,,,,,,"HVAC Drops / Diffusers in suspended ceilings - No independent safety wires, SDC A or B"
+D3041.041a,PFA,0,1.9,0.4,,,,,,,"Variable Air Volume (VAV) box with in-line coil, SDC A or B"
+D3041.101a,PFA,0,0.5,0.4,,,,,,,HVAC Fan - Capacity: all - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D3052.013c,PFA,0,0.5,0.5,,,,,,,Air Handling Unit - Capacity: <5000 CFM - Equipment that is either hard anchored or is vibration isolated with seismic snubbers/restraints - Combined anchorage/isolator & equipment fragility
+D4011.021a,PFA,0,1.1,0.4,2.4,0.5,,,,,"Fire Sprinkler Water Piping - Horizontal Mains and Branches - Old Style Victaulic - Thin Wall Steel - No bracing, SDC A or B, PIPING FRAGILITY"
+D4011.031a,PFA,0,0.75,0.4,0.95,0.4,,,,,"Fire Sprinkler Drop Standard Threaded Steel - Dropping into unbraced lay-in tile SOFT ceiling - 6 ft. long drop maximum, SDC A or B"
+D5011.011a,PFA,0,1.01,0.6,,,,,,,Transformer/primary service - Capacity: <100 kVA - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D5012.013a,PFA,0,0.73,0.45,,,,,,,Motor Control Center - Capacity: all - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D5012.021a,PFA,0,1.28,0.4,,,,,,,Low Voltage Switchgear - Capacity: 100 to <350 Amp - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D5012.031a,PFA,0,2.16,0.45,,,,,,,Distribution Panel - Capacity: 100 to <350 Amp - Unanchored equipment that is not vibration isolated - Equipment fragility only
+E2022.001,PFA,0,1,0.4,,,,,,,Modular office work stations.
+E2022.023,PFA,0,1,0.5,,,,,,,Desktop Computers
+E2022.102a,PFV,0,28.50395,0.5,,,,,,,"Bookcase, 2 shelves, unanchored laterally"
+E2022.112a,PFV,0,44.44884,0.5,,,,,,,"Vertical Filing Cabinet, 2 drawer, unanchored laterally"
+E1028.001,PFV,0,29.39,0.5,41.56,0.5,,,,,Anesthesia machine
+E1028.002,PFV,0,29.39,0.5,41.56,0.5,,,,,Ballon pump
+E1028.003,PFV,0,29.39,0.5,41.56,0.5,,,,,Catheter cabinet
+E1028.004,PFV,0,29.39,0.5,41.56,0.5,,,,,Blood recovery system
+E1028.005,PFV,0,29.39,0.5,41.56,0.5,,,,,Hypothermia system
+E1028.006,PFV,0,29.39,0.5,41.56,0.5,,,,,Surgical table
+E1028.011,PFV,0,29.39,0.5,41.56,0.5,,,,,Patient bed
+E1028.021,PFV,0,29.39,0.5,41.56,0.5,,,,,Endoscope system
+E1028.023,PFV,0,29.39,0.5,41.56,0.5,,,,,Ultrasound unit
+E1028.031,PFV,0,29.39,0.5,41.56,0.5,,,,,Cryostat
+E1028.104,PFV,0,29.39,0.5,41.56,0.5,,,,,Ice slusher
+E1028.022,PFA,0,0.966,0.5,,,,,,,Light system
+E1028.101,PFA,0,0.966,0.5,,,,,,,Equipment boom
+E1028.102,PFA,0,0.966,0.5,,,,,,,Warming cabinet (full height)
+E1028.103,PFA,0,0.966,0.5,,,,,,,Anesthesia boom
+E1028.105,PFA,0,0.966,0.5,,,,,,,Dual surgical light
+E1028.106,PFA,0,0.966,0.5,,,,,,,Cath lab system
+E1028.107,PFA,0,0.966,0.5,,,,,,,Sterilizer
+E1028.108,PFA,0,0.966,0.5,,,,,,,Washer / disinfector
+E1028.201,PFA,0,0.966,0.5,,,,,,,Bio safety hood (4 ft.)
+E1028.202,PFA,0,0.966,0.5,,,,,,,"Ultrasonic cleaner (table top, 5.75 gal.)"
+E1028.203,PFA,0,0.966,0.5,,,,,,,Freezer (23.3 cu. ft.)
+E1028.204,PFA,0,0.966,0.5,,,,,,,Laminar flow hood (6ft.)
+E1028.205,PFA,0,0.966,0.5,,,,,,,Decontamination washer
+E1028.212,PFA,0,0.966,0.5,,,,,,,Breathing circuit dryer (single cabinet)
+E1028.221,PFA,0,0.966,0.5,,,,,,,Chemistry analyzer
+E1028.301,PFA,0,0.966,0.5,,,,,,,Headwall
+E1028.311,PFA,0,0.966,0.5,,,,,,,Ice dispenser
+E1028.321,PFA,0,0.966,0.5,,,,,,,Under counter refrigerator
+E1028.331,PFA,0,0.966,0.5,,,,,,,Refrigerator (49 cu. ft.)
+E1028.341,PFA,0,0.966,0.5,,,,,,,Medstation (6-drawer)
+E1028.401,PFA,0,0.966,0.5,,,,,,,Imaging system (16 slice CT)
+E1028.403,PFA,0,0.966,0.5,,,,,,,CT C-Arm (digital)
+E1028.411,PFA,0,0.966,0.5,,,,,,,MRI system
+E1028.421,PFA,0,0.966,0.5,,,,,,,Laser imaging
+E1028.431,PFA,0,0.966,0.5,,,,,,,X-Ray system (digital)
+E1028.501,PFA,0,0.966,0.5,,,,,,,Shelving system (single 5 ft. unit)
+collapse,SA_0.82,1,3.32,0.6,,,,,,,
+irreparable,RID,1,0.01,0.3,,,,,,,

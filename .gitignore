@@ -140,3 +140,5 @@ nohup.out
 make/
 notes/
 Makefile
+doc/
+figure_data/

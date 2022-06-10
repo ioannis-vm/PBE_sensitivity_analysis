@@ -1,0 +1,44 @@
+component,base_quantity,unit,DS1_n,DS1_1_w,DS1_1_distribution,DS1_1_theta0,DS1_1_theta1,DS1_2_w,DS1_2_distribution,DS1_2_theta0,DS1_2_theta1,DS2_n,DS2_1_w,DS2_1_distribution,DS2_1_theta0,DS2_1_theta1,DS3_n,DS3_1_w,DS3_1_distribution,DS3_1_theta0,DS3_1_theta1,description
+B1031.001,1,ea,2,0.95,normal,"10536,8176|5,20",0.38359,0.05,normal,"16536,10176|5,20",0.3706,1,1,normal,"15564,11024.5|5,20",0.37889,1,1,normal,"15264,10812|5,20",0.38359,Bolted shear tab gravity connections
+B1031.011a,1,ea,2,0.95,lognormal,"5000,2000|5,20",0.25,0.05,lognormal,"25363,15608|5,20",0.407,1,1,lognormal,"31464,22287|5,20",0.3664,1,1,lognormal,"36744,26027|5,20",0.3434,"Steel Column Base Plates, Column W < 150 plf"
+B1031.011b,1,ea,2,0.95,lognormal,"5000,2000|5,20",0.25,0.05,lognormal,"26403,16248|5,20",0.3916,1,1,lognormal,"33864,23987|5,20",0.3418,1,1,lognormal,"41544,29427|5,20",0.3058,"Steel Column Base Plates, Column 150 plf < W < 300 plf"
+B1031.021a,1,ea,2,0.95,lognormal,"5000,2000|5,20",0.25,0.05,lognormal,"12142,7472|5,20",0.3248,1,1,lognormal,"13608,9639|5,20",0.302,,,,,,"Welded column splices, Column W < 150 plf"
+B1035.001,1,ea,1,1,normal,"21750,14790|3,7",0.35285,,,,,1,1,normal,"36625,24905|3,7",0.3054,1,1,normal,"36625,24905|3,7",0.3054,"Post-Northridge RBS connection with welded web, beam one side of column only, beam depth <= W27"
+B1035.002,1,ea,1,1,normal,"23000,15640|3,7",0.3321,,,,,1,1,normal,"40500,27540|3,7",0.284,1,1,normal,"40500,27540|3,7",0.284,"Post-Northridge RBS connection with welded web, beam one side of column only, beam depth >= W30"
+B1035.011,1,ea,1,1,normal,"37500,25500|3,7",0.32749,,,,,1,1,normal,"65375,44455|3,7",0.27643,1,1,normal,"65375,44455|3,7",0.27643,"Post-Northridge RBS connection with welded web, beams both sides of column, beam depth <= W27"
+B1035.012,1,ea,1,1,normal,"40000,27200|3,7",0.3096,,,,,1,1,normal,"73125,49725|3,7",0.2479,1,1,normal,"38880,25920|3,7",0.284,"Post-Northridge welded steel moment connection other than RBS, beam one side, beam depth >= W30"
+B2011.101,100,ft2,1,1,lognormal,"2990,1840|3,8",0.25663,,,,,1,1,lognormal,"3300,2337.5|3,8",0.36907,1,1,normal,"5400,3825|3,8",0.10978,"Exterior Wall - Light framed wood walls with structural panel sheathing, gypsum wallboard no hold-downs"
+B2022.001,30,ft2,1,1,lognormal,"2055,1096|20,100",0.1668,,,,,1,1,lognormal,"2055,1096|20,100",0.1668,,,,,,"Curtain Walls - Generic Midrise Stick-Built Curtain wall, Config: Monolithic, Lamination: Unknown, Glass Type: Unknown, Details: Aspect ratio = 6:5,  Other details Unknown"
+B3011.011,100,ft2,1,1,lognormal,"840,490|13,130",0.57618,,,,,1,1,lognormal,"2220,1184|13,130",0.30743,,,,,,"Concrete tile roof, tiles secured and compliant with UBC94"
+C1011.001a,100,ft,1,1,normal,"2677.5,1428|1,10",0.48138,,,,,1,1,lognormal,"6825,3640|1,10",0.55591,1,1,lognormal,"10500,7437.5|1,10",0.19586,"Wall Partition, Type: Gypsum with metal studs, Full Height, Fixed Below, Fixed Above"
+C2011.001a,1,ea,1,1,normal,"4340,1302|1,10",0.45861,,,,,1,1,normal,"11100,3330|1,10",0.48592,1,1,lognormal,"33900,10170|1,10",0.23515,Prefabricated steel stair with steel treads and landings with seismic joints that accommodate drift.
+C3021.001k,1,ft2,1,1,normal,"58.8,17.64|500,2000",0.34557,,,,,,,,,,,,,,,Generic Floor Covering - Flooding of floor caused by failure of pipe - Retail - Dry
+C3027.001,100,ft2,1,1,lognormal,"138,92|5,20",1.28411,,,,,,,,,,,,,,,"Raised Access Floor, non seismically rated."
+C3032.001b,600,ft2,1,1,normal,"1044,696|1,10",0.5508,,,,,1,1,lognormal,"8172,5448|1,10",0.51832,1,1,lognormal,"16812,11208|1,10",0.20262,"Suspended Ceiling, SDC A,B,C, Area (A): A < 250, Vert support only"
+C3032.001d,2500,ft2,1,1,normal,"4350,2900|1,10",0.5508,,,,,1,1,lognormal,"34050,22700|1,10",0.51832,1,1,lognormal,"70050,46700|1,10",0.20262,
+C3034.001,1,ea,1,1,lognormal,"400,280|5,10",0.63,,,,,,,,,,,,,,,Independent Pendant Lighting - non seismic
+D1014.011.1,1,ea,2,0.74,zero,"0,0|5,10",,0.26,lognormal,"8800,2640|5,10",0.8741,,,,,,,,,,,Traction Elevator (simultaneous consequence A)
+D1014.011.2,1,ea,2,0.21,zero,"0,0|5,10",,0.79,normal,"37400,11220|5,10",0.2776,,,,,,,,,,,Traction Elevator (simultaneous consequence B)
+D1014.011.3,1,ea,2,0.32,zero,"0,0|5,10",,0.68,normal,"32000,9600|5,10",0.4083,,,,,,,,,,,Traction Elevator (simultaneous consequence C)
+D1014.011.4,1,ea,2,0.83,zero,"0,0|5,10",,0.17,normal,"5000,1500|5,10",0.4877,,,,,,,,,,,Traction Elevator (simultaneous consequence D)
+D2021.011a,1000,ft,1,1,lognormal,"319,261|1,4",0.76369,,,,,1,1,lognormal,"2915,2385|1,4",0.40537,,,,,,"Cold or Hot Potable  - Small Diameter Threaded Steel - (2.5 inches in diameter or less), SDC A or B, PIPING FRAGILITY"
+D2031.013b,1000,ft,1,1,lognormal,"800,240|5,10",0.57578,,,,,,,,,,,,,,,Sanitary waste piping
+D3031.012c,1,ea,2,0.8,lognormal,"1100,900|1,5",0.4523,0.2,lognormal,"51920,42480|5,10",0.1843,,,,,,,,,,,Chiller - Capacity: < 100 Ton - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D3031.021a,1,ea,1,1,lognormal,"26070,21330|1,5",0.17196,,,,,,,,,,,,,,,Cooling Tower - Capacity: < 100 Ton - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D3041.011a,1000,ft,1,1,lognormal,"715,585|1,5",0.36736,,,,,1,1,lognormal,"6985,5715|1,5",0.1002,,,,,,"HVAC Galvanized Sheet Metal Ducting less than 6 sq. ft in cross sectional area, SDC A or B"
+D3041.012a,1000,ft,1,1,lognormal,"1045,855|1,5",0.25596,,,,,1,1,lognormal,"8745,7155|1,5",0.08055,,,,,,"HVAC Galvanized Sheet Metal Ducting -  6 sq. ft cross sectional area or greater, SDC A or B"
+D3041.031a,10,ea,1,1,normal,"3300,2700|1,5",0.20655,,,,,,,,,,,,,,,"HVAC Drops / Diffusers in suspended ceilings - No independent safety wires, SDC A or B"
+D3041.041a,10,ea,1,1,lognormal,"16500,13500|1,5",0.29415,,,,,,,,,,,,,,,"Variable Air Volume (VAV) box with in-line coil, SDC A or B"
+D3041.101a,1,ea,1,1,lognormal,"2915,2385|1,5",0.13943,,,,,,,,,,,,,,,HVAC Fan - Capacity: all - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D3052.013c,1,ea,2,0.8,lognormal,"1100,900|1,5",0.4523,0.2,lognormal,"33220,27180|1,5",0.1751,,,,,,,,,,,Air Handling Unit - Capacity: <5000 CFM - Equipment that is either hard anchored or is vibration isolated with seismic snubbers/restraints - Combined anchorage/isolator & equipment fragility
+D4011.021a,1000,ft,1,1,lognormal,"385,315|3,10",0.64877,,,,,1,1,lognormal,"2915,2385|3,10",0.40537,,,,,,"Fire Sprinkler Water Piping - Horizontal Mains and Branches - Old Style Victaulic - Thin Wall Steel - No bracing, SDC A or B, PIPING FRAGILITY"
+D4011.031a,100,ea,1,1,lognormal,"550,450|2,5",0.36654,,,,,1,1,lognormal,"550,450|2,5",0.36654,,,,,,"Fire Sprinkler Drop Standard Threaded Steel - Dropping into unbraced lay-in tile SOFT ceiling - 6 ft. long drop maximum, SDC A or B"
+D5011.011a,1,ea,1,1,lognormal,"8332.5,6817.5|1,5",0.1875,,,,,,,,,,,,,,,Transformer/primary service - Capacity: <100 kVA - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D5012.013a,1,ea,1,1,normal,"4565,3735|1,5",0.18259,,,,,,,,,,,,,,,Motor Control Center - Capacity: all - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D5012.021a,1,ea,1,1,lognormal,"10202.5,8347.5|1,5",0.1572,,,,,,,,,,,,,,,Low Voltage Switchgear - Capacity: 100 to <350 Amp - Unanchored equipment that is not vibration isolated - Equipment fragility only
+D5012.031a,1,ea,1,1,lognormal,"12057.5,8347.5|1,5",0.1572,,,,,,,,,,,,,,,Distribution Panel - Capacity: 100 to <350 Amp - Unanchored equipment that is not vibration isolated - Equipment fragility only
+E2022.001,1,ea,1,1,lognormal,"2800,2200|1,5",0.4,,,,,,,,,,,,,,,Modular office work stations.
+E2022.023,1,ea,1,1,lognormal,"2000,1750|1,5",0.4,,,,,,,,,,,,,,,Desktop Computers
+E2022.102a,1,ea,1,1,lognormal,"800,500|1,5",0.5,,,,,,,,,,,,,,,"Bookcase, 2 shelves, unanchored laterally"
+E2022.112a,1,ea,1,1,lognormal,"500,300|1,5",0.5,,,,,,,,,,,,,,,"Vertical Filing Cabinet, 2 drawer, unanchored laterally"
+replacement,1,ea,1,1,lognormal,10448000,0.09975,,,,,,,,,,,,,,,
