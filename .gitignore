@@ -142,4 +142,7 @@ notes/
 Makefile
 doc/
 figure_data/
+data/peer_nga_west_2/
+data/smrf_3_of_II/_old_psha/
+data/smrf_3_of_II/_old_site_hazard/
 *.class
