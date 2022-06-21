@@ -191,6 +191,21 @@ mkf.add_rule(
     ["touch make/site_hazard/flatfile_obtained"]
 )
 
+# ~~~~~~~~~~~~~~~~~~~~~ #
+# Ground Motion Parsing #
+# ~~~~~~~~~~~~~~~~~~~~~ #
+
+mkf.add_rule(
+    "make/site_hazard/ground_motions_parsed",
+    ["Makefile", "src/parse_gms.py"],
+    ["python src/parse_gms.py && touch make/site_hazard/ground_motions_parsed"]
+)
+
+mkf.add_rule(
+    "make/site_hazard/UPD_ground_motions_parsed",
+    [],
+    ["touch make/site_hazard/ground_motions_parsed"]
+)
 
 
 mkf.write_to_file('Makefile')

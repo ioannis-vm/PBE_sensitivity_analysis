@@ -35,7 +35,6 @@ max_scaling = 4.50
 num_records = 14
 
 
-archetypes_all = read_study_param('data/archetype_codes_response').split()
 m = int(read_study_param('data/study_vars/m'))
 
 
