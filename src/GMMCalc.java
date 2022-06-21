@@ -2,7 +2,7 @@
 //   javac -classpath <path_to_jar> GMMCalc.java
 
 // Execute:
-//   java -classpath <path_to_jar>:. GMMCalc <Mw> <rRup> <vs30>
+//   java -classpath <path_to_jar>:. GMMCalc <Mw> <rRup> <vs30> <output_path>
 //   e.g.: clear && javac -classpath ../lib/opensha-all.jar GMMCalc.java && java -classpath ../lib/opensha-all.jar:. GMMCalc 7.5 25.00 730.0
 
 // e.g.
@@ -22,7 +22,11 @@ import org.opensha.sha.earthquake.ERF_Ref;
 import org.opensha.sha.gui.infoTools.IMT_Info;
 import org.opensha.sha.imr.AttenRelRef;
 import org.opensha.sha.imr.ScalarIMR;
+import org.opensha.sha.imr.attenRelImpl.ngaw2.ASK_2014;
+import org.opensha.sha.imr.attenRelImpl.ngaw2.NGAW2_GMM;
 import org.opensha.sha.imr.param.IntensityMeasureParams.SA_Param;
+import org.opensha.sha.imr.attenRelImpl.ngaw2.IMT;
+import org.opensha.sha.imr.attenRelImpl.ngaw2.ScalarGroundMotion;
 import static java.lang.Math.exp;
 
 import java.io.File;
@@ -39,22 +43,44 @@ class GMMCalc {
 	double vs30 = Double.parseDouble(args[2]);
 	String output_file_path = args[3];
 
-	ScalarIMR gmm = AttenRelRef.NGAWest_2014_AVG.instance(null);
-	double periods[] = { 0.010, 0.020, 0.030, 0.050, 0.075, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 7.5, 10.0 };
-	double[] means = new double[21];
-	double[] stdvs = new double[21];
+	// ScalarIMR gmm = AttenRelRef.ASK_2014.instance(null);
+	NGAW2_GMM gmm = new ASK_2014();
 
-		
-	for (int i = 0; i < periods.length; i++) {
-	    double period = periods[i];
-	    gmm.setParamDefaults();
-	    gmm.setIntensityMeasure(SA_Param.NAME);
-	    gmm.getSiteParams().setValue("vs30", vs30);
-	    SA_Param.setPeriodInSA_Param(gmm.getIntensityMeasure(), period);
-	    means[i] = exp(gmm.getMean());
-	    stdvs[i] = gmm.getStdDev();
+	Double[] periods = new Double[23];
+	Double[] savals  = new Double[23];
+	Double[] stdvals  = new Double[23];
+
+	int j = 0;
+	for (IMT imt : gmm.getSupportedIMTs()) {
+	    gmm.set_IMT(imt);
+	    gmm.set_Mw(Mw);
+	    gmm.set_rRup(rRup);
+	    gmm.set_rJB(0.00);
+	    gmm.set_rX(0.00);
+	    gmm.set_zTop(0.00);
+	    gmm.set_zHyp(0.00);
+	    gmm.set_vs30(vs30);
+	    gmm.set_dip(90.00);
+	    gmm.set_width(10.00);
+	    ScalarGroundMotion res = gmm.calc();
+	    Double period;
+	    if (imt.name().startsWith("SA")) {
+		period = imt.getPeriod();
+		periods[j] = period;
+		savals[j] = exp(res.mean());
+		stdvals[j] = res.stdDev();
+		j++;
+	    }
+	    if (imt.name().startsWith("PGA")) {
+		period = 0.00;
+		periods[j] = period;
+		savals[j] = exp(res.mean());
+		stdvals[j] = res.stdDev();
+		j++;
+	    }
+
 	}
-
+	
 	// write results to a text file
 	try {
 	    File myObj = new File(output_file_path);
@@ -64,6 +90,7 @@ class GMMCalc {
 		// file already exists
 		myObj.delete();
 		myObj.createNewFile();
+		System.out.println("File replaced: " + myObj.getName());
 	    }
 	} catch (IOException e) {
 	    System.out.println("An error occurred.");
@@ -71,11 +98,8 @@ class GMMCalc {
 	}
 	try {
 	    FileWriter myWriter = new FileWriter(output_file_path);
-
-	    myWriter.write("GMM: "+gmm.getName());
-	    myWriter.write(""+gmm.getSiteParams());
 	    for (int i = 0; i < periods.length; i++) {
-		myWriter.write(periods[i]+" "+means[i]+" "+stdvs[i]+"\n");
+		myWriter.write(String.valueOf(periods[i])+", "+String.valueOf(savals[i])+", "+String.valueOf(stdvals[i])+"\n");
 	    }
 	    myWriter.close();
 	} catch (IOException e) {

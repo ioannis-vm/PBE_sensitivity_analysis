@@ -2,7 +2,7 @@
 //   javac -classpath <path_to_jar> DisaggregationCalc.java
 
 // Execute:
-// java -classpath <path_to_jar>:. DisaggregationCalc <period> <latitude> <longitude> <vs30>
+// java -classpath <path_to_jar>:. DisaggregationCalc <period> <latitude> <longitude> <vs30> <imlVal>
 
 // e.g.
 // clear && javac -classpath ../lib/opensha-all.jar DisaggregationCalc.java && java -classpath ../lib/opensha-all.jar:. DisaggregationCalc 1.00 37.871 -122.259 733.4 0.20 out.txt

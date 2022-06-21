@@ -2,9 +2,9 @@
 
 # Generate site-specific hazard curves by calling HazardCurveCalc.java
 
-longitude=-122.259
-latitude=37.871
-vs30=733.4
+longitude=$(cat data/study_vars/longitude)
+latitude=$(cat data/study_vars/latitude)
+vs30=$(cat data/study_vars/vs30)
 
 cd src
 
@@ -35,12 +35,12 @@ fi
 periods=(0.010 0.020 0.030 0.050 0.075 0.10 0.15 0.20 0.25 0.30 0.40 0.50 0.75 1.0 1.5 2.0 3.0 4.0 5.0 7.5 10.0)
 curve_names=(0p01 0p02 0p03 0p05 0p075 0p1 0p15 0p2 0p25 0p3 0p4 0p5 0p75 1p0 1p5 2p0 3p0 4p0 5p0 7p5 10p0)
 
-# run calculations in batches of three
-for idx in {0..7}
+# run calculations in batches
+for idx in {0..10}
 do
-    for idxadd in {0..2}
+    for idxadd in {0..1}
     do
-	subidx=$(expr $idx + $idxadd)
+	subidx=$(echo $idx*2 + $idxadd | bc)
 	java -classpath $jar_file_path:. HazardCurveCalc ${periods[$subidx]} 37.871 -122.259 733.4 "$site_hazard_path""${curve_names[$subidx]}.txt" &
     done
     wait
