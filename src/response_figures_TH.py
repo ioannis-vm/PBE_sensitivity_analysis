@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import argparse
 
-# ~~~~~~~~~~~~~~~~~~~~~ #
-# setup argument parser #
-# ~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~~~~ #
+# set up argument parser #
+# ~~~~~~~~~~~~~~~~~~~~~~ #
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_dir')

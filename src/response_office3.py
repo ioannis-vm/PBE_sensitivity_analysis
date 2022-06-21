@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import argparse
 
-# ~~~~~~~~~~~~~~~~~~~~~ #
-# setup argument parser #
-# ~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~~~~ #
+# set up argument parser #
+# ~~~~~~~~~~~~~~~~~~~~~~ #
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gm_dir')
