@@ -15,43 +15,29 @@ parser.add_argument('--input_dir')
 parser.add_argument('--output_dir')
 parser.add_argument('--num_levels')
 parser.add_argument('--num_inputs')
+parser.add_argument('--t_1')
+parser.add_argument('--yield_dr')
 
 args = parser.parse_args()
 input_dir = args.input_dir
 output_dir = args.output_dir
 num_levels = int(args.num_levels)
 num_inputs = int(args.num_inputs)
+t_1 = float(args.t_1)
+yield_dr = float(args.yield_dr)
 
-# input_dir = "analysis/hazard_level_8/response"
-# num_inputs = 14
-# output_dir = "analysis/hazard_level_8/response_summary"
-# num_levels = 3
-
-# if input_dir == 'analysis/office3/hazard_level_10/response':
-#     response_dirs = [f'%s/gm%i' % (input_dir, i+1)
-#                      for input_dir, i in zip([input_dir]*num_inputs,
-#                                              [0,1,2,3,4,5,6,7,9,10,11,12,13])]
-#     num_inputs = 13
-# else:
-#     response_dirs = [f'%s/gm%i' % (input_dir, i+1)
-#                      for input_dir, i in zip([input_dir]*num_inputs,
-#                                              range(num_inputs))]
 response_dirs = [f'%s/gm%i' % (input_dir, i+1)
                  for input_dir, i in zip([input_dir]*num_inputs,
                                          range(num_inputs))]
-num_inputs = 14
 
 # ~~~~~~~~~~ #
 # parameters #
 # ~~~~~~~~~~ #
 
-# fundamental period of the building
-t_1 = 0.82
 # yield global drift in the X and Y direction
 yield_drift = {}
-yield_drift[1] = 0.01
-yield_drift[2] = 0.01
-
+yield_drift[1] = yield_dr
+yield_drift[2] = yield_dr
 
 
 # ~~~~ #
@@ -60,8 +46,6 @@ yield_drift[2] = 0.01
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-
-
 
 first_column = np.arange(1, num_inputs+1)
 
@@ -75,7 +59,7 @@ for level in range(1, num_levels+1):
         for j, response_dir in enumerate(response_dirs):
             response_file = \
                 f'{response_dir}/ID-{level}-{direction}.csv'
-            contents = np.genfromtxt(response_file)
+            contents = pd.read_csv(response_file, engine='pyarrow').to_numpy()
             peak = np.max(np.abs(contents))
             peak_edp.append(peak)
         edps[tag] = np.array(peak_edp)
@@ -88,7 +72,7 @@ for level in range(num_levels+1):
         for j, response_dir in enumerate(response_dirs):
             response_file = \
                 f'{response_dir}/FV-{level}-{direction}.csv'
-            contents = np.genfromtxt(response_file)
+            contents = pd.read_csv(response_file, engine='pyarrow').to_numpy()
             peak = np.max(np.abs(contents))
             peak_edp.append(peak)
         edps[tag] = np.array(peak_edp)
@@ -101,7 +85,7 @@ for level in range(num_levels+1):
         for j, response_dir in enumerate(response_dirs):
             response_file = \
                 f'{response_dir}/FA-{level}-{direction}.csv'
-            contents = np.genfromtxt(response_file)
+            contents = pd.read_csv(response_file, engine='pyarrow').to_numpy()
             # convert to G units
             peak = np.max(np.abs(contents)) / 386.22
             peak_edp.append(peak)
@@ -109,11 +93,11 @@ for level in range(num_levels+1):
 
 # RotD50 Sa at T_1
 rs_paths = [
-    f"{input_dir.replace('response', 'ground_motions/parsed')}/{i+1}RS.txt"
+    f"{input_dir.replace('response', 'ground_motions')}/{i+1}RS.txt"
     for i in range(num_inputs)]
 psas = np.full(num_inputs, 0.00)
 for i, rs_path in enumerate(rs_paths):
-    rs = np.genfromtxt(rs_path)
+    rs = pd.read_csv(rs_path, delimiter=' ', engine='pyarrow').to_numpy()
     f_rs = interp1d(rs[:, 0], rs[:, 1], bounds_error=False, fill_value=0.00)
     psas[i] = float(f_rs(t_1))
 edps[f'SA_{t_1}-0-1'] = psas
@@ -126,7 +110,7 @@ for direction in range(1, 3):
     for j, response_dir in enumerate(response_dirs):
         response_file = \
             f'{response_dir}/BD-{direction}.csv'
-        contents = np.genfromtxt(response_file)
+        contents = pd.read_csv(response_file, engine='pyarrow').to_numpy()
         peak = np.max(np.abs(contents))
         if peak < yield_drift[direction]:
             peak_edp[direction].append(peak/1e4)

@@ -10,25 +10,25 @@ import argparse
 # set up argument parser #
 # ~~~~~~~~~~~~~~~~~~~~~~ #
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--input_dir')
-parser.add_argument('--fig_type')
-parser.add_argument('--output_filename')
-parser.add_argument('--num_levels')
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--input_dir')
+# parser.add_argument('--fig_type')
+# parser.add_argument('--output_filename')
+# parser.add_argument('--num_levels')
 
-args = parser.parse_args()
-input_dir = args.input_dir
-fig_type = args.fig_type
-output_filename = args.output_filename
-num_levels = int(args.num_levels)
+# args = parser.parse_args()
+# input_dir = args.input_dir
+# fig_type = args.fig_type
+# output_filename = args.output_filename
+# num_levels = int(args.num_levels)
+
+input_dir = 'analysis/smrf_3_of_II/hazard_level_16/response/gm13'
+fig_type = 'ID'
+num_levels = 3
 
 # ~~~~ #
 # main #
 # ~~~~ #
-
-# sns.set_style('whitegrid')
-plt.rcParams["font.family"] = "serif"
-plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 if fig_type == 'FA':
     num_rows = num_levels + 1
@@ -64,5 +64,6 @@ for level in level_list:
     axs[level+shift].get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
     axs[level+shift].grid(visible=True, which='major', linewidth=1.0)
     axs[level+shift].grid(visible=True, which='minor', linewidth=0.5)
-plt.savefig(output_filename)
+# plt.savefig(output_filename)
+plt.show()
 plt.close()

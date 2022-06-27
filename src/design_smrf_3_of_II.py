@@ -1,9 +1,11 @@
 import sys
-sys.path.append("../OpenSees_Model_Builder/src")
+sys.path.append("../OpenSees_Model_Generator/src")
 
 import numpy as np
 import model
+from utility.common import methods
 import solver
+import preprocess
 import time
 import pickle
 from scipy.interpolate import interp1d
@@ -13,6 +15,7 @@ import pandas as pd
 # ~~~~~~~~~~~~~~~~~~~~ #
 # function definitions #
 # ~~~~~~~~~~~~~~~~~~~~ #
+
 
 def k(T):
     if T <= 0.5:
@@ -168,7 +171,7 @@ for function in ['exterior', 'interior']:
 
 for sec in wsections:
     b.add_sections_from_json(
-        "../OpenSees_Model_Builder/section_data/sections.json",
+        "../OpenSees_Model_Generator/section_data/sections.json",
         'W',
         [sec])
 
@@ -440,8 +443,11 @@ b.selection.add_UDL(np.array((0.00, 0.00,
                               -((15./12.**2) * hi[2] / 2.00))))
 b.selection.clear()
 
-b.preprocess(assume_floor_slabs=True, self_weight=True,
-             steel_panel_zones=True, elevate_column_splices=0.25)
+preprocess.model_steel_frame_panel_zones(b)
+preprocess.diaphragms(b)
+preprocess.elevate_steel_column_splices(b, 0.25)
+preprocess.tributary_area_analysis(b)
+preprocess.self_weight_and_mass(b)
 
 cam = dict(
     up=dict(x=0, y=0, z=1),
@@ -474,6 +480,7 @@ linear_gravity_analysis = solver.LinearGravityAnalysis(b)
 linear_gravity_analysis.run()
 
 # store column axial loads for design checks
+
 col_uids = dict(
     exterior=dict(level_1='3907',
                   level_2='4489',

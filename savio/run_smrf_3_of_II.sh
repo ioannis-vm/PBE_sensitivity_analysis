@@ -9,7 +9,7 @@
 #SBATCH --partition=savio2_htc
 #
 # Tasks needed
-#SBATCH --ntasks=20
+#SBATCH --ntasks=40
 #
 # Wall clock limit:
 #SBATCH --time=1-20:00:00
@@ -20,4 +20,4 @@
 #
 ## Command(s) to run:
 module load gcc openmpi # or module load intel openmpi
-ht_helper.sh -t taskfile_smrf_3_of_II
+ht_helper.sh -t savio/nlth_taskfile_smrf_3_of_II

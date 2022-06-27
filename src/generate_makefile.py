@@ -73,14 +73,15 @@ class Makefile:
 hazard_lvl_dirs = ['hazard_level_' + str(i+1)
                    for i in range(16)]
 
-gms = ['gm'+str(i+1) for i in range(14)]
+num_gms = 14
+gms = ['gm'+str(i+1) for i in range(num_gms)]
 
-cases = ['smrf_3_of_II']
+cases = ['smrf_3_of_II', 'smrf_3_he_II']
+use_response_of = dict(smrf_3_of_II='smrf_3_of_II', smrf_3_he_II='smrf_3_of_II')
+num_levels = dict(smrf_3_of_II=3)
+periods = dict(smrf_3_of_II=0.82)
+yield_drifts = dict(smrf_3_of_II=0.01)
 
-response_cases = ['smrf_3_of_II']
-use_response_of = dict(smrf_3_of_II='smrf_3_of_II')
-
-rvgroups = ['edp', 'cmp_quant', 'cmp_dm', 'cmp_dv', 'bldg_dm', 'bldg_dv']
 uncertainty_cases = ['low', 'medium']
 repl_threshold_cases = [0.4, 1.0]
 
@@ -98,6 +99,16 @@ mkf.add_rule(
     ["python src/generate_makefile.py"]
 )
 
+
+# ~~~~~~~ #
+# Phase A #
+# ~~~~~~~ #
+
+mkf.add_rule(
+    "make/phase_A",
+    ["make/site_hazard/hazard_curves_obtained", "make/site_hazard/hazard_levels_defined", "make/site_hazard/deaggregation_complete", "make/site_hazard/target_spectra", "make/site_hazard/ground_motions_selected"],
+    ["touch make/phase_A"]
+)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Generating site hazard curves #
@@ -191,6 +202,22 @@ mkf.add_rule(
     ["touch make/site_hazard/flatfile_obtained"]
 )
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# at this point, download ground motions from the PEER website
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# ~~~~~~~ #
+# Phase B #
+# ~~~~~~~ #
+
+mkf.add_rule(
+    "make/phase_B",
+    ["make/site_hazard/ground_motions_parsed"],
+    ["touch make/phase_B"]
+)
+
 # ~~~~~~~~~~~~~~~~~~~~~ #
 # Ground Motion Parsing #
 # ~~~~~~~~~~~~~~~~~~~~~ #
@@ -206,6 +233,76 @@ mkf.add_rule(
     [],
     ["touch make/site_hazard/ground_motions_parsed"]
 )
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# at this point, run nlth analysis on savio
+
+archetypes = []
+for arch in cases:
+    resp_arch = use_response_of[arch]
+    if resp_arch not in archetypes:
+        archetypes.append(resp_arch)
+
+for arch in archetypes:
+    with open(f'savio/nlth_taskfile_{arch}', 'w') as file:
+        for hz in hazard_lvl_dirs:
+            for gm in gms:
+                file.write(f"/global/home/users/ioannisvm/.conda/envs/computing/bin/python src/response.py '--archetype' '{arch}' '--gm_dir' 'analysis/{arch}/{hz}/ground_motions' '--gm_dt' '0.005' '--analysis_dt' '0.001' '--gm_number' '{gm}' '--output_dir' 'analysis/{arch}/{hz}/response/{gm}'\n")
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# ~~~~~~~ #
+# Phase C #
+# ~~~~~~~ #
+
+mkf.add_rule(
+    "make/phase_C",
+    ["make/response_parsed"],
+    ["touch make/phase_C"]
+)
+
+# ~~~~~~~~~~~~~~~~~ #
+# Parse nlth output #
+# ~~~~~~~~~~~~~~~~~ #
+
+prerequisites = []
+for case in cases:
+    for hz in hazard_lvl_dirs:
+        resp_case = use_response_of[case]
+        prerequisites.append(f"make/{resp_case}/{hz}/response/response_parsed")
+
+mkf.add_rule(
+    "make/response_parsed",
+    prerequisites,
+    ["touch make/response_parsed"]
+)
+
+for case in cases:
+    for hz in hazard_lvl_dirs:
+        resp_case = use_response_of[case]
+        nlvl = num_levels[use_response_of[case]]
+        t_1 = periods[use_response_of[case]]
+        dry = yield_drifts[use_response_of[case]]
+        mkf.add_rule(
+            f"make/{resp_case}/{hz}/response/response_parsed",
+            ["Makefile", "src/response_vectors.py"],
+            [f"python src/response_vectors.py '--input_dir' 'analysis/{resp_case}/{hz}/response' '--output_dir' 'analysis/{resp_case}/{hz}/response_summary' '--num_levels' '{nlvl}' '--num_inputs' '{num_gms}' '--t_1' '{t_1}' '--yield_dr' '{dry}' && mkdir -p make/{resp_case}/{hz}/response && touch make/{resp_case}/{hz}/response/response_parsed"]
+        )
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# at this point, run sensitivity analysis on savio
+
+with open(f'savio/si_taskfile', 'w') as file:
+    for case in cases:
+        for mdl_unc in uncertainty_cases:
+            for repl in repl_threshold_cases:
+                for hz in hazard_lvl_dirs:
+                    file.write(f"/global/home/users/ioannisvm/.conda/envs/computing/bin/python src/performance_var_sens.py '--response_path' 'analysis/{use_response_of[case]}/{hz}/response_summary/response.csv' '--modeling_uncertainty_case' '{mdl_unc}' '--repl_thr' '{repl}' '--performance_data_path' 'data/{case}/performance' '--analysis_output_path' 'analysis/{case}/{hz}/performance'\n")
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 mkf.write_to_file('Makefile')

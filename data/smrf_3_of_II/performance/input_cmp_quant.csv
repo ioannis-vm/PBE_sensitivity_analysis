@@ -23,7 +23,7 @@ C2011.001a,PID,"1,2,3",1,1,,,ea,Prefabricated steel stair with steel treads and 
 C2011.001a,PID,"1,2,3",2,"1,1",,,ea,
 C3021.001k,PFA,"0,1,2",1,14000,0.3,lognormal,ft2,Generic Floor Covering - Flooding of floor caused by failure of pipe - Retail - Dry
 C3027.001,PFA,"0,1,2",1,10500,0.15,lognormal,ft2,"Raised Access Floor, non seismically rated."
-C3032.001b,PFA,"1,2,3",1,280420700,0.15,lognormal,ft2,"Suspended Ceiling, SDC A,B,C, Area (A): A < 250, Vert support only"
+C3032.001b,PFA,"1,2,3",1,"280,420,700",0.15,lognormal,ft2,"Suspended Ceiling, SDC A,B,C, Area (A): A < 250, Vert support only"
 C3032.001d,PFA,"1,2,3",1,12600,0.15,lognormal,ft2,
 C3034.001,PFA,"0,1,2",1,"210, 210",0.2,lognormal,ea,Independent Pendant Lighting - non seismic
 D1014.011.1,PFA,0,1,"1,1",0.1,lognormal,ea,"Traction Elevator \u2013 Applies to most California Installations 1976 or later, most western states installations 1982 or later and most other U.S installations 1998 or later."

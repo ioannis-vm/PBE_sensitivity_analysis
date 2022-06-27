@@ -25,8 +25,6 @@ import logging
 
 idx = pd.IndexSlice
 
-np.random.seed(42)
-
 # pylint: disable=unsubscriptable-object
 # pylint: disable=invalid-name
 
@@ -421,7 +419,7 @@ class P58_Assessment:
         cmp_repair_cost_input = pd.read_csv(
             cmp_repair_cost_input_path, index_col=0)
         cmp_repair_cost_input.drop(
-            ['description', 'note'], inplace=True, axis=1)
+            ['description'], inplace=True, axis=1)
 
         def pipe_split(x, side):
             if pd.isna(x):

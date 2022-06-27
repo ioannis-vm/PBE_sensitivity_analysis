@@ -22,8 +22,3 @@ for arch in archetypes_all:
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-for arch in archetypes:
-    with open(f'savio/taskfile_{arch}', 'w') as file:
-        for hz in hazard_lvl_dirs:
-            for gm in gms:
-                file.write(f"/global/home/users/ioannisvm/.conda/envs/computing/bin/python ../src/response_{arch}.py '--archetype' '{arch}' '--gm_dir' '../analysis/{arch}/{hz}/ground_motions' '--gm_dt' '0.005' '--analysis_dt' '0.001' '--gm_number' '{gm}' '--output_dir' 'analysis/{arch}/{hz}/response/{gm}'\n")

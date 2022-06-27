@@ -147,3 +147,4 @@ data/smrf_3_of_II/_old_psha/
 data/smrf_3_of_II/_old_site_hazard/
 *.class
 *ground_motions*
+*taskfile*
