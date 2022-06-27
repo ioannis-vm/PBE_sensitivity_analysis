@@ -132,7 +132,7 @@ mkf.add_rule(
 
 mkf.add_rule(
     "make/site_hazard/hazard_levels_defined",
-    ["Makefile", "src/site_hazard.py"],
+    ["Makefile", "src/site_hazard.py", "make/site_hazard/hazard_curves_obtained"],
     ["python src/site_hazard.py && mkdir -p make/site_hazard && touch make/site_hazard/hazard_levels_defined"]
 )
 
@@ -148,7 +148,7 @@ mkf.add_rule(
 
 mkf.add_rule(
     "make/site_hazard/deaggregation_complete",
-    ["Makefile", "src/GMMCalc.java", "src/DisaggregationCalc.java", "src/site_hazard_deagg.sh"],
+    ["Makefile", "src/GMMCalc.java", "src/DisaggregationCalc.java", "src/site_hazard_deagg.sh", "make/site_hazard/hazard_levels_defined"],
     ["./src/site_hazard_deagg.sh && mkdir -p make/site_hazard && touch make/site_hazard/deaggregation_complete"]
 )
 
@@ -164,7 +164,7 @@ mkf.add_rule(
 
 mkf.add_rule(
     "make/site_hazard/target_spectra",
-    ["Makefile", "src/site_target_spectra.py"],
+    ["Makefile", "src/site_target_spectra.py", "make/site_hazard/deaggregation_complete"],
     ["python src/site_target_spectra.py && mkdir -p make/site_hazard && touch make/site_hazard/target_spectra"]
 )
 
@@ -180,7 +180,7 @@ mkf.add_rule(
 
 mkf.add_rule(
     "make/site_hazard/ground_motions_selected",
-    ["Makefile", "src/site_gm_selection.py", "make/site_hazard/flatfile_obtained"],
+    ["Makefile", "src/site_gm_selection.py", "make/site_hazard/flatfile_obtained", "make/site_hazard/target_spectra"],
     ["python src/site_gm_selection.py && touch make/site_hazard/ground_motions_selected"]
 )
 
@@ -224,7 +224,7 @@ mkf.add_rule(
 
 mkf.add_rule(
     "make/site_hazard/ground_motions_parsed",
-    ["Makefile", "src/parse_gms.py"],
+    ["Makefile", "src/parse_gms.py", "make/site_hazard/ground_motions_selected"],
     ["python src/parse_gms.py && touch make/site_hazard/ground_motions_parsed"]
 )
 
