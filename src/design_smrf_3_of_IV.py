@@ -67,6 +67,10 @@ family_30 = [
 family_33 = [
     'W33X130', 'W33X141', 'W33X152', 'W33X169', 'W33X201', 'W33X221',
     'W33X241', 'W33X263', 'W33X291', 'W33X318', 'W33X354']
+family_36 = [
+    'W36X150', 'W36X160', 'W36X170', 'W36X182', 'W36X194', 'W36X210',
+    'W36X232', 'W36X256', 'W36X231', 'W36X247', 'W36X262', 'W36X282',
+    'W36X302', 'W36X330', 'W36X361', 'W36X395', 'W36X441', 'W36X487']
 
 
 
@@ -77,16 +81,16 @@ family_33 = [
 
 
 # this solution:
-beams_1 = family_30
-beams_2 = family_30
+beams_1 = family_33
+beams_2 = family_33
 beams_3 = family_21
-cols_int = family_24
-cols_ext = family_18
+cols_int = family_27
+cols_ext = family_21
 #   weight:  53,404 lb
 #   lvl: 1    2    3
-coeff = [3,   2,   1,  # beams
-         7,   7,   6,  # interior
-         11,  11,  10] # exterior
+coeff = [1,   1,   3,  # beams
+         9,   8,   7,  # interior
+         12,  12,  10] # exterior
 
 
 
@@ -183,6 +187,13 @@ col_ext_secs = {
     'level_2': col_ext_sec_lvl2,
     'level_3': col_ext_sec_lvl3
 }
+
+print('Beams')
+print([c.name for c in list(beam_secs.values())])
+print('Cols Int')
+print([c.name for c in list(col_int_secs.values())])
+print('Cols Ext')
+print([c.name for c in list(col_ext_secs.values())])
 
 # define structural elements
 x_locs = np.array([0.00, 25.00, 50.00, 75.00]) * 12.00  # (in)
@@ -364,11 +375,11 @@ static_anl.run()
 # design parameters
 Cd = 5.5
 R = 8.0
-Ie = 1.0
+Ie = 1.5
 Sds = 1.58
 Sd1 = 1.38
 Tshort = Sd1/Sds
-max_drift = 0.02
+max_drift = 0.015
 
 def k(T):
     if T <= 0.5:
@@ -702,8 +713,6 @@ for i in range(len(p_nodes)):
         msgs += get_warning(thetas[i], '<', theta_lim, f'Stability Problem @ lvl {i+1}')
 
 # lower sections should not be ligher
-msgs += get_warning(beam_coeff_lvl1, '>', beam_coeff_lvl2, 'sections')
-msgs += get_warning(beam_coeff_lvl2, '>', beam_coeff_lvl3, 'sections')
 
 msgs += get_warning(
     col_int_coeff_lvl1, '>', col_int_coeff_lvl2, 'sections')

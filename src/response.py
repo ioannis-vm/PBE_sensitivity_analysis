@@ -1,12 +1,15 @@
 import sys
-sys.path.append("../OpenSees_Model_Generator/src")
 sys.path.append("src")
 
 import numpy as np
 from scipy import integrate
-import model
-import solver
 from archetypes import smrf_3_of_II
+from archetypes import smrf_6_of_II
+from archetypes import smrf_9_of_II
+from archetypes import smrf_3_of_IV
+from archetypes import smrf_6_of_IV
+from osmg import solver
+from util import read_study_param
 import time
 import pickle
 import sys
@@ -36,8 +39,8 @@ analysis_dt = float(args.analysis_dt)
 gm_number = int(args.gm_number.replace('gm', ''))
 output_folder = args.output_dir
 
-# archetype = 'smrf_3_of_II'
-# ground_motion_dir = 'analysis/smrf_3_of_II/hazard_level_8/ground_motions'
+# archetype = 'smrf_9_of_II'
+# ground_motion_dir = 'analysis/smrf_3_of_II/hazard_level_16/ground_motions'
 # ground_motion_dt = 0.005
 # analysis_dt = 0.001
 # gm_number = 1
@@ -49,42 +52,53 @@ if not os.path.exists(output_folder):
 
 # load archetype building here
 if archetype == 'smrf_3_of_II':
-    b = smrf_3_of_II()
+    mdl, loadcase = smrf_3_of_II()
+elif archetype == 'smrf_6_of_II':
+    mdl, loadcase = smrf_6_of_II()
+elif archetype == 'smrf_9_of_II':
+    mdl, loadcase = smrf_9_of_II()
+elif archetype == 'smrf_3_of_IV':
+    mdl, loadcase = smrf_3_of_IV()
+elif archetype == 'smrf_6_of_IV':
+    mdl, loadcase = smrf_6_of_IV()
 else:
     raise ValueError(f'Unknown archetype code: {archetype}')
 
 
-# b.plot_building_geometry(extrude_frames=True)
-# b.plot_building_geometry(extrude_frames=False, frame_axes=False)
-# modal_analysis = solver.ModalAnalysis(b, num_modes=6)
-# modal_analysis.run()
-# modal_analysis.deformed_shape(step=0, scaling=0.00, extrude_frames=True)
 
+# from osmg.gen.querry import LoadCaseQuerry
+# querry = LoadCaseQuerry(mdl, loadcase)
+# querry.level_masses()*386.22 / 2.00
+
+# from osmg.graphics.preprocessing_3D import show
+# show(mdl, loadcase, extrude=True)
+
+
+
+t_bar = float(read_study_param(f'data/{archetype}/period'))
 
 # retrieve some info used in the for loops
-num_levels = len(b.levels.registry) - 1
+num_levels = len(mdl.levels.registry) - 1
 level_heights = []
-for level in b.levels.registry.values():
+for level in mdl.levels.registry.values():
     level_heights.append(level.elevation)
 level_heights = np.diff(level_heights)
 
-
-base_node = list(b.levels.registry['base'].nodes_primary.registry.values())[0].uid
-lvl1_node = b.levels.registry['1'].parent_node.uid
-lvl2_node = b.levels.registry['2'].parent_node.uid
-lvl3_node = b.levels.registry['3'].parent_node.uid
+lvl_nodes = []
+base_node = list(mdl.levels.registry[0].nodes.registry.values())[0].uid
+lvl_nodes.append(base_node)
+for i in range(num_levels):
+    lvl_nodes.append(loadcase.parent_nodes[i+1].uid)
 
 # define analysis object
 nlth = solver.NLTHAnalysis(
-    b,
-    output_directory=f'{output_folder}',
-    disk_storage=False,
-    store_fiber=False,
-    store_forces=False,
-    store_reactions=False,
-    store_release_force_defo=False,
-    specific_nodes=[base_node, lvl1_node,
-                    lvl2_node, lvl3_node])
+    mdl, {loadcase.name: loadcase},
+    output_directory=f'{output_folder}')
+nlth.settings.store_fiber = False
+nlth.settings.store_forces = False
+nlth.settings.store_reactions = False
+nlth.settings.store_release_force_defo = False
+nlth.settings.specific_nodes = lvl_nodes
 
 # get the corresponding ground motion duration
 gm_X_filepath = ground_motion_dir + '/' + str(gm_number) + 'x.txt'
@@ -102,6 +116,7 @@ def get_duration(time_history_path, dt):
     num_points = len(values)
     return float(num_points) * dt
 
+
 dx = get_duration(gm_X_filepath, ground_motion_dt)
 dy = get_duration(gm_Y_filepath, ground_motion_dt)
 dz = get_duration(gm_Z_filepath, ground_motion_dt)
@@ -110,10 +125,12 @@ duration = np.min(np.array((dx, dy, dz)))  # note: actually should be =
 
 damping = {'type': 'rayleigh',
            'ratio': 0.03,
-           'periods': [0.82, 0.12]}
+           'periods': [t_bar, t_bar/10]}
 # damping = {'type': 'modal',
 #            'num_modes': 50,
 #            'ratio': 0.03}
+
+# nlth.plot_ground_motion(ground_motion_dir + '/' + str(gm_number) + 'x.txt', 0.005)
 
 # run the nlth analysis
 metadata = nlth.run(analysis_dt,
@@ -121,61 +138,29 @@ metadata = nlth.run(analysis_dt,
                     ground_motion_dir + '/' + str(gm_number) + 'y.txt',
                     ground_motion_dir + '/' + str(gm_number) + 'z.txt',
                     ground_motion_dt,
-                    finish_time=0.00,
+                    finish_time=0.10,
                     damping=damping,
-                    printing=False)
+                    print_progress=False)
 
 if not metadata['analysis_finished_successfully']:
     print(f'Analysis failed due to convergence issues. '
           f'| {ground_motion_dir}: {gm_number}')
     sys.exit()
 
-
-for thing in dir(nlth):
-    print(thing)
-    print(getattr(nlth, thing))
-    print()
-    print()
-
-nlth.basic_forces
-    
-# # reopen shelves
-# nlth = solver.NLTHAnalysis(
-#     b, output_directory=f'{output_folder}',
-#     disk_storage=True,
-#     store_fiber=False,
-#     store_forces=False,
-#     store_reactions=False)
-# nlth.read_results()
+# ~~~~~~~~~~~~~~~~ #
+# collect response #
+# ~~~~~~~~~~~~~~~~ #
 
 time_vec = np.array(nlth.time_vector)
 resp_a = {}
 resp_v = {}
 resp_u = {}
-resp_a[0] = nlth.retrieve_node_abs_acceleration(base_node)
-resp_a[1] = nlth.retrieve_node_abs_acceleration(lvl1_node)
-resp_a[2] = nlth.retrieve_node_abs_acceleration(lvl2_node)
-resp_a[3] = nlth.retrieve_node_abs_acceleration(lvl3_node)
-resp_v[0] = nlth.retrieve_node_abs_velocity(base_node)
-resp_v[1] = nlth.retrieve_node_abs_velocity(lvl1_node)
-resp_v[2] = nlth.retrieve_node_abs_velocity(lvl2_node)
-resp_v[3] = nlth.retrieve_node_abs_velocity(lvl3_node)
-# resp_u[0] = nlth.retrieve_node_displacement(base_node)  # always 0 - fixed
-resp_u[1] = nlth.retrieve_node_displacement(lvl1_node)
-resp_u[2] = nlth.retrieve_node_displacement(lvl2_node)
-resp_u[3] = nlth.retrieve_node_displacement(lvl3_node)
+for i in range(num_levels+1):
+    resp_a[i] = nlth.retrieve_node_abs_acceleration(lvl_nodes[i], loadcase.name)
+    resp_v[i] = nlth.retrieve_node_abs_velocity(lvl_nodes[i], loadcase.name)
+    if i > 0:
+        resp_u[i] = nlth.retrieve_node_displacement(lvl_nodes[i], loadcase.name)
 
-
-# ~~~~~~~~~~~~~~~~ #
-# collect response #
-# ~~~~~~~~~~~~~~~~ #
-
-
-# ground acceleration, velocity and displacement
-# interpolation functions
-
-if not os.path.exists(output_folder):
-    os.mkdir(output_folder)
 
 time_vec = np.array(nlth.time_vector)
 np.savetxt(f'{output_folder}/time.csv',
@@ -185,29 +170,29 @@ for direction in range(2):
     # store response time-histories
     # ground acceleration
     np.savetxt(f'{output_folder}/FA-0-{direction+1}.csv',
-               resp_a[0][:, direction])
+               resp_a[0].iloc[:, direction])
     # ground velocity
     np.savetxt(f'{output_folder}/FV-0-{direction+1}.csv',
-               resp_v[0][:, direction])
+               resp_v[0].iloc[:, direction])
     for lvl in range(num_levels):
         # story drifts
         if lvl == 0:
-            u = resp_u[1][:, direction]
+            u = resp_u[1].iloc[:, direction]
             dr = u / level_heights[lvl]
         else:
-            uprev = resp_u[lvl][:, direction]
-            u = resp_u[lvl + 1][:, direction]
+            uprev = resp_u[lvl].iloc[:, direction]
+            u = resp_u[lvl + 1].iloc[:, direction]
             dr = (u - uprev) / level_heights[lvl]
         # story accelerations
-        a = resp_a[lvl + 1][:, direction]
+        a = resp_a[lvl + 1].iloc[:, direction]
         # story velocities
-        v = resp_v[lvl + 1][:, direction]
+        v = resp_v[lvl + 1].iloc[:, direction]
 
         np.savetxt(f'{output_folder}/ID-{lvl+1}-{direction+1}.csv', dr)
         np.savetxt(f'{output_folder}/FA-{lvl+1}-{direction+1}.csv', a)
         np.savetxt(f'{output_folder}/FV-{lvl+1}-{direction+1}.csv', v)
 
     # global building drift
-    bdr = resp_u[3][:, direction]
+    bdr = resp_u[num_levels].iloc[:, direction]
     bdr /= np.sum(level_heights)
     np.savetxt(f'{output_folder}/BD-{direction+1}.csv', bdr)

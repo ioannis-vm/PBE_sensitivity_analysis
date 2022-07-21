@@ -67,30 +67,34 @@ family_30 = [
 family_33 = [
     'W33X130', 'W33X141', 'W33X152', 'W33X169', 'W33X201', 'W33X221',
     'W33X241', 'W33X263', 'W33X291', 'W33X318', 'W33X354']
+family_36 = [
+    'W36X150', 'W36X160', 'W36X170', 'W36X182', 'W36X194', 'W36X210',
+    'W36X232', 'W36X256', 'W36X231', 'W36X247', 'W36X262', 'W36X282',
+    'W36X302', 'W36X330', 'W36X361', 'W36X395', 'W36X441', 'W36X487']
 
 
 
 
 
-# # previously used design:
-# #   weight:  54,441 lb
 
 
 # this solution:
-beams_1 = family_30
-beams_2 = family_30
-beams_3 = family_21
-cols_int = family_24
-cols_ext = family_18
-#   weight:  53,404 lb
-#   lvl: 1    2    3
-coeff = [3,   2,   1,  # beams
-         7,   7,   6,  # interior
-         11,  11,  10] # exterior
+beams_12 = family_33
+beams_34 = family_33
+beams_56 = family_30
+beams_78 = family_27
+beams_9 = family_21
+cols_int = family_36
+cols_ext = family_24
+#   weight:  ??? lb
 
-
-
-
+#   lvl: 12   34   56   78   9
+coeff = [9,   8,
+                   10,   8,
+                              0,     # beams
+         14,  14,  14,   7,   3,     # interior
+         13,  13,  13,   6,   4      # exterior
+         ]
 
 
 
@@ -116,21 +120,39 @@ get_beam_checks = True
 # selecting sections
 
 beam_coeff_lvl1 = coeff[0]
-beam_coeff_lvl2 = coeff[1]
-beam_coeff_lvl3 = coeff[2]
+beam_coeff_lvl2 = coeff[0]
+beam_coeff_lvl3 = coeff[1]
+beam_coeff_lvl4 = coeff[1]
+beam_coeff_lvl5 = coeff[2]
+beam_coeff_lvl6 = coeff[2]
+beam_coeff_lvl7 = coeff[3]
+beam_coeff_lvl8 = coeff[3]
+beam_coeff_lvl9 = coeff[4]
 
-col_int_coeff_lvl1 = coeff[3]
-col_int_coeff_lvl2 = coeff[4]
-col_int_coeff_lvl3 = coeff[5]
+col_int_coeff_lvl1 = coeff[5]
+col_int_coeff_lvl2 = coeff[5]
+col_int_coeff_lvl3 = coeff[6]
+col_int_coeff_lvl4 = coeff[6]
+col_int_coeff_lvl5 = coeff[7]
+col_int_coeff_lvl6 = coeff[7]
+col_int_coeff_lvl7 = coeff[8]
+col_int_coeff_lvl8 = coeff[8]
+col_int_coeff_lvl9 = coeff[9]
 
-col_ext_coeff_lvl1 = coeff[6]
-col_ext_coeff_lvl2 = coeff[7]
-col_ext_coeff_lvl3 = coeff[8]
+col_ext_coeff_lvl1 = coeff[10]
+col_ext_coeff_lvl2 = coeff[10]
+col_ext_coeff_lvl3 = coeff[11]
+col_ext_coeff_lvl4 = coeff[11]
+col_ext_coeff_lvl5 = coeff[12]
+col_ext_coeff_lvl6 = coeff[12]
+col_ext_coeff_lvl7 = coeff[13]
+col_ext_coeff_lvl8 = coeff[13]
+col_ext_coeff_lvl9 = coeff[14]
 
 
 # initializing model
 
-mdl = Model('office_3_design')
+mdl = Model('office_6_design')
 mdl.settings.imperial_units = True
 mcg = BeamColumnGenerator(mdl)
 secg = SectionGenerator(mdl)
@@ -139,7 +161,17 @@ querry = ElmQuerry(mdl)
 rigidsec = secg.generate_generic_elastic(
     'rigidsec', 1.0e12, 1.0e12, 1.0e12)
 
-hi = np.array((15.00, 13.00+15.00, 13.00+13.00+15.00)) * 12.00  # in
+hi = np.array((
+    15.00,
+    13.00+15.00,
+    13.00*2.00+15.00,
+    13.00*3.00+15.00,
+    13.00*4.00+15.00,
+    13.00*5.00+15.00,
+    13.00*6.00+15.00,
+    13.00*7.00+15.00,
+    13.00*8.00+15.00,
+)) * 12.00  # in
 
 mdl.add_level(0, 0.00)
 for i, h in enumerate(hi):
@@ -158,36 +190,79 @@ def section_from_coeff(coeff, list_of_section_names):
         'name', list_of_section_names[coeff])
     return res_sec
 
-beam_sec_lvl1 = section_from_coeff(beam_coeff_lvl1, beams_1)
-beam_sec_lvl2 = section_from_coeff(beam_coeff_lvl2, beams_2)
-beam_sec_lvl3 = section_from_coeff(beam_coeff_lvl3, beams_3)
+beam_sec_lvl1 = section_from_coeff(beam_coeff_lvl1, beams_12)
+beam_sec_lvl2 = section_from_coeff(beam_coeff_lvl2, beams_12)
+beam_sec_lvl3 = section_from_coeff(beam_coeff_lvl3, beams_34)
+beam_sec_lvl4 = section_from_coeff(beam_coeff_lvl4, beams_34)
+beam_sec_lvl5 = section_from_coeff(beam_coeff_lvl5, beams_56)
+beam_sec_lvl6 = section_from_coeff(beam_coeff_lvl6, beams_56)
+beam_sec_lvl7 = section_from_coeff(beam_coeff_lvl7, beams_78)
+beam_sec_lvl8 = section_from_coeff(beam_coeff_lvl8, beams_78)
+beam_sec_lvl9 = section_from_coeff(beam_coeff_lvl9, beams_9)
 col_int_sec_lvl1 = section_from_coeff(col_int_coeff_lvl1, columns_int)
 col_int_sec_lvl2 = section_from_coeff(col_int_coeff_lvl2, columns_int)
 col_int_sec_lvl3 = section_from_coeff(col_int_coeff_lvl3, columns_int)
+col_int_sec_lvl4 = section_from_coeff(col_int_coeff_lvl4, columns_int)
+col_int_sec_lvl5 = section_from_coeff(col_int_coeff_lvl5, columns_int)
+col_int_sec_lvl6 = section_from_coeff(col_int_coeff_lvl6, columns_int)
+col_int_sec_lvl7 = section_from_coeff(col_int_coeff_lvl7, columns_int)
+col_int_sec_lvl8 = section_from_coeff(col_int_coeff_lvl8, columns_int)
+col_int_sec_lvl9 = section_from_coeff(col_int_coeff_lvl9, columns_int)
 col_ext_sec_lvl1 = section_from_coeff(col_ext_coeff_lvl1, columns_ext)
 col_ext_sec_lvl2 = section_from_coeff(col_ext_coeff_lvl2, columns_ext)
 col_ext_sec_lvl3 = section_from_coeff(col_ext_coeff_lvl3, columns_ext)
+col_ext_sec_lvl4 = section_from_coeff(col_ext_coeff_lvl4, columns_ext)
+col_ext_sec_lvl5 = section_from_coeff(col_ext_coeff_lvl5, columns_ext)
+col_ext_sec_lvl6 = section_from_coeff(col_ext_coeff_lvl6, columns_ext)
+col_ext_sec_lvl7 = section_from_coeff(col_ext_coeff_lvl7, columns_ext)
+col_ext_sec_lvl8 = section_from_coeff(col_ext_coeff_lvl8, columns_ext)
+col_ext_sec_lvl9 = section_from_coeff(col_ext_coeff_lvl9, columns_ext)
 
 beam_secs = {
     'level_1': beam_sec_lvl1,
     'level_2': beam_sec_lvl2,
-    'level_3': beam_sec_lvl3
+    'level_3': beam_sec_lvl3,
+    'level_4': beam_sec_lvl4,
+    'level_5': beam_sec_lvl5,
+    'level_6': beam_sec_lvl6,
+    'level_7': beam_sec_lvl7,
+    'level_8': beam_sec_lvl8,
+    'level_9': beam_sec_lvl9
 }
 col_int_secs = {
     'level_1': col_int_sec_lvl1,
     'level_2': col_int_sec_lvl2,
-    'level_3': col_int_sec_lvl3
+    'level_3': col_int_sec_lvl3,
+    'level_4': col_int_sec_lvl4,
+    'level_5': col_int_sec_lvl5,
+    'level_6': col_int_sec_lvl6,
+    'level_7': col_int_sec_lvl7,
+    'level_8': col_int_sec_lvl8,
+    'level_9': col_int_sec_lvl9
 }
 col_ext_secs = {
     'level_1': col_ext_sec_lvl1,
     'level_2': col_ext_sec_lvl2,
-    'level_3': col_ext_sec_lvl3
+    'level_3': col_ext_sec_lvl3,
+    'level_4': col_ext_sec_lvl4,
+    'level_5': col_ext_sec_lvl5,
+    'level_6': col_ext_sec_lvl6,
+    'level_7': col_ext_sec_lvl7,
+    'level_8': col_ext_sec_lvl8,
+    'level_9': col_ext_sec_lvl9
 }
+
+print('Beams')
+print([c.name for c in list(beam_secs.values())])
+print('Cols Int')
+print([c.name for c in list(col_int_secs.values())])
+print('Cols Ext')
+print([c.name for c in list(col_ext_secs.values())])
 
 # define structural elements
 x_locs = np.array([0.00, 25.00, 50.00, 75.00]) * 12.00  # (in)
 
-for level_counter in range(3):
+for level_counter in range(9):
     level_tag = 'level_'+str(level_counter+1)
     mdl.levels.set_active([level_counter+1])
     for xpt in x_locs:
@@ -225,7 +300,7 @@ for level_counter in range(3):
         )
 
 # leaning column
-for level_counter in range(3):
+for level_counter in range(9):
     level_tag = 'level_'+str(level_counter+1)
     mdl.levels.set_active([level_counter+1])
     pt = np.array((100.00*12.00, 0.00))
@@ -282,7 +357,13 @@ for level_counter in range(3):
 p_nodes = [
     querry.search_node_lvl(0.00, 0.00, 1),
     querry.search_node_lvl(0.00, 0.00, 2),
-    querry.search_node_lvl(0.00, 0.00, 3)
+    querry.search_node_lvl(0.00, 0.00, 3),
+    querry.search_node_lvl(0.00, 0.00, 4),
+    querry.search_node_lvl(0.00, 0.00, 5),
+    querry.search_node_lvl(0.00, 0.00, 6),
+    querry.search_node_lvl(0.00, 0.00, 7),
+    querry.search_node_lvl(0.00, 0.00, 8),
+    querry.search_node_lvl(0.00, 0.00, 9)
 ]
 
 
@@ -306,20 +387,38 @@ lc_live = LoadCase('live', mdl)
 beam_udls_dead = {
     'level_1': 72.30,
     'level_2': 72.30,
-    'level_3': 76.10
+    'level_3': 72.30,
+    'level_4': 72.30,
+    'level_5': 72.30,
+    'level_6': 72.30,
+    'level_7': 72.30,
+    'level_8': 72.30,
+    'level_9': 76.10
 }
 beam_udls_live = {
     'level_1': 29.90,
     'level_2': 29.90,
-    'level_3': 12.00
+    'level_3': 29.90,
+    'level_4': 29.90,
+    'level_5': 29.90,
+    'level_6': 29.90,
+    'level_7': 29.90,
+    'level_8': 29.90,
+    'level_9': 12.00
 }
 lvl_weight = {
     'level_1': 793500.00,
     'level_2': 785000.00,
-    'level_3': 817400.00
+    'level_3': 785000.00,
+    'level_4': 785000.00,
+    'level_5': 785000.00,
+    'level_6': 785000.00,
+    'level_7': 785000.00,
+    'level_8': 785000.00,
+    'level_9': 817400.00
 }
 
-for level_counter in range(1, 3+1):
+for level_counter in range(1, 9+1):
     level_tag = 'level_'+str(level_counter)
     for xpt in x_locs[:-1]:
         xpt += 30.00
@@ -368,7 +467,7 @@ Ie = 1.0
 Sds = 1.58
 Sd1 = 1.38
 Tshort = Sd1/Sds
-max_drift = 0.02
+max_drift = 0.015
 
 def k(T):
     if T <= 0.5:
@@ -417,7 +516,7 @@ T_max = Tmax(ct, exponent, hi[-1]/12.00, Sd1)
 # modal period
 lc_modal = LoadCase('modal', mdl)
 lc_modal.node_mass = lc_dead.node_mass
-num_modes = 3
+num_modes = 9
 
 modal_analysis = solver.ModalAnalysis(mdl, {'modal': lc_modal}, num_modes=num_modes)
 modal_analysis.run()
@@ -457,7 +556,8 @@ from osmg.postprocessing.design import LoadCombination
 elf_combo = LoadCombination(
     mdl,
     {
-        '+-E': [(1.00, elf_anl, 'elf'), (-1.00, elf_anl, 'elf')]
+        '+E': [(1.00, elf_anl, 'elf')],
+        '-E': [(-1.00, elf_anl, 'elf')]
         
 })
 # show_basic_forces_combo(
@@ -531,6 +631,12 @@ drift_combo = LoadCombination(
 dr1 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement(p_nodes[0])])) / (15.*12.) * Cd / Ie
 dr2 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement_diff(p_nodes[1], p_nodes[0])])) / (13.*12.) * Cd / Ie
 dr3 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement_diff(p_nodes[2], p_nodes[1])])) / (13.*12.) * Cd / Ie
+dr4 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement_diff(p_nodes[3], p_nodes[2])])) / (13.*12.) * Cd / Ie
+dr5 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement_diff(p_nodes[4], p_nodes[3])])) / (13.*12.) * Cd / Ie
+dr6 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement_diff(p_nodes[5], p_nodes[4])])) / (13.*12.) * Cd / Ie
+dr7 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement_diff(p_nodes[6], p_nodes[5])])) / (13.*12.) * Cd / Ie
+dr8 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement_diff(p_nodes[7], p_nodes[6])])) / (13.*12.) * Cd / Ie
+dr9 = np.max(np.abs([r[0] for r in drift_combo.envelope_node_displacement_diff(p_nodes[8], p_nodes[7])])) / (13.*12.) * Cd / Ie
 
 
 strength_combo = LoadCombination(
@@ -552,7 +658,7 @@ strength_combo = LoadCombination(
 
 # strong column-weak beam check
 
-level_tags = [f'level_{i+1}' for i in range(3)]
+level_tags = [f'level_{i+1}' for i in range(9)]
 
 col_puc = {
     'exterior': {},
@@ -641,7 +747,7 @@ if get_doubler_plates:
 
 # check beam strength
 if get_beam_checks:
-    for level_counter in range(1, 3+1):
+    for level_counter in range(1, 9+1):
         level_tag = 'level_'+str(level_counter)
         for xpt in x_locs[:-1]:
             xpt += 30.00
@@ -691,6 +797,12 @@ for elm in mdl.list_of_beamcolumn_elements():
 msgs += get_warning(dr1/max_drift, '<', 1.00, 'drift')
 msgs += get_warning(dr2/max_drift, '<', 1.00, 'drift')
 msgs += get_warning(dr3/max_drift, '<', 1.00, 'drift')
+msgs += get_warning(dr4/max_drift, '<', 1.00, 'drift')
+msgs += get_warning(dr5/max_drift, '<', 1.00, 'drift')
+msgs += get_warning(dr6/max_drift, '<', 1.00, 'drift')
+msgs += get_warning(dr7/max_drift, '<', 1.00, 'drift')
+msgs += get_warning(dr8/max_drift, '<', 1.00, 'drift')
+msgs += get_warning(dr9/max_drift, '<', 1.00, 'drift')
 
 # strong column, weak beam check
 for val in ext_res + int_res:
@@ -702,20 +814,46 @@ for i in range(len(p_nodes)):
         msgs += get_warning(thetas[i], '<', theta_lim, f'Stability Problem @ lvl {i+1}')
 
 # lower sections should not be ligher
-msgs += get_warning(beam_coeff_lvl1, '>', beam_coeff_lvl2, 'sections')
-msgs += get_warning(beam_coeff_lvl2, '>', beam_coeff_lvl3, 'sections')
 
 msgs += get_warning(
     col_int_coeff_lvl1, '>', col_int_coeff_lvl2, 'sections')
 msgs += get_warning(
     col_int_coeff_lvl2, '>', col_int_coeff_lvl3, 'sections')
 msgs += get_warning(
+    col_int_coeff_lvl3, '>', col_int_coeff_lvl4, 'sections')
+msgs += get_warning(
+    col_int_coeff_lvl4, '>', col_int_coeff_lvl5, 'sections')
+msgs += get_warning(
+    col_int_coeff_lvl5, '>', col_int_coeff_lvl6, 'sections')
+msgs += get_warning(
+    col_int_coeff_lvl6, '>', col_int_coeff_lvl7, 'sections')
+msgs += get_warning(
+    col_int_coeff_lvl7, '>', col_int_coeff_lvl8, 'sections')
+msgs += get_warning(
+    col_int_coeff_lvl8, '>', col_int_coeff_lvl9, 'sections')
+msgs += get_warning(
     col_ext_coeff_lvl1, '>', col_ext_coeff_lvl2, 'sections')
 msgs += get_warning(
     col_ext_coeff_lvl2, '>', col_ext_coeff_lvl3, 'sections')
+msgs += get_warning(
+    col_ext_coeff_lvl3, '>', col_ext_coeff_lvl4, 'sections')
+msgs += get_warning(
+    col_ext_coeff_lvl4, '>', col_ext_coeff_lvl5, 'sections')
+msgs += get_warning(
+    col_ext_coeff_lvl5, '>', col_ext_coeff_lvl6, 'sections')
+msgs += get_warning(
+    col_ext_coeff_lvl6, '>', col_ext_coeff_lvl7, 'sections')
+msgs += get_warning(
+    col_ext_coeff_lvl7, '>', col_ext_coeff_lvl8, 'sections')
+msgs += get_warning(
+    col_ext_coeff_lvl8, '>', col_ext_coeff_lvl9, 'sections')
 
 print("Drift capacity ratios, X direction (MODAL):")
-print("%.2f %.2f %.2f" % (dr1/max_drift, dr2/max_drift, dr3/max_drift))
+print("  lvl1   lvl2   lvl3   lvl4   lvl5   lvl6   lvl7   lvl8   lvl9")
+print("%6.2f %6.2f %6.2f %6.2f %6.2f %6.2f %6.2f %6.2f %6.2f"
+      % (dr1/max_drift, dr2/max_drift, dr3/max_drift,
+         dr4/max_drift, dr5/max_drift, dr6/max_drift,
+         dr7/max_drift, dr8/max_drift, dr9/max_drift))
 print(f'  periods: {ts}')
 print(f'  weight:  {weight:.2f}')
 print(f'  warnings: {msgs}')

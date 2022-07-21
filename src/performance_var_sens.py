@@ -48,7 +48,9 @@ elif modeling_uncertainty_case == 'low':
 else:
     raise ValueError('Unknown modeling uncertainty case specified')
 
-num_realizations = 50000
+# debug
+# num_realizations = 50000
+num_realizations = 5
 perf_model_input_path = f'{performance_data_path}/input_cmp_quant.csv'
 cmp_fragility_input_path = f'{performance_data_path}/input_fragility.csv'
 cmp_repair_cost_input_path = f'{performance_data_path}/input_repair_cost.csv'
@@ -296,12 +298,16 @@ for rv_group in rv_groups:
 
     if not os.path.exists(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}'):
         os.makedirs(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}')
+
+    # file output
     results_df.to_csv(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}/total_cost_realizations.csv')
 
     s1, sT = calc_sens(yA, yB, yC, yD)
 
     # bootstrap
-    num_repeats = 5000
+    # debug
+    num_repeats = 5
+    # num_repeats = 5000
     bootstrap_sample_s1 = np.zeros(num_repeats)
     bootstrap_sample_sT = np.zeros(num_repeats)
     for j in range(num_repeats):
@@ -333,5 +339,7 @@ for rv_group in rv_groups:
 
     if not os.path.exists(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}'):
         os.makedirs(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}')
+
+    # file output
     sens_results_df.to_csv(
-        f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}/sensitividy_indices.csv')
+        f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}/sensitivity_indices.csv')

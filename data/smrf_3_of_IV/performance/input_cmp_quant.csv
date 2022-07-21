@@ -51,5 +51,5 @@ E2022.001,PFA,"0,1,2",1,90,0.35,lognormal,ea,Modular office work stations.
 E2022.023,PFA,"0,1,2",1,90,0.35,lognormal,ea,Desktop Computers
 E2022.102a,PFV,"0,1,2",1,40,0.35,lognormal,ea,"Bookcase, 2 shelves, unanchored laterally"
 E2022.112a,PFV,"0,1,2",1,90,0.35,lognormal,ea,"Vertical Filing Cabinet, 2 drawer, unanchored laterally"
-collapse,SA_0.93,0,1,1,,,ea,
+collapse,SA_0.77,0,1,1,,,ea,
 irreparable,RID,0,1,1,,,ea,

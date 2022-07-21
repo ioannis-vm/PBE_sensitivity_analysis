@@ -2,13 +2,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-hz_num = 14  # not zero indexed
-gm_num = 1  # not zero indexed
+hz_num = 16  # not zero indexed
+gm_num = 14  # not zero indexed
 response_type = 'ID-1-1'
 
 
-gm_dir = f'analysis/office3/hazard_level_{hz_num}/ground_motions/parsed/{gm_num}x.txt'
-response_dir = f'analysis/office3/hazard_level_{hz_num}/response/gm{gm_num}'
+gm_dir = f'analysis/smrf_3_of_II/hazard_level_{hz_num}/ground_motions/{gm_num}x.txt'
+response_dir = f'analysis/smrf_3_of_II/hazard_level_{hz_num}/response/gm{gm_num}'
 
 time_vec = np.genfromtxt(f'{response_dir}/time.csv')
 resp_vec = np.genfromtxt(f'{response_dir}/{response_type}.csv')

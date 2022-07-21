@@ -76,11 +76,40 @@ hazard_lvl_dirs = ['hazard_level_' + str(i+1)
 num_gms = 14
 gms = ['gm'+str(i+1) for i in range(num_gms)]
 
-cases = ['smrf_3_of_II', 'smrf_3_he_II']
-use_response_of = dict(smrf_3_of_II='smrf_3_of_II', smrf_3_he_II='smrf_3_of_II')
-num_levels = dict(smrf_3_of_II=3)
-periods = dict(smrf_3_of_II=0.82)
-yield_drifts = dict(smrf_3_of_II=0.01)
+# archetype information
+cases = [
+    'smrf_3_of_II', 'smrf_3_he_II',
+    'smrf_6_of_II', 'smrf_6_he_II',
+    'smrf_9_of_II', 'smrf_9_he_II',
+    'smrf_3_of_IV', 'smrf_3_he_IV',
+    'smrf_6_of_IV', 'smrf_6_he_IV'
+]
+use_response_of = dict(
+    smrf_3_of_II='smrf_3_of_II', smrf_3_he_II='smrf_3_of_II',
+    smrf_6_of_II='smrf_6_of_II', smrf_6_he_II='smrf_6_of_II',
+    smrf_9_of_II='smrf_9_of_II', smrf_9_he_II='smrf_9_of_II',
+    smrf_3_of_IV='smrf_3_of_IV', smrf_3_he_IV='smrf_3_of_IV',
+    smrf_6_of_IV='smrf_6_of_IV', smrf_6_he_IV='smrf_6_of_IV'
+)
+num_levels = dict(
+    smrf_3_of_II=3,
+    smrf_6_of_II=6,
+    smrf_9_of_II=9,
+    smrf_3_of_IV=3,
+    smrf_6_of_IV=6
+)
+
+periods = dict(
+    smrf_3_of_II=0.93, smrf_6_of_II=1.34, smrf_9_of_II=1.40,
+    smrf_3_of_IV=0.77, smrf_6_of_IV=1.07
+)
+yield_drifts = dict(
+    smrf_3_of_II=0.01,
+    smrf_6_of_II=0.01,
+    smrf_9_of_II=0.01,
+    smrf_3_of_IV=0.01,
+    smrf_6_of_IV=0.01
+)
 
 uncertainty_cases = ['low', 'medium']
 repl_threshold_cases = [0.4, 1.0]
@@ -238,13 +267,13 @@ mkf.add_rule(
 
 # at this point, run nlth analysis on savio
 
-archetypes = []
+response_archetypes = []
 for arch in cases:
     resp_arch = use_response_of[arch]
-    if resp_arch not in archetypes:
-        archetypes.append(resp_arch)
+    if resp_arch not in response_archetypes:
+        response_archetypes.append(resp_arch)
 
-for arch in archetypes:
+for arch in response_archetypes:
     with open(f'savio/nlth_taskfile_{arch}', 'w') as file:
         for hz in hazard_lvl_dirs:
             for gm in gms:
@@ -267,7 +296,7 @@ mkf.add_rule(
 # ~~~~~~~~~~~~~~~~~ #
 
 prerequisites = []
-for case in cases:
+for case in response_archetypes:
     for hz in hazard_lvl_dirs:
         resp_case = use_response_of[case]
         prerequisites.append(f"make/{resp_case}/{hz}/response/response_parsed")
@@ -278,12 +307,11 @@ mkf.add_rule(
     ["touch make/response_parsed"]
 )
 
-for case in cases:
+for resp_case in response_archetypes:
     for hz in hazard_lvl_dirs:
-        resp_case = use_response_of[case]
-        nlvl = num_levels[use_response_of[case]]
-        t_1 = periods[use_response_of[case]]
-        dry = yield_drifts[use_response_of[case]]
+        nlvl = num_levels[resp_case]
+        t_1 = periods[resp_case]
+        dry = yield_drifts[resp_case]
         mkf.add_rule(
             f"make/{resp_case}/{hz}/response/response_parsed",
             ["Makefile", "src/response_vectors.py"],

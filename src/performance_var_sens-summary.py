@@ -17,7 +17,8 @@ repl_threshold_cases = [0.4, 1.0]
 
 for case in cases:
     for beta_m_case in beta_m_cases:
-        for repl in repl_threshold_cases:
+        # for repl in repl_threshold_cases:
+        for repl in [1.0]:
 
                 idx = pd.IndexSlice
 
@@ -28,7 +29,7 @@ for case in cases:
 
                 for hz in hz_lvls:
                     for rvgroup in rvgroups:
-                        res_path = f'analysis/{case}/{hz}/performance/{beta_m_case}/{repl}/{rvgroup}/sensitividy_indices.csv'
+                        res_path = f'analysis/{case}/{hz}/performance/{beta_m_case}/{repl}/{rvgroup}/sensitivity_indices.csv'
                         data = pd.read_csv(res_path, index_col=0)
                         data.index = pd.MultiIndex.from_tuples([(hz, x) for x in data.index])
                         si_dfs.append(data)
@@ -174,8 +175,8 @@ for i, hzlvl in enumerate(hz_lvls):
 
 fig, [ax1, ax2] = plt.subplots(2, 1, figsize=(8, 4))
 bar_plot(ax1, data, erbr, total_width=.8, single_width=1.)
-ax1.set_xticks(range(6), my_order_names)
-ax1.set(ylabel='$s_1$')
+# ax1.set_xticks(range(6), my_order_names)
+# ax1.set(ylabel='$s_1$')
 
 
 data = {}
@@ -192,8 +193,8 @@ for i, hzlvl in enumerate(hz_lvls):
     erbr[hz_lvls_names[i]] = ers
 
 bar_plot(ax2, data, erbr, colors=None, total_width=.8, single_width=1, legend_title='Hazard Level')
-ax2.set_xticks(range(6), my_order_names)
-ax2.set(ylabel='$s_T$')
+# ax2.set_xticks(range(6), my_order_names)
+# ax2.set(ylabel='$s_T$')
 
 plt.subplots_adjust(left=0.08, right=0.99, top=0.96, bottom=0.09)
 

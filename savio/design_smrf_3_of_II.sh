@@ -1,18 +1,15 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=PBEE_sensitivity_analysis
+#SBATCH --job-name=design_smrf_3_of_II
 #
 # Account:
 #SBATCH --account=fc_hpc4pbee
 #
 # Partition:
-#SBATCH --partition=savio_bigmem
+#SBATCH --partition=savio2
 #
-# Tasks per node
-#SBATCH --ntasks-per-node=20
-#
-# Nodes
-#SBATCH --nodes=4
+# Tasks needed
+#SBATCH --ntasks=1
 #
 # Wall clock limit:
 #SBATCH --time=1-20:00:00
@@ -22,5 +19,6 @@
 #SBATCH --mail-user=ioannis_vm@berkeley.edu
 #
 ## Command(s) to run:
-module load gcc openmpi # or module load intel openmpi
-ht_helper.sh -t savio/si_taskfile
+module load python
+source activate computing
+python src/design_smrf_3_of_II.py
