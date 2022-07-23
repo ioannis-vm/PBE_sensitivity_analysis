@@ -131,6 +131,9 @@ for arch in archetypes:
         all_durations.append(durations)
         all_spectra.append(spectra)
         all_ground_motions.append(ground_motions)
+    del ground_motions
+    del spectra
+    del durations
 
     # Export to corresponding directory
     for hz, gms in enumerate(all_ground_motions):
@@ -138,9 +141,9 @@ for arch in archetypes:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         for i, gm in enumerate(gms):
-            np.savetxt(f"{output_dir}/{i+1}x.txt", ground_motions[i][0])
-            np.savetxt(f"{output_dir}/{i+1}y.txt", ground_motions[i][1])
-            np.savetxt(f"{output_dir}/{i+1}z.txt", ground_motions[i][2])
+            np.savetxt(f"{output_dir}/{i+1}x.txt", all_ground_motions[hz][i][0])
+            np.savetxt(f"{output_dir}/{i+1}y.txt", all_ground_motions[hz][i][1])
+            np.savetxt(f"{output_dir}/{i+1}z.txt", all_ground_motions[hz][i][2])
     for hz, spcs in enumerate(all_spectra):
         output_dir = f'analysis/{arch}/hazard_level_{hz+1}/ground_motions'
         for i, spc in enumerate(spcs):

@@ -50,42 +50,46 @@ E2022.001,PFA,2,1,6,0.35,lognormal,ea,Modular office work stations.
 E2022.023,PFA,2,1,6,0.35,lognormal,ea,Desktop Computers
 E2022.102a,PFV,2,1,4,0.35,lognormal,ea,"Bookcase, 2 shelves, unanchored laterally"
 E2022.112a,PFV,2,1,4,0.35,lognormal,ea,"Vertical Filing Cabinet, 2 drawer, unanchored laterally"
-E1028.001,PFV,1,1,2,0.35,lognormal,ea,Anesthesia machine
-E1028.002,PFV,1,1,2,0.35,lognormal,ea,Ballon pump
-E1028.003,PFV,1,1,1,0.35,lognormal,ea,Catheter cabinet
-E1028.004,PFV,1,1,1,0.35,lognormal,ea,Blood recovery system
+E1028.001,PFV,1,1,6,0.35,lognormal,ea,Anesthesia machine
+E1028.002,PFV,1,1,3,0.35,lognormal,ea,Ballon pump
+E1028.003,PFV,1,1,2,0.35,lognormal,ea,Catheter cabinet
+E1028.004,PFV,1,1,2,0.35,lognormal,ea,Blood recovery system
 E1028.005,PFV,1,1,2,0.35,lognormal,ea,Hypothermia system
-E1028.006,PFV,1,1,2,0.35,lognormal,ea,Surgical table
-E1028.011,PFV,"2,3",1,4,0.35,lognormal,ea,Patient bed
+E1028.006,PFV,1,1,6,0.35,lognormal,ea,Surgical table
+E1028.011,PFV,1,1,6,0.35,lognormal,ea,Patient bed
+E1028.011,PFV,"2,3,4",1,12,0.35,lognormal,ea,Patient bed
 E1028.021,PFV,0,1,3,0.35,lognormal,ea,Endoscope system
 E1028.023,PFV,0,1,3,0.35,lognormal,ea,Ultrasound unit
-E1028.031,PFV,2,1,1,0.35,lognormal,ea,Cryostat
+E1028.031,PFV,5,1,1,0.35,lognormal,ea,Cryostat
 E1028.104,PFV,1,1,1,0.35,lognormal,ea,Ice slusher
 E1028.022,PFA,1,1,36,0.35,lognormal,ea,Light system
-E1028.101,PFA,1,1,2,0.35,lognormal,ea,Equipment boom
-E1028.102,PFA,1,1,2,0.35,lognormal,ea,Warming cabinet (full height)
-E1028.103,PFA,1,1,2,0.35,lognormal,ea,Anesthesia boom
-E1028.105,PFA,1,1,2,0.35,lognormal,ea,Dual surgical light
+E1028.101,PFA,1,1,6,0.35,lognormal,ea,Equipment boom
+E1028.102,PFA,1,1,6,0.35,lognormal,ea,Warming cabinet (full height)
+E1028.103,PFA,1,1,6,0.35,lognormal,ea,Anesthesia boom
+E1028.105,PFA,1,1,6,0.35,lognormal,ea,Dual surgical light
 E1028.106,PFA,1,1,1,0.35,lognormal,ea,Cath lab system
-E1028.107,PFA,1,1,2,0.35,lognormal,ea,Sterilizer
-E1028.108,PFA,1,1,1,0.35,lognormal,ea,Washer / disinfector
-E1028.201,PFA,2,1,2,0.35,lognormal,ea,Bio safety hood (4 ft.)
-E1028.202,PFA,1,1,1,0.35,lognormal,ea,"Ultrasonic cleaner (table top, 5.75 gal.)"
+E1028.107,PFA,1,1,3,0.35,lognormal,ea,Sterilizer
+E1028.108,PFA,1,1,3,0.35,lognormal,ea,Washer / disinfector
+E1028.201,PFA,5,1,2,0.35,lognormal,ea,Bio safety hood (4 ft.)
+E1028.202,PFA,1,1,3,0.35,lognormal,ea,"Ultrasonic cleaner (table top, 5.75 gal.)"
 E1028.203,PFA,0,1,1,0.35,lognormal,ea,Freezer (23.3 cu. ft.)
-E1028.204,PFA,2,1,1,0.35,lognormal,ea,Laminar flow hood (6ft.)
-E1028.205,PFA,1,1,1,0.35,lognormal,ea,Decontamination washer
+E1028.203,PFA,1,1,6,0.35,lognormal,ea,Freezer (23.3 cu. ft.)
+E1028.204,PFA,5,1,1,0.35,lognormal,ea,Laminar flow hood (6ft.)
+E1028.205,PFA,1,1,3,0.35,lognormal,ea,Decontamination washer
 E1028.212,PFA,0,1,1,0.35,lognormal,ea,Breathing circuit dryer (single cabinet)
-E1028.221,PFA,2,1,1,0.35,lognormal,ea,Chemistry analyzer
-E1028.301,PFA,"1,2",1,4,0.35,lognormal,ea,Headwall
-E1028.311,PFA,"0,1,2",1,1,0.35,lognormal,ea,Ice dispenser
-E1028.321,PFA,"0,1,2",1,2,0.35,lognormal,ea,Under counter refrigerator
-E1028.331,PFA,"0,1,2",1,1,0.35,lognormal,ea,Refrigerator (49 cu. ft.)
-E1028.341,PFA,"0,1,2",1,1,0.35,lognormal,ea,Medstation (6-drawer)
+E1028.221,PFA,5,1,1,0.35,lognormal,ea,Chemistry analyzer
+E1028.301,PFA,1,1,6,0.35,lognormal,ea,Headwall
+E1028.301,PFA,"2,3,4",1,12,0.35,lognormal,ea,Headwall
+E1028.311,PFA,"0,2,3,4",1,1,0.35,lognormal,ea,Ice dispenser
+E1028.321,PFA,"0,2,3,4",1,2,0.35,lognormal,ea,Under counter refrigerator
+E1028.331,PFA,0,1,1,0.35,lognormal,ea,Refrigerator (49 cu. ft.)
+E1028.331,PFA,5,1,2,0.35,lognormal,ea,Refrigerator (49 cu. ft.)
+E1028.341,PFA,"0,2,3,4",1,1,0.35,lognormal,ea,Medstation (6-drawer)
 E1028.401,PFA,0,1,1,0.35,lognormal,ea,Imaging system (16 slice CT)
 E1028.403,PFA,0,1,1,0.35,lognormal,ea,CT C-Arm (digital)
 E1028.411,PFA,0,1,1,0.35,lognormal,ea,MRI system
 E1028.421,PFA,0,1,1,0.35,lognormal,ea,Laser imaging
 E1028.431,PFA,0,1,1,0.35,lognormal,ea,X-Ray system (digital)
 E1028.501,PFA,0,1,10,0.35,lognormal,ea,Shelving system (single 5 ft. unit)
-collapse,SA_0.93,0,1,1,,,ea,
+collapse,SA_1.34,0,1,1,,,ea,
 irreparable,RID,0,1,1,,,ea,

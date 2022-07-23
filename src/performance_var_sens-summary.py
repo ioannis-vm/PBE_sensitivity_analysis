@@ -10,15 +10,16 @@ from collections import OrderedDict
 import os
 
 # cases = ['healthcare3', 'office3']
-cases = ['smrf_3_of_II']
-beta_m_cases = ['medium', 'low']
+cases = ['smrf_3_he_II']
+# beta_m_cases = ['medium', 'low']
+beta_m_cases = ['medium']
 # output_dir = "/home/john_vm/google_drive_encr/UCB/research/projects/299_report/299_report/data/performance_si"
-repl_threshold_cases = [0.4, 1.0]
+# repl_threshold_cases = [0.4, 1.0]
+repl_threshold_cases = [0.4]
 
 for case in cases:
     for beta_m_case in beta_m_cases:
-        # for repl in repl_threshold_cases:
-        for repl in [1.0]:
+        for repl in repl_threshold_cases:
 
                 idx = pd.IndexSlice
 

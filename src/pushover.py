@@ -18,7 +18,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import pandas as pd
 
-archetype = 'smrf_3_of_II'
+archetype = 'smrf_9_of_II'
 output_folder = f'analysis/{archetype}/pushover'
 
 if not os.path.exists(output_folder):
@@ -59,11 +59,16 @@ control_node = list(loadcase.parent_nodes.values())[-1]
 
 # run analysis
 anl.run(
-    'x', [control_node.coords[2]*0.02],
-    control_node, 1.00,
+    'x', [control_node.coords[2]*0.04],
+    control_node, 1.0,
     modeshape=modeshape)
 
 # retrieve results
+anl.plot_pushover_curve(loadcase.name, 'x', control_node)
+
+# from osmg.graphics.postprocessing_3D import show_deformed_shape
+# show_deformed_shape(anl, loadcase.name, anl.results[loadcase.name].n_steps_success, 0.00, False)
+
 displ, force = anl.table_pushover_curve(loadcase.name, 'x', control_node)
 import pandas as pd
 df = pd.DataFrame(np.column_stack((displ, force)), columns=['displ', 'force'])

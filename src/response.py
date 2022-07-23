@@ -138,7 +138,7 @@ metadata = nlth.run(analysis_dt,
                     ground_motion_dir + '/' + str(gm_number) + 'y.txt',
                     ground_motion_dir + '/' + str(gm_number) + 'z.txt',
                     ground_motion_dt,
-                    finish_time=0.10,
+                    finish_time=0.00,
                     damping=damping,
                     print_progress=False)
 

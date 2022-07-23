@@ -87,5 +87,5 @@ E1028.411,PFA,0,1,1,0.35,lognormal,ea,MRI system
 E1028.421,PFA,0,1,1,0.35,lognormal,ea,Laser imaging
 E1028.431,PFA,0,1,1,0.35,lognormal,ea,X-Ray system (digital)
 E1028.501,PFA,0,1,10,0.35,lognormal,ea,Shelving system (single 5 ft. unit)
-collapse,SA_0.93,0,1,1,,,ea,
+collapse,SA_0.77,0,1,1,,,ea,
 irreparable,RID,0,1,1,,,ea,

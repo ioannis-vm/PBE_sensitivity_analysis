@@ -323,12 +323,12 @@ for resp_case in response_archetypes:
 
 # at this point, run sensitivity analysis on savio
 
-with open(f'savio/si_taskfile', 'w') as file:
-    for case in cases:
+for case in cases:
+    with open(f'savio/si_taskfile_{case}', 'w') as file:
         for mdl_unc in uncertainty_cases:
             for repl in repl_threshold_cases:
                 for hz in hazard_lvl_dirs:
-                    file.write(f"/global/home/users/ioannisvm/.conda/envs/computing/bin/python src/performance_var_sens.py '--response_path' 'analysis/{use_response_of[case]}/{hz}/response_summary/response.csv' '--modeling_uncertainty_case' '{mdl_unc}' '--repl_thr' '{repl}' '--performance_data_path' 'data/{case}/performance' '--analysis_output_path' 'analysis/{case}/{hz}/performance'\n")
+                    file.write(f"/global/home/users/ioannisvm/.conda/envs/computing/bin/python src/performance_var_sens.py '--response_path' 'analysis/{use_response_of[case]}/{hz}/response_summary/response.csv' '--base_period' '{periods[use_response_of[case]]}' '--modeling_uncertainty_case' '{mdl_unc}' '--repl_thr' '{repl}' '--performance_data_path' 'data/{case}/performance' '--analysis_output_path' 'analysis/{case}/{hz}/performance'\n")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -22,8 +22,8 @@ import argparse
 # output_filename = args.output_filename
 # num_levels = int(args.num_levels)
 
-input_dir = 'analysis/smrf_3_of_II/hazard_level_16/response/gm13'
-fig_type = 'ID'
+input_dir = 'analysis/smrf_3_of_II/hazard_level_1/response/gm10'
+fig_type = 'FA'
 num_levels = 3
 
 # ~~~~ #

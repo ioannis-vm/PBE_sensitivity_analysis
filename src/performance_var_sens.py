@@ -25,6 +25,7 @@ rv_groups = ['edp', 'cmp_quant', 'cmp_dm', 'cmp_dv', 'bldg_dm', 'bldg_dv']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--response_path')
+parser.add_argument('--base_period')
 parser.add_argument('--modeling_uncertainty_case')
 parser.add_argument('--repl_thr')
 parser.add_argument('--performance_data_path')
@@ -32,10 +33,18 @@ parser.add_argument('--analysis_output_path')
 
 args = parser.parse_args()
 response_path = args.response_path
+base_period = args.base_period
 modeling_uncertainty_case = args.modeling_uncertainty_case
 replacement_threshold = float(args.repl_thr)
 performance_data_path = args.performance_data_path
 analysis_output_path = args.analysis_output_path
+
+# response_path = 'analysis/smrf_6_of_IV/hazard_level_1/response_summary/response.csv'
+# base_period = '1.07'
+# modeling_uncertainty_case = 'low'
+# replacement_threshold = 0.40
+# performance_data_path = 'data/smrf_6_he_IV/performance'
+# analysis_output_path = '/tmp/test'
 
 # ~~~~~~~~~~ #
 # parameters #
@@ -48,9 +57,7 @@ elif modeling_uncertainty_case == 'low':
 else:
     raise ValueError('Unknown modeling uncertainty case specified')
 
-# debug
-# num_realizations = 50000
-num_realizations = 5
+num_realizations = 10000
 perf_model_input_path = f'{performance_data_path}/input_cmp_quant.csv'
 cmp_fragility_input_path = f'{performance_data_path}/input_fragility.csv'
 cmp_repair_cost_input_path = f'{performance_data_path}/input_repair_cost.csv'
@@ -61,12 +68,6 @@ desc = {'bldg_dm': 'Building DM',
         'cmp_dv': 'Component DV',
         'cmp_quant': 'Component Quantity',
         'edp': 'EDP'}
-
-if not os.path.exists(analysis_output_path):
-    os.makedirs(analysis_output_path)
-
-# if not os.path.exists(figures_output_path):
-#     os.makedirs(figures_output_path)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -261,8 +262,8 @@ for rv_group in rv_groups:
     elif rv_group == 'edp':
 
         asmt_C.edp_samples = asmt_A.edp_samples.copy()
-        asmt_C.edp_samples.loc[:, ('SA_0.82', '0', '1')] = \
-            asmt_B.edp_samples.loc[:, ('SA_0.82', '0', '1')]
+        asmt_C.edp_samples.loc[:, (f'SA_{base_period}', '0', '1')] = \
+            asmt_B.edp_samples.loc[:, (f'SA_{base_period}', '0', '1')]
         asmt_C.cmp_quant_RV = asmt_B.cmp_quant_RV
         asmt_C.cmp_fragility_RV = asmt_B.cmp_fragility_RV
         asmt_C.cmp_damage_consequence_RV = asmt_B.cmp_damage_consequence_RV
@@ -273,8 +274,8 @@ for rv_group in rv_groups:
         asmt_C.calc_total_cost()
 
         asmt_D.edp_samples = asmt_B.edp_samples.copy()
-        asmt_D.edp_samples.loc[:, ('SA_0.82', '0', '1')] = \
-            asmt_A.edp_samples.loc[:, ('SA_0.82', '0', '1')]
+        asmt_D.edp_samples.loc[:, (f'SA_{base_period}', '0', '1')] = \
+            asmt_A.edp_samples.loc[:, (f'SA_{base_period}', '0', '1')]
         asmt_D.cmp_quant_RV = asmt_A.cmp_quant_RV
         asmt_D.cmp_fragility_RV = asmt_A.cmp_fragility_RV
         asmt_D.cmp_damage_consequence_RV = asmt_A.cmp_damage_consequence_RV
@@ -296,18 +297,16 @@ for rv_group in rv_groups:
     results_df = pd.DataFrame({'A': yA, 'B': yB, 'C': yC, 'D': yD},
                               index=range(num_realizations))
 
+    # file output
     if not os.path.exists(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}'):
         os.makedirs(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}')
 
-    # file output
     results_df.to_csv(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}/total_cost_realizations.csv')
 
     s1, sT = calc_sens(yA, yB, yC, yD)
 
     # bootstrap
-    # debug
-    num_repeats = 5
-    # num_repeats = 5000
+    num_repeats = 1000
     bootstrap_sample_s1 = np.zeros(num_repeats)
     bootstrap_sample_sT = np.zeros(num_repeats)
     for j in range(num_repeats):
@@ -335,10 +334,6 @@ for rv_group in rv_groups:
          'sT_CI_l': conf_int_sT[0], 'sT_CI_h': conf_int_sT[1]},
         index=[rv_group])
     sens_results_df.columns.name = 'Sensitivity Index'
-
-
-    if not os.path.exists(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}'):
-        os.makedirs(f'{analysis_output_path}/{modeling_uncertainty_case}/{replacement_threshold}/{rv_group}')
 
     # file output
     sens_results_df.to_csv(

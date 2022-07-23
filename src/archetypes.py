@@ -163,7 +163,7 @@ def generate_smrf_archetype(
                     np.pi/2.00,
                     method='generate_hinged_component_assembly',
                     additional_args={
-                        'zerolength_gen_i': release_5_imk_6,
+                        'zerolength_gen_i': imk_6,
                         'zerolength_gen_args_i': {
                             'lbry': 60.00,
                             'loverh': 1.00,
@@ -213,7 +213,7 @@ def generate_smrf_archetype(
                     np.pi/2.00,
                     method='generate_hinged_component_assembly',
                     additional_args={
-                        'zerolength_gen_i': release_5_imk_6,
+                        'zerolength_gen_i': imk_6,
                         'zerolength_gen_args_i': {
                             'lbry': 60.00,
                             'loverh': 1.00,
@@ -265,7 +265,7 @@ def generate_smrf_archetype(
                     0.00,
                     method='generate_hinged_component_assembly',
                     additional_args={
-                        'zerolength_gen_i': release_5_imk_6,
+                        'zerolength_gen_i': imk_6,
                         'zerolength_gen_args_i': {
                             'lbry': 60.00,
                             'loverh': 1.00,
@@ -315,7 +315,7 @@ def generate_smrf_archetype(
                     0.00,
                     method='generate_hinged_component_assembly',
                     additional_args={
-                        'zerolength_gen_i': release_5_imk_6,
+                        'zerolength_gen_i': imk_6,
                         'zerolength_gen_args_i': {
                             'lbry': 60.00,
                             'loverh': 1.00,
